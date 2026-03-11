@@ -1,0 +1,62 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Edit Post - Campus Network{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white rounded-xl shadow-md p-6">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Edit Post</h1>
+        
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="space-y-4">
+                <!-- Content -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Content</label>
+                    <textarea name="content" rows="4" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                              required>{{ form.content.value|default:'' }}</textarea>
+                </div>
+                
+                <!-- Privacy -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Privacy</label>
+                    <select name="privacy" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                        <option value="public" {% if form.privacy.value == 'public' %}selected{% endif %}>🌍 Public</option>
+                        <option value="followers" {% if form.privacy.value == 'followers' %}selected{% endif %}>👥 Followers Only</option>
+                        <option value="private" {% if form.privacy.value == 'private' %}selected{% endif %}>🔒 Private</option>
+                    </select>
+                </div>
+                
+                <!-- Image -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Image</label>
+                    {% if form.image.value %}
+                    <div class="mb-2">
+                        <img src="{{ form.image.value.url }}" class="h-32 w-auto rounded-lg">
+                    </div>
+                    {% endif %}
+                    <input type="file" name="image" accept="image/*" class="w-full">
+                </div>
+                
+                <!-- Video -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Video</label>
+                    <input type="file" name="video" accept="video/*" class="w-full">
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-6">
+                <a href="javascript:history.back()" class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                    Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

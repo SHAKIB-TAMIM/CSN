@@ -1,0 +1,503 @@
+{% extends 'core/base.html' %}
+
+{% load static %}
+{% load humanize %}
+
+{% block title %}Explore - Campus Network{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== Global Styles ===== */
+    :root {
+        --primary: #4f46e5;
+        --primary-dark: #4338ca;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --success: #10b981;
+    }
+
+    /* ===== Announcement Cards ===== */
+    .announcement-card {
+        transition: all 0.3s ease;
+        border: 1px solid #f0f0f0;
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        background: white;
+    }
+    
+    .announcement-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+    
+    .announcement-card.pinned {
+        border-left: 4px solid var(--primary);
+    }
+    
+    .announcement-card.important {
+        border-left: 4px solid var(--danger);
+    }
+    
+    /* ===== Type Badges ===== */
+    .type-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .type-badge.notice { background: #dbeafe; color: #1e40af; }
+    .type-badge.event { background: #fef3c7; color: #92400e; }
+    .type-badge.news { background: #dcfce7; color: #166534; }
+    .type-badge.academic { background: #e0e7ff; color: #3730a3; }
+    .type-badge.exam { background: #fee2e2; color: #991b1b; }
+    .type-badge.result { background: #f3e8ff; color: #6b21a8; }
+    .type-badge.holiday { background: #ccfbf1; color: #115e59; }
+    .type-badge.emergency { background: #fee2e2; color: #991b1b; animation: pulse 2s infinite; }
+    
+    /* ===== Department Badge ===== */
+    .dept-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.7rem;
+        background: #f3f4f6;
+        color: #4b5563;
+    }
+    
+    /* ===== Filter Dropdowns ===== */
+    .filter-dropdown {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .filter-dropdown-content {
+        display: none;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        min-width: 220px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        z-index: 50;
+        margin-top: 8px;
+        padding: 8px 0;
+    }
+    
+    .filter-dropdown:hover .filter-dropdown-content {
+        display: block;
+    }
+    
+    .filter-dropdown-item {
+        display: block;
+        padding: 10px 16px;
+        font-size: 0.875rem;
+        color: #374151;
+        transition: all 0.2s;
+        text-decoration: none;
+    }
+    
+    .filter-dropdown-item:hover {
+        background: #f3f4f6;
+        color: var(--primary);
+    }
+    
+    .filter-dropdown-item.active {
+        background: #eef2ff;
+        color: var(--primary);
+        font-weight: 500;
+    }
+    
+    .filter-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 9999px;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #374151;
+        transition: all 0.2s;
+        cursor: pointer;
+    }
+    
+    .filter-button:hover {
+        border-color: var(--primary);
+        color: var(--primary);
+        box-shadow: 0 4px 6px -1px rgba(79, 70, 229, 0.1);
+    }
+    
+    .filter-button i {
+        font-size: 0.8rem;
+        color: #9ca3af;
+    }
+    
+    /* ===== Create Button ===== */
+    .create-btn {
+        position: fixed;
+        bottom: 2rem;
+        right: 2rem;
+        background: var(--primary);
+        color: white;
+        width: 3.5rem;
+        height: 3.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 10px 15px -3px rgba(79, 70, 229, 0.3);
+        transition: all 0.3s;
+        z-index: 40;
+    }
+    
+    .create-btn:hover {
+        transform: scale(1.1);
+        background: var(--primary-dark);
+    }
+    
+    /* ===== Section Headers ===== */
+    .section-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 20px;
+        padding-bottom: 8px;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .section-header h2 {
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .section-header i {
+        color: var(--primary);
+    }
+    
+    /* ===== Empty State ===== */
+    .empty-state {
+        background: white;
+        border-radius: 12px;
+        padding: 40px;
+        text-align: center;
+        border: 1px dashed #e5e7eb;
+    }
+    
+    .empty-state i {
+        font-size: 3rem;
+        color: #d1d5db;
+        margin-bottom: 16px;
+    }
+    
+    .empty-state h3 {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 8px;
+    }
+    
+    .empty-state p {
+        color: #6b7280;
+        font-size: 0.9rem;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">University Hub</h1>
+            <p class="text-gray-600 mt-2">Stay updated with important announcements from your campus</p>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="flex space-x-6 mt-4 md:mt-0">
+            <div class="text-center">
+                <div class="text-2xl font-bold text-indigo-600">{{ total_count }}</div>
+                <div class="text-xs text-gray-500">Total</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-yellow-600">{{ event_count }}</div>
+                <div class="text-xs text-gray-500">Events</div>
+            </div>
+            <div class="text-center">
+                <div class="text-2xl font-bold text-green-600">{{ notice_count }}</div>
+                <div class="text-xs text-gray-500">Notices</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="bg-white rounded-xl shadow-md p-4 mb-8">
+        <div class="flex flex-wrap items-center gap-4">
+            <!-- Type Filter Dropdown -->
+            <div class="filter-dropdown">
+                <button class="filter-button">
+                    <i class="fas fa-filter"></i>
+                    {% if current_type %}
+                        {% if current_type == 'notice' %}📢 Notices
+                        {% elif current_type == 'event' %}🎉 Events
+                        {% elif current_type == 'news' %}📰 News
+                        {% elif current_type == 'academic' %}📚 Academic
+                        {% elif current_type == 'exam' %}📝 Exams
+                        {% endif %}
+                    {% else %}
+                        All Types
+                    {% endif %}
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="filter-dropdown-content">
+                    <a href="{% url 'explore' %}" class="filter-dropdown-item {% if not current_type %}active{% endif %}">
+                        All Types
+                    </a>
+                    <a href="?type=notice" class="filter-dropdown-item {% if current_type == 'notice' %}active{% endif %}">
+                        📢 Notices
+                    </a>
+                    <a href="?type=event" class="filter-dropdown-item {% if current_type == 'event' %}active{% endif %}">
+                        🎉 Events
+                    </a>
+                    <a href="?type=news" class="filter-dropdown-item {% if current_type == 'news' %}active{% endif %}">
+                        📰 News
+                    </a>
+                    <a href="?type=academic" class="filter-dropdown-item {% if current_type == 'academic' %}active{% endif %}">
+                        📚 Academic
+                    </a>
+                    <a href="?type=exam" class="filter-dropdown-item {% if current_type == 'exam' %}active{% endif %}">
+                        📝 Exams
+                    </a>
+                </div>
+            </div>
+
+            <!-- Department Filter Dropdown -->
+            <div class="filter-dropdown">
+                <button class="filter-button">
+                    <i class="fas fa-building"></i>
+                    {% if current_dept %}
+                        {{ current_dept }}
+                    {% else %}
+                        All Departments
+                    {% endif %}
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="filter-dropdown-content">
+                    <a href="{% url 'explore' %}" class="filter-dropdown-item {% if not current_dept %}active{% endif %}">
+                        All Departments
+                    </a>
+                    {% for dept in departments %}
+                    <a href="?dept={{ dept.code }}" class="filter-dropdown-item {% if current_dept == dept.code %}active{% endif %}">
+                        <i class="{{ dept.icon }} mr-2"></i>
+                        {{ dept.name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <!-- Create Button (inline for authorized users) -->
+            {% if can_create %}
+            <a href="{% url 'announcement-create' %}" class="ml-auto bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition text-sm font-medium">
+                <i class="fas fa-plus-circle mr-2"></i> New Announcement
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Pinned Announcements Section -->
+    {% if pinned %}
+    <div class="mb-10">
+        <div class="section-header">
+            <i class="fas fa-thumbtack"></i>
+            <h2>Pinned Announcements</h2>
+            <span class="ml-auto text-xs text-gray-400">Important updates that stay on top</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for item in pinned %}
+            <div class="announcement-card pinned">
+                {% include "core/includes/announcement_card.html" with announcement=item pinned=True %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Important Announcements Section -->
+    {% if important %}
+    <div class="mb-10">
+        <div class="section-header">
+            <i class="fas fa-exclamation-circle text-red-600"></i>
+            <h2>Important Announcements</h2>
+            <span class="ml-auto text-xs text-gray-400">Time-sensitive information</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for item in important %}
+            <div class="announcement-card important">
+                {% include "core/includes/announcement_card.html" with announcement=item %}
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- General Announcements Section (shown only if no type/department filter) -->
+    {% if not current_type and not current_dept %}
+        {% if general_announcements %}
+        <div class="mb-10">
+            <div class="section-header">
+                <i class="fas fa-bullhorn text-gray-600"></i>
+                <h2>General Announcements</h2>
+                <span class="ml-auto text-xs text-gray-400">Latest updates for everyone</span>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for item in general_announcements %}
+                <div class="announcement-card">
+                    {% include "core/includes/announcement_card.html" with announcement=item %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    {% endif %}
+
+    <!-- Filtered Results Section (shown when filters are active) -->
+    {% if current_type or current_dept %}
+    <div class="mb-10">
+        <div class="section-header">
+            <i class="fas fa-search"></i>
+            <h2>
+                {% if current_type %}
+                    {% if current_type == 'notice' %}📢 Notices
+                    {% elif current_type == 'event' %}🎉 Events
+                    {% elif current_type == 'news' %}📰 News
+                    {% elif current_type == 'academic' %}📚 Academic
+                    {% elif current_type == 'exam' %}📝 Exams
+                    {% endif %}
+                {% endif %}
+                {% if current_dept %}
+                    {% if current_type %} - {% endif %}
+                    {{ current_dept }} Department
+                {% endif %}
+            </h2>
+        </div>
+        
+        {% if announcements %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for announcement in announcements %}
+                {% if not announcement.is_pinned %}
+                <div class="announcement-card">
+                    {% include "core/includes/announcement_card.html" with announcement=announcement %}
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_next %}
+        <div class="text-center mt-8">
+            <button hx-get="?page={{ page_obj.next_page_number }}{% if current_type %}&type={{ current_type }}{% endif %}{% if current_dept %}&dept={{ current_dept }}{% endif %}"
+                    hx-target=".grid"
+                    hx-swap="beforeend"
+                    class="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                Load More
+            </button>
+        </div>
+        {% endif %}
+        
+        {% else %}
+        <div class="empty-state">
+            <i class="fas fa-search"></i>
+            <h3>No announcements found</h3>
+            <p>Try adjusting your filters or check back later</p>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- If no announcements at all -->
+    {% if not pinned and not important and not general_announcements and not announcements %}
+    <div class="empty-state">
+        <i class="fas fa-bullhorn"></i>
+        <h3>No announcements yet</h3>
+        <p>Check back later for updates from your university</p>
+        {% if can_create %}
+        <a href="{% url 'announcement-create' %}" class="inline-block mt-4 px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+            Create First Announcement
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Trending Section (always visible) -->
+    {% if trending %}
+    <div class="mt-12">
+        <div class="section-header">
+            <i class="fas fa-fire text-orange-500"></i>
+            <h2>Trending Now</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+            {% for item in trending %}
+            <a href="{{ item.get_absolute_url }}" class="block p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition">
+                <p class="font-medium text-sm text-gray-800">{{ item.title|truncatechars:30 }}</p>
+                <div class="flex items-center justify-between mt-2 text-xs text-gray-500">
+                    <span><i class="fas fa-heart text-red-500 mr-1"></i> {{ item.likes_count }}</span>
+                    <span><i class="fas fa-eye mr-1"></i> {{ item.views_count }}</span>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Floating Create Button (alternative for mobile) -->
+{% if can_create %}
+<a href="{% url 'announcement-create' %}" class="create-btn md:hidden">
+    <i class="fas fa-plus text-2xl"></i>
+</a>
+{% endif %}
+
+<script>
+    // Like functionality for announcements
+    document.querySelectorAll('.like-announcement-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            const announcementId = this.dataset.id;
+            const icon = this.querySelector('i');
+            const countSpan = this.querySelector('.likes-count');
+            
+            fetch(`/announcement/${announcementId}/like/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'liked') {
+                    icon.classList.add('text-red-600');
+                } else {
+                    icon.classList.remove('text-red-600');
+                }
+                countSpan.textContent = data.likes_count;
+            })
+            .catch(error => console.error('Like error:', error));
+        });
+    });
+</script>
+{% endblock %}

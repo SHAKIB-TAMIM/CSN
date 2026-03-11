@@ -6,6 +6,66 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{% static 'core/css/chat.css' %}">
+<style>
+    .typing-indicator {
+        display: flex;
+        align-items: center;
+        padding: 12px 16px;
+        background-color: #f3f4f6;
+        border-radius: 20px;
+        width: fit-content;
+        margin-bottom: 10px;
+    }
+    
+    .typing-indicator span {
+        height: 8px;
+        width: 8px;
+        background-color: #9ca3af;
+        border-radius: 50%;
+        display: inline-block;
+        margin: 0 2px;
+        animation: typing 1.4s infinite;
+    }
+    
+    .typing-indicator span:nth-child(2) {
+        animation-delay: 0.2s;
+    }
+    
+    .typing-indicator span:nth-child(3) {
+        animation-delay: 0.4s;
+    }
+    
+    @keyframes typing {
+        0%, 60%, 100% { transform: translateY(0); }
+        30% { transform: translateY(-10px); }
+    }
+    
+    .message-image {
+        max-width: 200px;
+        max-height: 200px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: transform 0.2s;
+    }
+    
+    .message-image:hover {
+        transform: scale(1.05);
+    }
+    
+    .file-attachment {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        background-color: rgba(255,255,255,0.1);
+        border-radius: 8px;
+        margin-top: 5px;
+    }
+    
+    .file-attachment i {
+        font-size: 20px;
+        margin-right: 8px;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
@@ -21,25 +81,31 @@
                 </div>
             </div>
             
-            <div class="overflow-y-auto h-[calc(100vh-12rem)]" x-data>
+            <div class="overflow-y-auto h-[calc(100vh-12rem)]">
                 {% for conversation in conversations %}
-                <a href="{% url 'chat-with' conversation.other_user.username %}" 
-                   class="block px-4 py-3 hover:bg-gray-50 {% if conversation.id == active_conversation.id %}bg-indigo-50{% endif %}"
-                   x-data="{ unread: {{ conversation.unread_count }} }">
+                <a href="{% url 'chat-with' conversation.user.username %}" 
+                   class="block px-4 py-3 hover:bg-gray-50 {% if conversation.user.username == other_user.username %}bg-indigo-50{% endif %}">
                     <div class="flex items-center space-x-3">
                         <div class="relative">
-                            <img src="{{ conversation.other_user.profile.profile_photo.url }}" 
+                            <img src="{{ conversation.user.profile.profile_photo.url }}" 
                                  class="w-12 h-12 rounded-full">
-                            {% if conversation.other_user.profile.is_online %}
+                            {% if conversation.user.profile.is_online %}
                             <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
                             {% endif %}
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-center justify-between">
-                                <p class="font-semibold text-gray-800 truncate">{{ conversation.other_user.get_full_name|default:conversation.other_user.username }}</p>
+                                <p class="font-semibold text-gray-800 truncate">{{ conversation.user.get_full_name|default:conversation.user.username }}</p>
+                                {% if conversation.last_message %}
                                 <p class="text-xs text-gray-500">{{ conversation.last_message.created_at|naturaltime }}</p>
+                                {% endif %}
                             </div>
-                            <p class="text-sm text-gray-600 truncate">{{ conversation.last_message.content|truncatechars:30 }}</p>
+                            <p class="text-sm text-gray-600 truncate">
+                                {% if conversation.last_message %}
+                                    {% if conversation.last_message.sender == user %}You: {% endif %}
+                                    {{ conversation.last_message.content|truncatechars:30 }}
+                                {% endif %}
+                            </p>
                             {% if conversation.unread_count > 0 %}
                             <span class="inline-block bg-indigo-600 text-white text-xs rounded-full px-2 py-1 mt-1">
                                 {{ conversation.unread_count }} new
@@ -68,13 +134,10 @@
                     </div>
                     <div>
                         <h3 class="font-semibold text-gray-800">{{ other_user.get_full_name|default:other_user.username }}</h3>
-                        <p class="text-xs text-gray-500">
-                            {% if other_user.profile.is_online %}
-                            Online
-                            {% else %}
-                            Last seen {{ other_user.profile.last_seen|naturaltime }}
-                            {% endif %}
-                        </p>
+                        <div class="flex items-center text-xs text-gray-500">
+                            <span id="connection-indicator" class="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-1"></span>
+                            <span id="connection-text">Connecting...</span>
+                        </div>
                     </div>
                 </div>
                 <div class="flex space-x-2">
@@ -90,52 +153,66 @@
                 </div>
             </div>
             
-            <!-- Messages -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-messages" 
-                 x-data="{ 
-                    messages: {{ messages_json|safe }},
-                    scrollToBottom() {
-                        this.$el.scrollTop = this.$el.scrollHeight;
-                    }
-                 }"
-                 x-init="scrollToBottom()"
-                 @new-message.window="messages.push($event.detail); scrollToBottom()">
-                
-                <template x-for="message in messages" :key="message.id">
-                    <div class="flex" :class="{'justify-end': message.sender === currentUserId}">
-                        <div class="max-w-xs lg:max-w-md" :class="{'order-1': message.sender === currentUserId}">
-                            <div class="rounded-lg p-3" 
-                                 :class="message.sender === currentUserId ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-800'">
-                                <p class="text-sm" x-text="message.content"></p>
-                                {% if message.image %}
-                                <img :src="message.image" class="mt-2 rounded-lg max-w-full">
-                                {% endif %}
+            <!-- Messages Container -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-messages">
+                {% for message in messages %}
+                <div class="flex {% if message.sender == user %}justify-end{% endif %}">
+                    <div class="max-w-xs lg:max-w-md {% if message.sender == user %}order-1{% endif %}">
+                        <div class="rounded-lg p-3 {% if message.sender == user %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-800{% endif %}">
+                            <p class="text-sm">{{ message.content }}</p>
+                            {% if message.image %}
+                            <img src="{{ message.image.url }}" class="mt-2 rounded-lg max-w-full message-image" onclick="openImageModal('{{ message.image.url }}')">
+                            {% endif %}
+                            {% if message.file %}
+                            <div class="file-attachment">
+                                <i class="fas fa-file"></i>
+                                <a href="{{ message.file.url }}" target="_blank" class="text-sm underline">Download file</a>
                             </div>
-                            <p class="text-xs text-gray-500 mt-1" 
-                               x-text="new Date(message.created_at).toLocaleTimeString()"></p>
+                            {% endif %}
                         </div>
+                        <p class="text-xs text-gray-500 mt-1 {% if message.sender == user %}text-right{% endif %}">
+                            {{ message.created_at|time }}
+                        </p>
                     </div>
-                </template>
+                </div>
+                {% empty %}
+                <div class="text-center text-gray-500 py-8" id="no-messages">
+                    <p>No messages yet. Say hello!</p>
+                </div>
+                {% endfor %}
+                
+                <!-- Typing Indicator -->
+                <div id="typing-indicator-container" class="hidden">
+                    <div class="typing-indicator">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                        <span class="ml-2 text-sm text-gray-500">{{ other_user.username }} is typing...</span>
+                    </div>
+                </div>
             </div>
             
             <!-- Message Input -->
             <div class="p-4 border-t border-gray-200">
-                <form id="message-form" @submit.prevent="sendMessage" class="flex items-end space-x-2">
+                <form id="message-form" class="flex items-end space-x-2">
                     {% csrf_token %}
+                    
+                    <!-- Hidden file input -->
+                    <input type="file" id="file-input" accept="image/*, .pdf, .doc, .docx, .txt" class="hidden">
+                    
                     <div class="flex-1">
-                        <textarea name="content" rows="1" 
+                        <textarea id="message-input" name="content" rows="1" 
                                   class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600 resize-none"
-                                  placeholder="Type a message..."
-                                  @keydown.enter.prevent="sendMessage"></textarea>
+                                  placeholder="Type a message..."></textarea>
                     </div>
                     <div class="flex space-x-1">
-                        <button type="button" class="p-2 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100">
+                        <button type="button" id="image-upload-btn" class="p-2 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100" title="Send image">
                             <i class="fas fa-image"></i>
                         </button>
-                        <button type="button" class="p-2 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100">
+                        <button type="button" id="file-upload-btn" class="p-2 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100" title="Send file">
                             <i class="fas fa-paperclip"></i>
                         </button>
-                        <button type="submit" class="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700">
+                        <button type="submit" id="send-button" class="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700">
                             <i class="fas fa-paper-plane"></i>
                         </button>
                     </div>
@@ -155,39 +232,383 @@
         </div>
     </div>
 </div>
+
+<!-- Image Modal -->
+<div id="image-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50" onclick="closeImageModal()">
+    <img id="modal-image" src="" class="max-w-full max-h-full object-contain">
+</div>
 {% endblock %}
 
 {% block extra_js %}
 <script src="{% static 'core/js/chat.js' %}"></script>
 <script>
+(function() {
+
     {% if other_user %}
-    // WebSocket connection for real-time chat
-    const chatSocket = new WebSocket(
-        `ws://${window.location.host}/ws/chat/{{ other_user.username }}/`
-    );
-    
-    chatSocket.onmessage = function(e) {
-        const data = JSON.parse(e.data);
-        window.dispatchEvent(new CustomEvent('new-message', { detail: data.message }));
-    };
-    
-    function sendMessage(e) {
-        e.preventDefault();
-        const form = e.target;
-        const content = form.querySelector('textarea[name="content"]').value;
-        
-        if (!content.trim()) return;
-        
-        chatSocket.send(JSON.stringify({
-            'message': content,
-            'sender': {{ user.id }},
-            'recipient': {{ other_user.id }}
-        }));
-        
-        form.querySelector('textarea[name="content"]').value = '';
+
+
+    const otherUsername = "{{ other_user.username }}";
+    const currentUsername = "{{ user.username }}";
+    const currentUserId = {{ user.id }};
+
+    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat/${otherUsername}/`;
+
+    let chatSocket = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    let typingTimer = null;
+
+    const messagesContainer = document.getElementById("chat-messages");
+    const messageInput = document.getElementById("message-input");
+    const sendButton = document.getElementById("send-button");
+    const messageForm = document.getElementById("message-form");
+    const connectionIndicator = document.getElementById("connection-indicator");
+    const connectionText = document.getElementById("connection-text");
+    const noMessages = document.getElementById("no-messages");
+    const fileInput = document.getElementById("file-input");
+    const imageUploadBtn = document.getElementById("image-upload-btn");
+    const fileUploadBtn = document.getElementById("file-upload-btn");
+    const typingIndicatorContainer = document.getElementById("typing-indicator-container");
+
+    function updateConnectionStatus(status, color) {
+        if (!connectionIndicator || !connectionText) return;
+
+        connectionIndicator.classList.remove("bg-green-500", "bg-red-500", "bg-yellow-500");
+        connectionIndicator.classList.add(`bg-${color}-500`);
+
+        connectionText.textContent = status;
     }
-    
-    document.getElementById('message-form').addEventListener('submit', sendMessage);
+
+    function scrollToBottom() {
+        if (!messagesContainer) return;
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+    }
+
+    function formatTime(timestamp) {
+        if (!timestamp) return "Just now";
+        const date = new Date(timestamp);
+        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    }
+
+
+    function showTypingIndicator() {
+        if (typingIndicatorContainer) {
+            typingIndicatorContainer.classList.remove("hidden");
+            scrollToBottom();
+        }
+    }
+
+    function hideTypingIndicator() {
+        if (typingIndicatorContainer) {
+            typingIndicatorContainer.classList.add("hidden");
+        }
+    }
+
+    function addMessage(message, isCurrentUser, messageType = 'text') {
+        if (!messagesContainer) return;
+
+        if (noMessages) {
+            noMessages.style.display = "none";
+        }
+
+        const wrapper = document.createElement("div");
+        wrapper.className = `flex ${isCurrentUser ? "justify-end" : "justify-start"} mb-3`;
+
+        const bubble = document.createElement("div");
+        bubble.className = `max-w-xs lg:max-w-md rounded-lg p-3 ${
+            isCurrentUser
+                ? "bg-indigo-600 text-white"
+                : "bg-gray-100 text-gray-800"
+        }`;
+
+        if (!isCurrentUser) {
+            const sender = document.createElement("p");
+            sender.className = "text-xs font-semibold mb-1 text-gray-600";
+            sender.textContent = message.sender || otherUsername;
+            bubble.appendChild(sender);
+        }
+
+        // Add content based on message type
+        if (messageType === 'text') {
+            const content = document.createElement("p");
+            content.className = "text-sm";
+            content.textContent = message.content;
+            bubble.appendChild(content);
+        } else if (messageType === 'image') {
+            const img = document.createElement("img");
+            img.src = message.file_url;
+            img.className = "message-image mt-2 rounded-lg max-w-full cursor-pointer";
+            img.onclick = () => openImageModal(message.file_url);
+            bubble.appendChild(img);
+        } else if (messageType === 'file') {
+            const fileDiv = document.createElement("div");
+            fileDiv.className = "file-attachment";
+            fileDiv.innerHTML = `
+                <i class="fas fa-file"></i>
+                <a href="${message.file_url}" target="_blank" class="text-sm underline">Download file</a>
+            `;
+            bubble.appendChild(fileDiv);
+        }
+
+        const time = document.createElement("p");
+        time.className = `text-xs text-right mt-1 ${
+            isCurrentUser ? "text-indigo-200" : "text-gray-500"
+        }`;
+        time.textContent = formatTime(message.created_at);
+        bubble.appendChild(time);
+
+        wrapper.appendChild(bubble);
+        messagesContainer.appendChild(wrapper);
+
+        scrollToBottom();
+    }
+
+    function connectWebSocket() {
+        chatSocket = new WebSocket(wsUrl);
+
+        chatSocket.onopen = function () {
+            console.log("✅ WebSocket connected");
+            updateConnectionStatus("Online", "green");
+            reconnectAttempts = 0;
+
+            if (messageInput) messageInput.disabled = false;
+            if (sendButton) sendButton.disabled = false;
+        };
+
+        chatSocket.onclose = function (event) {
+            console.log("❌ WebSocket disconnected", event.code);
+
+            updateConnectionStatus("Offline", "red");
+
+            if (messageInput) messageInput.disabled = true;
+            if (sendButton) sendButton.disabled = true;
+
+            if (reconnectAttempts < maxReconnectAttempts) {
+                reconnectAttempts++;
+                updateConnectionStatus(
+                    `Reconnecting (${reconnectAttempts}/${maxReconnectAttempts})...`,
+                    "yellow"
+                );
+
+                setTimeout(connectWebSocket, 3000 * reconnectAttempts);
+            } else {
+                updateConnectionStatus("Connection failed", "red");
+            }
+        };
+
+        chatSocket.onerror = function (error) {
+            console.error("WebSocket error:", error);
+        };
+
+        chatSocket.onmessage = function (event) {
+            try {
+                const data = JSON.parse(event.data);
+
+                if (data.type === 'typing') {
+                    if (data.typing && data.user !== currentUsername) {
+                        showTypingIndicator();
+                    } else {
+                        hideTypingIndicator();
+                    }
+                } else if (data.type === 'file' || data.type === 'image') {
+                    const isCurrentUser = data.message.sender === currentUsername;
+                    if (!isCurrentUser) {
+                        addMessage(data.message, false, data.type);
+                    }
+                } else if (data.message) {
+                    const isCurrentUser = data.message.sender === currentUsername;
+                    if (!isCurrentUser) {
+                        addMessage(data.message, false, 'text');
+                    }
+                }
+            } catch (error) {
+                console.error("Message parse error:", error);
+            }
+        };
+    }
+
+    function handleTyping() {
+        if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN) return;
+
+        chatSocket.send(JSON.stringify({
+            'type': 'typing',
+            'typing': true,
+            'user': currentUsername
+        }));
+
+        clearTimeout(typingTimer);
+        typingTimer = setTimeout(() => {
+            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
+                chatSocket.send(JSON.stringify({
+                    'type': 'typing',
+                    'typing': false,
+                    'user': currentUsername
+                }));
+            }
+        }, 1000);
+    }
+
+    function uploadFile(file, fileType) {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        // Show loading indicator
+        const loadingMsg = document.createElement('div');
+        loadingMsg.className = 'text-sm text-gray-500 text-center py-2';
+        loadingMsg.textContent = 'Uploading...';
+        messagesContainer.appendChild(loadingMsg);
+
+        fetch('/api/upload-chat-file/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            // Remove loading indicator
+            loadingMsg.remove();
+
+            if (data.success) {
+                // Send via WebSocket
+                chatSocket.send(JSON.stringify({
+                    'type': fileType,
+                    'message': {
+                        content: file.name,
+                        file_url: data.url,
+                        file_type: data.file_type,
+                        sender: currentUsername,
+                        created_at: new Date().toISOString()
+                    }
+                }));
+
+                // Optimistic UI update
+                addMessage({
+                    file_url: data.url,
+                    sender: currentUsername,
+                    created_at: new Date().toISOString()
+                }, true, fileType);
+            } else {
+                alert('Upload failed: ' + data.error);
+            }
+        })
+        .catch(error => {
+            loadingMsg.remove();
+            console.error('Upload error:', error);
+            alert('Upload failed. Please try again.');
+        });
+    }
+
+    function sendMessage() {
+        if (!messageInput) return;
+
+        const message = messageInput.value.trim();
+
+        if (!message) return;
+
+        if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN) {
+            alert("Connection lost. Please wait...");
+            return;
+        }
+
+        chatSocket.send(JSON.stringify({ message }));
+
+        // Optimistic UI update
+        addMessage({
+            content: message,
+            sender: currentUsername,
+            created_at: new Date().toISOString()
+        }, true, 'text');
+
+        messageInput.value = "";
+    }
+
+    if (messageForm) {
+        messageForm.addEventListener("submit", function (e) {
+            e.preventDefault();
+            sendMessage();
+        });
+    }
+
+    if (messageInput) {
+        messageInput.addEventListener("keypress", function (e) {
+            if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                sendMessage();
+            }
+            handleTyping();
+        });
+    }
+
+    if (sendButton) {
+        sendButton.addEventListener("click", function (e) {
+            e.preventDefault();
+            sendMessage();
+        });
+    }
+
+    // Image upload
+    if (imageUploadBtn && fileInput) {
+        imageUploadBtn.addEventListener("click", function() {
+            fileInput.accept = "image/*";
+            fileInput.click();
+        });
+    }
+
+    // File upload
+    if (fileUploadBtn && fileInput) {
+        fileUploadBtn.addEventListener("click", function() {
+            fileInput.accept = ".pdf,.doc,.docx,.txt";
+            fileInput.click();
+        });
+    }
+
+    // File input change handler
+    if (fileInput) {
+        fileInput.addEventListener("change", function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const fileType = file.type.startsWith('image/') ? 'image' : 'file';
+            uploadFile(file, fileType);
+
+            // Clear input so same file can be selected again
+            fileInput.value = '';
+        });
+    }
+
+    window.openImageModal = function(imageUrl) {
+        const modal = document.getElementById('image-modal');
+        const modalImg = document.getElementById('modal-image');
+        modalImg.src = imageUrl;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+    };
+
+    window.closeImageModal = function() {
+        const modal = document.getElementById('image-modal');
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+    };
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeImageModal();
+        }
+    });
+    connectWebSocket();
+    scrollToBottom();
+
+    console.log("🚀 Chat initialized with typing indicators and file sharing", {
+        currentUser: currentUsername,
+        otherUser: otherUsername
+    });
+
     {% endif %}
+
+})();
 </script>
 {% endblock %}

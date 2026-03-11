@@ -1,0 +1,280 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Privacy Policy - Campus Network{% endblock %}
+
+{% block extra_css %}
+<style>
+    .policy-section {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .policy-section h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .policy-section h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #374151;
+        margin: 20px 0 10px;
+    }
+    
+    .policy-section p {
+        color: #4b5563;
+        line-height: 1.7;
+        margin-bottom: 15px;
+    }
+    
+    .policy-section ul {
+        margin: 15px 0;
+        padding-left: 20px;
+    }
+    
+    .policy-section li {
+        color: #4b5563;
+        margin-bottom: 8px;
+        list-style-type: disc;
+    }
+    
+    .last-updated {
+        background: #f3f4f6;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-bottom: 30px;
+    }
+    
+    .highlight-box {
+        background: #f0f9ff;
+        border-left: 4px solid #4f46e5;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-4xl font-bold mb-4">Privacy Policy</h1>
+        <p class="text-xl text-indigo-100">
+            Your privacy matters. Learn how we protect your data.
+        </p>
+    </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Last Updated -->
+    <div class="last-updated">
+        <i class="fas fa-calendar-alt mr-2 text-indigo-600"></i>
+        Last Updated: February 28, 2026
+    </div>
+    
+    <!-- Introduction -->
+    <div class="policy-section">
+        <h2>Introduction</h2>
+        <p>
+            Campus Network ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our platform. By using Campus Network, you consent to the practices described in this policy.
+        </p>
+        
+        <div class="highlight-box">
+            <p class="font-medium text-indigo-800 mb-0">
+                <i class="fas fa-shield-alt mr-2"></i>
+                We prioritize your privacy and security. We never sell your personal information to third parties.
+            </p>
+        </div>
+    </div>
+    
+    <!-- Information We Collect -->
+    <div class="policy-section">
+        <h2>1. Information We Collect</h2>
+        
+        <h3>1.1 Personal Information</h3>
+        <p>When you register for Campus Network, we collect:</p>
+        <ul>
+            <li>Name and username</li>
+            <li>Email address (university email required)</li>
+            <li>Student ID (optional, for verification)</li>
+            <li>Department and batch information</li>
+            <li>Profile photo and cover photo</li>
+            <li>Any other information you choose to add to your profile</li>
+        </ul>
+        
+        <h3>1.2 Usage Data</h3>
+        <p>We automatically collect information about how you use our platform:</p>
+        <ul>
+            <li>Posts, comments, and interactions</li>
+            <li>Messages and conversations</li>
+            <li>Announcements viewed and engaged with</li>
+            <li>Login times and session duration</li>
+            <li>IP address and device information</li>
+            <li>Browser type and operating system</li>
+        </ul>
+        
+        <h3>1.3 Content You Share</h3>
+        <p>Any content you post, share, or upload to Campus Network, including:</p>
+        <ul>
+            <li>Posts and comments</li>
+            <li>Photos and images</li>
+            <li>Files and attachments</li>
+            <li>Stories and temporary content</li>
+        </ul>
+    </div>
+    
+    <!-- How We Use Your Information -->
+    <div class="policy-section">
+        <h2>2. How We Use Your Information</h2>
+        <p>We use your information to:</p>
+        <ul>
+            <li>Provide and maintain our services</li>
+            <li>Personalize your experience</li>
+            <li>Connect you with your department and campus community</li>
+            <li>Send important notifications and announcements</li>
+            <li>Improve and optimize our platform</li>
+            <li>Detect and prevent fraud or abuse</li>
+            <li>Comply with legal obligations</li>
+        </ul>
+    </div>
+    
+    <!-- Information Sharing -->
+    <div class="policy-section">
+        <h2>3. Information Sharing</h2>
+        <p>We do not sell your personal information. We may share information in these limited circumstances:</p>
+        <ul>
+            <li><strong>With your consent:</strong> When you explicitly choose to share content publicly</li>
+            <li><strong>With department admins:</strong> For verification and announcement purposes</li>
+            <li><strong>Legal requirements:</strong> When required by law or to protect rights</li>
+            <li><strong>Service providers:</strong> Trusted third parties who assist in operating our platform</li>
+        </ul>
+    </div>
+    
+    <!-- Data Security -->
+    <div class="policy-section">
+        <h2>4. Data Security</h2>
+        <p>We implement industry-standard security measures:</p>
+        <ul>
+            <li>Encryption of data in transit (HTTPS)</li>
+            <li>Secure password hashing</li>
+            <li>Regular security audits</li>
+            <li>Access controls and authentication</li>
+            <li>Monitoring for suspicious activity</li>
+        </ul>
+        
+        <div class="highlight-box">
+            <p class="font-medium text-indigo-800 mb-0">
+                <i class="fas fa-lock mr-2"></i>
+                Your password is never stored in plain text. We use bcrypt hashing with salt.
+            </p>
+        </div>
+    </div>
+    
+    <!-- Your Rights -->
+    <div class="policy-section">
+        <h2>5. Your Rights</h2>
+        <p>You have the right to:</p>
+        <ul>
+            <li><strong>Access:</strong> Request a copy of your data</li>
+            <li><strong>Correction:</strong> Update inaccurate information</li>
+            <li><strong>Deletion:</strong> Request account deletion (see Section 8)</li>
+            <li><strong>Export:</strong> Download your data in a portable format</li>
+            <li><strong>Object:</strong> Opt-out of non-essential communications</li>
+        </ul>
+        <p>To exercise these rights, contact us at privacy@campusnetwork.edu.</p>
+    </div>
+    
+    <!-- Cookies -->
+    <div class="policy-section">
+        <h2>6. Cookies and Tracking</h2>
+        <p>We use cookies to:</p>
+        <ul>
+            <li>Keep you logged in</li>
+            <li>Remember your preferences</li>
+            <li>Analyze platform usage</li>
+            <li>Improve user experience</li>
+        </ul>
+        <p>You can control cookie settings through your browser. Disabling cookies may affect platform functionality.</p>
+    </div>
+    
+    <!-- Third-Party Services -->
+    <div class="policy-section">
+        <h2>7. Third-Party Services</h2>
+        <p>We may use third-party services for:</p>
+        <ul>
+            <li>Email delivery (for notifications)</li>
+            <li>Analytics (to improve our service)</li>
+            <li>File storage (for uploaded content)</li>
+        </ul>
+        <p>These services have their own privacy policies and data handling practices.</p>
+    </div>
+    
+    <!-- Account Deletion -->
+    <div class="policy-section">
+        <h2>8. Account Deletion</h2>
+        <p>When you delete your account:</p>
+        <ul>
+            <li>All your personal information is permanently removed</li>
+            <li>Posts and comments are deleted</li>
+            <li>Messages are removed</li>
+            <li>Profile information is erased</li>
+        </ul>
+        <p>Some data may be retained for legal purposes or anonymous analytics, but will be disassociated from your identity.</p>
+        <p class="mt-4">
+            <a href="{% url 'delete-account-confirm' %}" class="text-red-600 hover:text-red-800 font-medium">
+                <i class="fas fa-exclamation-triangle mr-1"></i>
+                Request Account Deletion
+            </a>
+        </p>
+    </div>
+    
+    <!-- Changes to Policy -->
+    <div class="policy-section">
+        <h2>9. Changes to This Policy</h2>
+        <p>
+            We may update this Privacy Policy from time to time. We will notify you of significant changes through:
+        </p>
+        <ul>
+            <li>Email notification</li>
+            <li>Site-wide announcement</li>
+            <li>Notice at login</li>
+        </ul>
+        <p>Continued use of Campus Network after changes constitutes acceptance of the updated policy.</p>
+    </div>
+    
+    <!-- Contact Information -->
+    <div class="policy-section">
+        <h2>10. Contact Us</h2>
+        <p>For privacy-related questions or concerns:</p>
+        <ul class="list-none pl-0">
+            <li class="mb-2"><i class="fas fa-envelope text-indigo-600 w-6 mr-2"></i> privacy@campusnetwork.edu</li>
+            <li class="mb-2"><i class="fas fa-phone text-indigo-600 w-6 mr-2"></i> +880 1234 567890</li>
+            <li class="mb-2"><i class="fas fa-map-marker-alt text-indigo-600 w-6 mr-2"></i> Campus Network HQ, University Campus, Dhaka</li>
+        </ul>
+        <p class="mt-4">
+            <a href="{% url 'contact' %}" class="inline-flex items-center text-indigo-600 hover:text-indigo-800">
+                Contact our Privacy Team <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </p>
+    </div>
+    
+    <!-- Consent -->
+    <div class="bg-indigo-50 rounded-xl p-6 text-center mt-8">
+        <p class="text-indigo-800">
+            <i class="fas fa-check-circle mr-2"></i>
+            By using Campus Network, you acknowledge that you have read and understood this Privacy Policy.
+        </p>
+    </div>
+</div>
+{% endblock %}

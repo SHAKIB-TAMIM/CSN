@@ -1,0 +1,105 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Announcement Permissions - Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="bg-white rounded-xl shadow-md p-8">
+        <h1 class="text-2xl font-bold text-gray-900 mb-6">Announcement Author Permissions</h1>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">General</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Departmental</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Events</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notices</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">News</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Departments</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for user in users %}
+                    <tr>
+                        <form method="post">
+                            {% csrf_token %}
+                            <input type="hidden" name="user_id" value="{{ user.id }}">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <img src="{{ user.profile.profile_photo.url }}" class="w-8 h-8 rounded-full mr-3 object-cover" onerror="this.src='/static/default.jpg'">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">{{ user.get_full_name|default:user.username }}</div>
+                                        <div class="text-sm text-gray-500">{{ user.email }}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <input type="checkbox" name="can_create_general" 
+                                       {% if user.announcement_permission and user.announcement_permission.can_create_general %}checked{% endif %}>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <input type="checkbox" name="can_create_departmental"
+                                       {% if user.announcement_permission and user.announcement_permission.can_create_departmental %}checked{% endif %}>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <input type="checkbox" name="can_create_events"
+                                       {% if user.announcement_permission and user.announcement_permission.can_create_events %}checked{% endif %}>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <input type="checkbox" name="can_create_notices"
+                                       {% if user.announcement_permission and user.announcement_permission.can_create_notices %}checked{% endif %}>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-center">
+                                <input type="checkbox" name="can_create_news"
+                                       {% if user.announcement_permission and user.announcement_permission.can_create_news %}checked{% endif %}>
+                            </td>
+                            <td class="px-6 py-4">
+                                <select name="departments" multiple class="w-32 text-sm border border-gray-300 rounded-lg px-2 py-1 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                                    {% for dept in departments %}
+                                    <option value="{{ dept.id }}" 
+                                            {% if user.announcement_permission and dept in user.announcement_permission.departments.all %}selected{% endif %}>
+                                        {{ dept.code }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <p class="text-xs text-gray-400 mt-1">Hold Ctrl/Cmd to select multiple</p>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <button type="submit" class="px-3 py-1 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition text-sm">
+                                    Save
+                                </button>
+                            </td>
+                        </form>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="px-6 py-4 text-center text-gray-500">
+                            No users found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="mt-6 text-sm text-gray-500">
+            <p><i class="fas fa-info-circle mr-1"></i> Check the boxes to grant permissions. Departmental users can only post to selected departments.</p>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Add confirmation before saving
+    document.querySelectorAll('form').forEach(form => {
+        form.addEventListener('submit', function(e) {
+            if (!confirm('Save these permission changes?')) {
+                e.preventDefault();
+            }
+        });
+    });
+</script>
+{% endblock %}

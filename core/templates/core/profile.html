@@ -4,51 +4,247 @@
 
 {% block title %}{{ profile_user.get_full_name|default:profile_user.username }} - Campus Social Network{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* Story indicator ring animation */
+    @keyframes pulse-ring {
+        0% {
+            transform: scale(0.95);
+            opacity: 0.7;
+        }
+        50% {
+            transform: scale(1.05);
+            opacity: 0.3;
+        }
+        100% {
+            transform: scale(0.95);
+            opacity: 0.7;
+        }
+    }
+
+    .story-active {
+        position: relative;
+    }
+
+    .story-active + .story-ring {
+        animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    .relative img {
+        transition: all 0.3s ease;
+    }
+
+    .relative img.story-active {
+        box-shadow: 0 0 0 2px #4f46e5;
+    }
+
+    .relative img.story-active:hover {
+        transform: scale(1.02);
+        box-shadow: 0 0 0 4px #4f46e5;
+    }
+
+    /* Story Viewer Modal */
+    #story-modal {
+        transition: opacity 0.3s ease;
+    }
+    
+    .story-progress-bar {
+        height: 2px;
+        background: rgba(255,255,255,0.3);
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .story-progress-fill {
+        height: 100%;
+        background: white;
+        animation: progress 5s linear forwards;
+    }
+    
+    @keyframes progress {
+        from { width: 0%; }
+        to { width: 100%; }
+    }
+    
+    /* Post Menu */
+    .post-menu {
+        position: relative;
+    }
+
+    .post-menu-button {
+        padding: 0.5rem;
+        border-radius: 50%;
+        transition: all 0.2s ease;
+        color: #6b7280;
+        background: transparent;
+        border: none;
+        cursor: pointer;
+    }
+
+    .post-menu-button:hover {
+        background: #f3f4f6;
+        color: #1f2937;
+    }
+
+    .post-menu-dropdown {
+        position: absolute;
+        right: 0;
+        top: 100%;
+        margin-top: 0.5rem;
+        background: white;
+        border-radius: 0.75rem;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        border: 1px solid #e5e7eb;
+        overflow: hidden;
+        z-index: 10;
+        min-width: 150px;
+    }
+
+    .post-menu-item {
+        display: block;
+        padding: 0.75rem 1rem;
+        font-size: 0.875rem;
+        color: #1f2937;
+        transition: all 0.2s ease;
+        width: 100%;
+        text-align: left;
+        border: none;
+        background: transparent;
+        cursor: pointer;
+    }
+
+    .post-menu-item:hover {
+        background: #f3f4f6;
+    }
+
+    .post-menu-item i {
+        margin-right: 0.5rem;
+        width: 1rem;
+    }
+
+    .post-menu-item.delete:hover {
+        color: #dc2626;
+        background: #fee2e2;
+    }
+
+    /* File Upload Animation */
+    @keyframes pulse {
+        0%, 100% {
+            opacity: 1;
+        }
+        50% {
+            opacity: 0.5;
+        }
+    }
+    
+    .upload-pulse {
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+    
+    /* Document Icons */
+    .doc-icon {
+        transition: all 0.3s ease;
+    }
+    
+    .doc-icon:hover {
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <!-- Profile Header -->
     <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
         <!-- Cover Photo -->
-        <div class="h-64 bg-gradient-to-r from-indigo-500 to-purple-600 relative">
+        {% if is_own_profile %}
+        <div class="h-64 bg-gradient-to-r from-indigo-500 to-purple-600 relative" id="cover-container">
             {% if profile_user.profile.cover_photo %}
-            <img src="{{ profile_user.profile.cover_photo.url }}" alt="Cover" class="w-full h-full object-cover">
+            <img src="{{ profile_user.profile.cover_photo.url }}" alt="Cover" class="w-full h-full object-cover" id="cover-photo-img">
             {% endif %}
             
-            {% if is_own_profile %}
             <button class="absolute bottom-4 right-4 bg-white text-gray-700 px-4 py-2 rounded-lg shadow-md hover:bg-gray-100 transition" 
                     onclick="document.getElementById('cover-upload').click()">
                 <i class="fas fa-camera mr-2"></i>Edit Cover
             </button>
-            <input type="file" id="cover-upload" class="hidden" accept="image/*" 
-                   hx-post="{% url 'api-update-cover' %}"
-                   hx-trigger="change"
-                   hx-target="#cover-message"
-                   hx-swap="innerHTML">
+            
+            <!-- Cover Upload Form -->
+            <form id="cover-upload-form" hx-encoding="multipart/form-data" hx-post="{% url 'api-update-cover' %}" hx-target="#cover-message" hx-swap="innerHTML">
+                {% csrf_token %}
+                <input type="file" id="cover-upload" name="file" class="hidden" accept="image/*" 
+                       onchange="document.getElementById('cover-upload-form').querySelector('input[name=file]').files = this.files; handleCoverUpload(this);">
+            </form>
+            
+            <!-- Message Container -->
+            <div id="cover-message" class="absolute bottom-20 right-4"></div>
+        </div>
+        {% else %}
+        <div class="h-64 bg-gradient-to-r from-indigo-500 to-purple-600 relative" id="cover-container">
+            {% if profile_user.profile.cover_photo %}
+            <img src="{{ profile_user.profile.cover_photo.url }}" alt="Cover" class="w-full h-full object-cover" id="cover-photo-img">
             {% endif %}
         </div>
+        {% endif %}
         
         <!-- Profile Info -->
         <div class="px-6 pb-6">
             <div class="flex flex-col md:flex-row md:items-end -mt-16">
-                <!-- Profile Photo -->
+                <!-- Profile Photo with Story Indicator -->
                 <div class="relative">
+                    <!-- Profile Photo -->
                     <img src="{{ profile_user.profile.profile_photo.url }}" 
                          alt="{{ profile_user.username }}" 
-                         class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover">
+                         class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover {% if user_story %}story-active{% endif %}" 
+                         id="profile-photo-img">
+                    
+                    <!-- Story Indicator Ring (like Facebook) -->
+                    {% if user_story %}
+                    <div class="absolute inset-0 rounded-full border-4 border-indigo-600 border-opacity-50 story-ring"></div>
+                    {% endif %}
+                    
+                    <!-- Online Status Indicator -->
                     {% if profile_user.profile.is_online %}
                     <span class="absolute bottom-2 right-2 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
                     {% endif %}
                     
+                    <!-- Story Action Button (for user's own profile) -->
+                    {% if is_own_profile %}
+                        {% if user_story %}
+                        <!-- If user has story, show view button -->
+                        <button class="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full shadow-lg hover:bg-indigo-700 transition z-10"
+                                onclick="viewStory('{{ user_story.id }}', '{{ user.username }}', '{{ user.profile.profile_photo.url }}', '{{ user_story.text|escapejs }}', '{{ user_story.image.url }}')">
+                            <i class="fas fa-eye text-sm"></i>
+                        </button>
+                        {% else %}
+                        <!-- If no story, show add button -->
+                        <a href="{% url 'story-create' %}" class="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full shadow-lg hover:bg-indigo-700 transition z-10">
+                            <i class="fas fa-plus text-sm"></i>
+                        </a>
+                        {% endif %}
+                    {% else %}
+                        <!-- For other users, show view button if they have story -->
+                        {% if user_story %}
+                        <button class="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full shadow-lg hover:bg-indigo-700 transition z-10"
+                                onclick="viewStory('{{ user_story.id }}', '{{ profile_user.username }}', '{{ profile_user.profile.profile_photo.url }}', '{{ user_story.text|escapejs }}', '{{ user_story.image.url }}')">
+                            <i class="fas fa-eye text-sm"></i>
+                        </button>
+                        {% endif %}
+                    {% endif %}
+                    
+                    <!-- Photo Upload Button (for user's own profile) -->
                     {% if is_own_profile %}
                     <button class="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full shadow-lg hover:bg-indigo-700 transition"
                             onclick="document.getElementById('photo-upload').click()">
                         <i class="fas fa-camera text-sm"></i>
                     </button>
-                    <input type="file" id="photo-upload" class="hidden" accept="image/*"
-                           hx-post="{% url 'api-update-photo' %}"
-                           hx-trigger="change"
-                           hx-target="#photo-message"
-                           hx-swap="innerHTML">
+                    <form id="photo-upload-form" hx-encoding="multipart/form-data" hx-post="{% url 'api-update-photo' %}" hx-target="#photo-message" hx-swap="innerHTML">
+                        {% csrf_token %}
+                        <input type="file" id="photo-upload" name="file" class="hidden" accept="image/*" 
+                               onchange="document.getElementById('photo-upload-form').querySelector('input[name=file]').files = this.files; handlePhotoUpload(this);">
+                    </form>
+                    
+                    <!-- Message Container -->
+                    <div id="photo-message" class="mt-2"></div>
                     {% endif %}
                 </div>
                 
@@ -105,23 +301,29 @@
                                     <div x-show="open" @click.away="open = false" 
                                          class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50" 
                                          style="display: none;">
+                                        <!-- Report User -->
                                         <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                                @click="open = false; showReportModal = true">
+                                                 @click="open = false; $dispatch('open-report-modal-window')">
                                             <i class="fas fa-flag mr-2"></i>Report User
                                         </button>
-                                        <button class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                                                hx-post="{% url 'block-user' profile_user.username %}"
-                                                hx-confirm="Are you sure you want to block this user?"
-                                                hx-target="#message-container"
-                                                hx-swap="innerHTML">
-                                            <i class="fas fa-ban mr-2"></i>Block User
-                                        </button>
+                                        
+                                        <!-- Block User -->
+                                        <form method="post" action="{% url 'block-user' profile_user.username %}">
+                                            {% csrf_token %}
+                                            <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                                <i class="fas fa-ban mr-2"></i>Block User
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             {% else %}
-                                <button class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed" disabled>
-                                    <i class="fas fa-ban mr-2"></i>Blocked
-                                </button>
+                                <!-- User is blocked - show unblock button -->
+                                <form method="post" action="{% url 'unblock-user' profile_user.username %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                                        <i class="fas fa-ban mr-2"></i>Unblock User
+                                    </button>
+                                </form>
                             {% endif %}
                         </div>
                     </div>
@@ -166,6 +368,11 @@
                             <i class="fab fa-linkedin text-xl"></i>
                         </a>
                         {% endif %}
+                        {% if profile_user.profile.github %}
+                        <a href="{{ profile_user.profile.github }}" target="_blank" class="text-gray-500 hover:text-gray-900">
+                            <i class="fab fa-github text-xl"></i>
+                        </a>
+                        {% endif %}
                     </div>
                 </div>
                 
@@ -178,6 +385,7 @@
                     <div class="text-center">
                         <span class="block font-bold text-xl text-gray-900">{{ profile_user.profile.followers_count }}</span>
                         <span class="text-sm text-gray-500">Followers</span>
+                        <span class="follower-count hidden">{{ profile_user.profile.followers_count }}</span>
                     </div>
                     <div class="text-center">
                         <span class="block font-bold text-xl text-gray-900">{{ profile_user.profile.following_count }}</span>
@@ -201,6 +409,14 @@
                     {% endif %}
                     <p><i class="far fa-calendar-alt w-5 text-gray-400 mr-2"></i>Joined {{ profile_user.date_joined|date:"F Y" }}</p>
                     <p><i class="far fa-clock w-5 text-gray-400 mr-2"></i>Last active {{ profile_user.profile.last_seen|naturaltime }}</p>
+                    
+                    {% if profile_user.profile.department %}
+                    <p><i class="fas fa-building w-5 text-gray-400 mr-2"></i>{{ profile_user.profile.department.name }}</p>
+                    {% endif %}
+                    
+                    {% if profile_user.profile.batch %}
+                    <p><i class="fas fa-calendar w-5 text-gray-400 mr-2"></i>Batch of {{ profile_user.profile.batch }}</p>
+                    {% endif %}
                 </div>
             </div>
             
@@ -254,31 +470,260 @@
                         <img src="{{ user.profile.profile_photo.url }}" class="w-10 h-10 rounded-full">
                         <div class="flex-1">
                             <textarea name="content" rows="2" 
-                                      class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
-                                      placeholder="What's on your mind?"></textarea>
+                                    class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                                    placeholder="What's on your mind?"></textarea>
                             
-                            <div class="mt-3 flex items-center justify-between" x-data="{ showMedia: false }">
-                                <div class="flex space-x-2">
-                                    <button type="button" @click="showMedia = !showMedia" class="text-gray-500 hover:text-indigo-600">
-                                        <i class="fas fa-image text-xl"></i>
+                            <!-- File Upload Section -->
+                            <div class="mt-3" x-data="{ 
+                                showFileUpload: false,
+                                fileType: '',
+                                selectedFile: null,
+                                filePreview: null,
+                                
+                                handleFileSelect(event) {
+                                    const file = event.target.files[0];
+                                    if (!file) return;
+                                    
+                                    // Validate file size based on type
+                                    const maxSizes = {
+                                        'image': 10 * 1024 * 1024, // 10MB
+                                        'video': 50 * 1024 * 1024, // 50MB
+                                        'document': 20 * 1024 * 1024 // 20MB
+                                    };
+                                    
+                                    if (file.size > maxSizes[this.fileType]) {
+                                        alert(`File too large. Maximum size for ${this.fileType}s is ${maxSizes[this.fileType] / (1024 * 1024)}MB`);
+                                        return;
+                                    }
+                                    
+                                    this.selectedFile = file;
+                                    
+                                    // Create preview for images/videos
+                                    if (this.fileType === 'image' || this.fileType === 'video') {
+                                        const reader = new FileReader();
+                                        reader.onload = (e) => {
+                                            this.filePreview = e.target.result;
+                                        };
+                                        reader.readAsDataURL(file);
+                                    } else {
+                                        this.filePreview = null;
+                                    }
+                                },
+                                
+                                handleFileDrop(event) {
+                                    event.preventDefault();
+                                    const file = event.dataTransfer.files[0];
+                                    if (!file) return;
+                                    
+                                    // Set the file to the input
+                                    const fileInput = document.getElementById(`file-input-${this.fileType}`);
+                                    if (fileInput) {
+                                        const dataTransfer = new DataTransfer();
+                                        dataTransfer.items.add(file);
+                                        fileInput.files = dataTransfer.files;
+                                        
+                                        // Trigger change event
+                                        const changeEvent = new Event('change', { bubbles: true });
+                                        fileInput.dispatchEvent(changeEvent);
+                                        
+                                        this.selectedFile = file;
+                                        
+                                        // Create preview for images/videos
+                                        if (this.fileType === 'image' || this.fileType === 'video') {
+                                            const reader = new FileReader();
+                                            reader.onload = (e) => {
+                                                this.filePreview = e.target.result;
+                                            };
+                                            reader.readAsDataURL(file);
+                                        }
+                                    }
+                                },
+                                
+                                removeFile() {
+                                    this.selectedFile = null;
+                                    this.filePreview = null;
+                                    const fileInput = document.getElementById(`file-input-${this.fileType}`);
+                                    if (fileInput) fileInput.value = '';
+                                },
+                                
+                                triggerFileInput() {
+                                    const fileInput = document.getElementById(`file-input-${this.fileType}`);
+                                    if (fileInput) {
+                                        fileInput.click();
+                                    }
+                                },
+                                
+                                formatFileSize(bytes) {
+                                    if (bytes === 0) return '0 Bytes';
+                                    const k = 1024;
+                                    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+                                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                                    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                                }
+                            }">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex space-x-2">
+                                        <!-- Image Upload Button -->
+                                        <button type="button" 
+                                                @click="showFileUpload = !showFileUpload; fileType = 'image'; removeFile()" 
+                                                class="text-gray-500 hover:text-indigo-600 transition-colors p-2 rounded-full hover:bg-indigo-50">
+                                            <i class="fas fa-image text-xl"></i>
+                                            <span class="sr-only">Upload Image</span>
+                                        </button>
+                                        
+                                        <!-- Video Upload Button -->
+                                        <button type="button" 
+                                                @click="showFileUpload = !showFileUpload; fileType = 'video'; removeFile()" 
+                                                class="text-gray-500 hover:text-indigo-600 transition-colors p-2 rounded-full hover:bg-indigo-50">
+                                            <i class="fas fa-video text-xl"></i>
+                                            <span class="sr-only">Upload Video</span>
+                                        </button>
+                                        
+                                        <!-- Document Upload Button -->
+                                        <button type="button" 
+                                                @click="showFileUpload = !showFileUpload; fileType = 'document'; removeFile()" 
+                                                class="text-gray-500 hover:text-indigo-600 transition-colors p-2 rounded-full hover:bg-indigo-50">
+                                            <i class="fas fa-file text-xl"></i>
+                                            <span class="sr-only">Upload Document</span>
+                                        </button>
+                                        
+                                        <!-- Privacy Selector -->
+                                        <select name="privacy" class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                                            <option value="public">🌍 Public</option>
+                                            <option value="followers">👥 Followers</option>
+                                            <option value="private">🔒 Private</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-indigo-700 transition-colors">
+                                        Post
                                     </button>
-                                    <button type="button" class="text-gray-500 hover:text-indigo-600">
-                                        <i class="fas fa-smile text-xl"></i>
-                                    </button>
-                                    <select name="privacy" class="text-sm border border-gray-300 rounded-lg px-2 py-1">
-                                        <option value="public">🌍 Public</option>
-                                        <option value="followers">👥 Followers</option>
-                                        <option value="private">🔒 Private</option>
-                                    </select>
                                 </div>
-                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-indigo-700">
-                                    Post
-                                </button>
-                            </div>
-                            
-                            <div x-show="showMedia" class="mt-3 p-3 border border-gray-200 rounded-lg" style="display: none;">
-                                <input type="file" name="image" accept="image/*" class="text-sm">
-                                <p class="text-xs text-gray-500 mt-1">Upload an image (max 10MB)</p>
+                                
+                                <!-- File Upload Area -->
+                                <div x-show="showFileUpload" 
+                                    x-transition:enter="transition ease-out duration-200"
+                                    x-transition:enter-start="opacity-0 transform scale-95"
+                                    x-transition:enter-end="opacity-100 transform scale-100"
+                                    class="mt-4">
+                                    
+                                    <!-- Hidden File Input (using id instead of x-ref) -->
+                                    <template x-if="fileType === 'image'">
+                                        <input type="file" 
+                                            name="image"
+                                            accept="image/*"
+                                            class="hidden"
+                                            id="file-input-image"
+                                            @change="handleFileSelect">
+                                    </template>
+                                    
+                                    <template x-if="fileType === 'video'">
+                                        <input type="file" 
+                                            name="video"
+                                            accept="video/*"
+                                            class="hidden"
+                                            id="file-input-video"
+                                            @change="handleFileSelect">
+                                    </template>
+                                    
+                                    <template x-if="fileType === 'document'">
+                                        <input type="file" 
+                                            name="document"
+                                            accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx,.csv,.zip,.rar"
+                                            class="hidden"
+                                            id="file-input-document"
+                                            @change="handleFileSelect">
+                                    </template>
+                                    
+                                    <!-- Upload Area -->
+                                    <template x-if="!selectedFile">
+                                        <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-indigo-500 transition-colors cursor-pointer"
+                                            @click="triggerFileInput()"
+                                            @dragover.prevent
+                                            @drop.prevent="handleFileDrop">
+                                            
+                                            <div class="text-center">
+                                                <template x-if="fileType === 'image'">
+                                                    <div>
+                                                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
+                                                        <p class="text-sm text-gray-600 mb-1">
+                                                            Drag & drop an image or 
+                                                            <span class="text-indigo-600 hover:text-indigo-800 font-medium">browse</span>
+                                                        </p>
+                                                        <p class="text-xs text-gray-500">Supports: JPG, PNG, GIF, WEBP (max 10MB)</p>
+                                                    </div>
+                                                </template>
+                                                
+                                                <template x-if="fileType === 'video'">
+                                                    <div>
+                                                        <i class="fas fa-video text-4xl text-gray-400 mb-2"></i>
+                                                        <p class="text-sm text-gray-600 mb-1">
+                                                            Drag & drop a video or 
+                                                            <span class="text-indigo-600 hover:text-indigo-800 font-medium">browse</span>
+                                                        </p>
+                                                        <p class="text-xs text-gray-500">Supports: MP4, MOV, AVI, WebM (max 50MB)</p>
+                                                    </div>
+                                                </template>
+                                                
+                                                <template x-if="fileType === 'document'">
+                                                    <div>
+                                                        <i class="fas fa-file-alt text-4xl text-gray-400 mb-2"></i>
+                                                        <p class="text-sm text-gray-600 mb-1">
+                                                            Drag & drop a document or 
+                                                            <span class="text-indigo-600 hover:text-indigo-800 font-medium">browse</span>
+                                                        </p>
+                                                        <p class="text-xs text-gray-500">Supports: PDF, DOC, DOCX, TXT, PPT, XLS, ZIP (max 20MB)</p>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </div>
+                                    </template>
+                                    
+                                    <!-- File Preview -->
+                                    <template x-if="selectedFile">
+                                        <div class="relative p-4 bg-gray-50 rounded-lg">
+                                            <!-- Remove button -->
+                                            <button type="button" 
+                                                    @click="removeFile()"
+                                                    class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10">
+                                                <i class="fas fa-times text-xs"></i>
+                                            </button>
+                                            
+                                            <!-- Preview based on file type -->
+                                            <template x-if="fileType === 'image' && filePreview">
+                                                <div class="relative">
+                                                    <img :src="filePreview" class="max-h-48 rounded-lg mx-auto">
+                                                </div>
+                                            </template>
+                                            
+                                            <template x-if="fileType === 'video' && filePreview">
+                                                <div class="relative bg-black rounded-lg p-2">
+                                                    <video class="max-h-48 rounded-lg mx-auto" controls>
+                                                        <source :src="filePreview" :type="selectedFile.type">
+                                                    </video>
+                                                </div>
+                                            </template>
+                                            
+                                            <template x-if="fileType === 'document'">
+                                                <div class="flex items-center p-4 bg-white rounded-lg">
+                                                    <i :class="{
+                                                        'fas fa-file-pdf text-4xl text-red-500': selectedFile.name.toLowerCase().endsWith('.pdf'),
+                                                        'fas fa-file-word text-4xl text-blue-500': selectedFile.name.toLowerCase().endsWith('.doc') || selectedFile.name.toLowerCase().endsWith('.docx'),
+                                                        'fas fa-file-excel text-4xl text-green-500': selectedFile.name.toLowerCase().endsWith('.xls') || selectedFile.name.toLowerCase().endsWith('.xlsx'),
+                                                        'fas fa-file-powerpoint text-4xl text-orange-500': selectedFile.name.toLowerCase().endsWith('.ppt') || selectedFile.name.toLowerCase().endsWith('.pptx'),
+                                                        'fas fa-file-archive text-4xl text-purple-500': selectedFile.name.toLowerCase().endsWith('.zip') || selectedFile.name.toLowerCase().endsWith('.rar'),
+                                                        'fas fa-file-alt text-4xl text-gray-500': true
+                                                    }" class="mr-4"></i>
+                                                    <div class="flex-1">
+                                                        <p class="text-sm font-medium text-gray-700" x-text="selectedFile.name"></p>
+                                                        <p class="text-xs text-gray-500" x-text="formatFileSize(selectedFile.size)"></p>
+                                                    </div>
+                                                    <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                                                </div>
+                                            </template>
+                                        </div>
+                                    </template>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -306,39 +751,57 @@
                                         {% if post.privacy == 'followers' %}👥{% else %}🔒{% endif %}
                                     </span>
                                     {% endif %}
+                                    {% if post.is_edited %}
+                                    <span class="text-xs text-gray-400 ml-1">(edited)</span>
+                                    {% endif %}
                                 </div>
                                 
-                                {% if is_own_profile %}
+                                <!-- Post Actions Menu -->
                                 <div class="relative" x-data="{ open: false }">
                                     <button @click="open = !open" class="text-gray-400 hover:text-gray-600">
                                         <i class="fas fa-ellipsis-h"></i>
                                     </button>
+                                    
                                     <div x-show="open" @click.away="open = false" 
-                                         class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50" 
-                                         style="display: none;">
-                                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            <i class="fas fa-edit mr-2"></i>Edit
+                                        class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50" 
+                                        style="display: none;">
+                                        
+                                        <!-- Edit option (only for author or admin) -->
+                                        {% if user == post.user or user.is_staff %}
+                                        <a href="{% url 'post-update' post.id %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            <i class="fas fa-edit mr-2"></i> Edit Post
                                         </a>
-                                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                                            <i class="fas fa-chart-bar mr-2"></i>Analytics
-                                        </a>
-                                        <a href="#" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
-                                           hx-delete="{% url 'post-delete' post.id %}"
-                                           hx-confirm="Are you sure you want to delete this post?">
-                                            <i class="fas fa-trash mr-2"></i>Delete
-                                        </a>
+                                        {% endif %}
+                                        
+                                        <!-- Delete option (only for author or admin) -->
+                                        {% if user == post.user or user.is_staff %}
+                                        <form method="post" action="{% url 'post-delete' post.id %}"
+                                            onsubmit="return confirm('Are you sure you want to delete this post?');">
+                                            {% csrf_token %}
+                                            <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                                <i class="fas fa-trash mr-2"></i> Delete Post
+                                            </button>
+                                        </form>
+                                        {% endif %}
+                                        
+                                        <!-- Report option (for everyone) -->
+                                        {% if user != post.user %}
+                                        <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                @click="open = false; $dispatch('open-report-post-modal', { postId: '{{ post.id }}' })">
+                                            <i class="fas fa-flag mr-2"></i> Report Post
+                                        </button>
+                                        {% endif %}
                                     </div>
                                 </div>
-                                {% endif %}
                             </div>
                             
+                            <!-- Post Content -->
+                            {% if post.content %}
                             <p class="mt-2 text-gray-700 whitespace-pre-wrap">{{ post.content }}</p>
-                            
-                            {% if post.image %}
-                            <div class="mt-3 rounded-lg overflow-hidden">
-                                <img src="{{ post.image.url }}" class="w-full max-h-96 object-cover">
-                            </div>
                             {% endif %}
+
+                            <!-- Include the media display partial (ONLY ONCE) -->
+                            {% include 'core/includes/post_media.html' with post=post %}
                             
                             <!-- Engagement Stats -->
                             <div class="mt-4 flex items-center text-sm text-gray-500">
@@ -361,7 +824,8 @@
                                     <span class="text-sm">{{ post.comments_count }}</span>
                                 </button>
                                 
-                                <button class="share-btn flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition">
+                                <button class="share-btn flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition"
+                                        onclick="sharePost('{{ post.id }}')">
                                     <i class="fas fa-share"></i>
                                     <span class="text-sm">Share</span>
                                 </button>
@@ -382,25 +846,32 @@
                                             <a href="{% url 'profile' comment.user.username %}" class="font-semibold text-sm text-gray-800">
                                                 {{ comment.user.username }}
                                             </a>
-                                            <p class="text-sm text-gray-700">{{ comment.content }}</p>
+                                            {% if comment.is_edited %}
+                                            <span class="text-xs text-gray-400 ml-1">(edited)</span>
+                                            {% endif %}
+                                            <p class="text-sm text-gray-700 mt-1">{{ comment.content }}</p>
                                         </div>
                                         <p class="text-xs text-gray-500 mt-1">{{ comment.created_at|naturaltime }}</p>
                                     </div>
                                 </div>
+                                {% empty %}
+                                <p class="text-sm text-gray-500 text-center py-2">No comments yet</p>
                                 {% endfor %}
                                 
                                 <!-- Add Comment -->
+                                {% if user.is_authenticated %}
                                 <form class="mt-3 flex items-start space-x-2 comment-form" 
-                                      hx-post="{% url 'post-comment' post.id %}"
-                                      hx-target="#comments-{{ post.id }}"
-                                      hx-swap="beforeend">
+                                    hx-post="{% url 'post-comment' post.id %}"
+                                    hx-target="#comments-{{ post.id }}"
+                                    hx-swap="beforeend">
                                     {% csrf_token %}
                                     <img src="{{ user.profile.profile_photo.url }}" class="w-6 h-6 rounded-full">
                                     <div class="flex-1">
                                         <input type="text" name="content" placeholder="Write a comment..." 
-                                               class="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                                            class="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600">
                                     </div>
                                 </form>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
@@ -427,7 +898,7 @@
                         hx-target="#posts-container"
                         hx-swap="beforeend"
                         class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">
-                    Load More
+                    Load More Posts
                 </button>
             </div>
             {% endif %}
@@ -436,37 +907,214 @@
 </div>
 
 <!-- Report User Modal -->
-<div id="report-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden" x-data="{ show: false }" x-show="show">
-    <div class="flex items-center justify-center min-h-screen px-4">
-        <div class="bg-white rounded-lg max-w-md w-full p-6">
-            <h3 class="text-lg font-semibold text-gray-900 mb-4">Report User</h3>
-            <form hx-post="{% url 'report-user' profile_user.username %}" hx-target="#message-container">
+<div x-data="{ show: false, reason: '', description: '' }" 
+     x-show="show" 
+     x-cloak
+     @open-report-modal-window.window="show = true"
+     @close-report-modal.window="show = false"
+     @keydown.escape.window="show = false"
+     class="fixed inset-0 z-50 overflow-y-auto" 
+     style="display: none;">
+    
+    <!-- Backdrop -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" 
+         @click="show = false"></div>
+    
+    <!-- Modal panel -->
+    <div class="flex items-center justify-center min-h-screen p-4">
+        <div class="relative bg-white rounded-lg max-w-md w-full p-6 shadow-xl"
+             @click.stop>
+            
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">Report User</h3>
+                <button @click="show = false" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <form method="post" action="{% url 'report-user' profile_user.username %}">
                 {% csrf_token %}
+                
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Reason for reporting</label>
-                    <select name="reason" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                    <select name="reason" required
+                            class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600">
                         <option value="spam">Spam</option>
-                        <option value="harassment">Harassment</option>
+                        <option value="harassment">Harassment or Bullying</option>
                         <option value="fake">Fake Account</option>
                         <option value="inappropriate">Inappropriate Content</option>
+                        <option value="hate_speech">Hate Speech</option>
                         <option value="other">Other</option>
                     </select>
                 </div>
+                
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Additional details (optional)</label>
-                    <textarea name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"></textarea>
+                    <textarea name="description" rows="3" 
+                              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                              placeholder="Please provide any additional information..."></textarea>
                 </div>
+                
                 <div class="flex justify-end space-x-2">
-                    <button type="button" @click="show = false" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
-                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Submit Report</button>
+                    <button type="button" 
+                            @click="show = false"
+                            class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                        <i class="fas fa-flag mr-2"></i>Submit Report
+                    </button>
                 </div>
             </form>
         </div>
     </div>
 </div>
 
+<!-- Story Viewer Modal -->
+<div id="story-modal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden items-center justify-center">
+    <div class="relative w-full max-w-lg mx-4">
+        <!-- Close button -->
+        <button onclick="closeStoryModal()" class="absolute -top-12 right-0 text-white hover:text-gray-300 transition z-10">
+            <i class="fas fa-times text-2xl"></i>
+        </button>
+        
+        <!-- Story content -->
+        <div id="story-content" class="bg-black rounded-lg overflow-hidden relative">
+            <!-- Progress bar -->
+            <div class="absolute top-0 left-0 right-0 h-1 bg-gray-600 bg-opacity-50 z-10">
+                <div id="story-progress" class="h-full bg-indigo-600 transition-all duration-[5000ms] linear" style="width: 0%"></div>
+            </div>
+            
+            <!-- Story image -->
+            <img id="story-image" src="" class="w-full h-auto" alt="Story">
+            
+            <!-- Story overlay -->
+            <div class="absolute inset-0 flex flex-col justify-between p-4">
+                <!-- Top bar with user info -->
+                <div class="flex items-center space-x-2">
+                    <img id="story-user-avatar" src="" class="w-8 h-8 rounded-full border-2 border-white">
+                    <span id="story-username" class="text-white font-medium"></span>
+                </div>
+                
+                <!-- Story caption -->
+                <div class="text-center">
+                    <p id="story-caption" class="text-white text-lg"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Image Modal -->
+<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden items-center justify-center" onclick="closeImageModal()">
+    <div class="relative max-w-5xl max-h-screen p-4">
+        <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white hover:text-gray-300 text-2xl z-10">
+            <i class="fas fa-times"></i>
+        </button>
+        <img id="modalImage" src="" class="max-w-full max-h-screen object-contain" alt="Full size image">
+    </div>
+</div>
+
+<style>
+#imageModal {
+    transition: opacity 0.3s ease;
+}
+#imageModal.hidden {
+    display: none;
+}
+#imageModal.flex {
+    display: flex;
+}
+</style>
+
 <script>
-    // Follow/Unfollow functionality
+// Image Modal functionality
+function openImageModal(imageUrl) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    if (!modal || !modalImg) return;
+    
+    modalImg.src = imageUrl;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+        document.body.style.overflow = 'auto';
+    }
+}
+
+// Share functionality
+function sharePost(postId) {
+    if (navigator.share) {
+        navigator.share({
+            title: 'Check out this post',
+            url: window.location.origin + '/post/' + postId + '/'
+        }).catch(console.error);
+    } else {
+        // Fallback - copy to clipboard
+        const url = window.location.origin + '/post/' + postId + '/';
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Link copied to clipboard!');
+        }).catch(() => {
+            prompt('Copy this link:', url);
+        });
+    }
+}
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeImageModal();
+    }
+});
+</script>
+
+<script>
+    // ==================== STORY FUNCTIONALITY ====================
+    let storyTimer = null;
+    
+    function viewStory(storyId, username, avatar, caption, imageUrl) {
+        // Show modal
+        const modal = document.getElementById('story-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        // Update story content
+        document.getElementById('story-image').src = imageUrl;
+        document.getElementById('story-user-avatar').src = avatar;
+        document.getElementById('story-username').textContent = username;
+        document.getElementById('story-caption').textContent = caption || '';
+        
+        // Reset and start progress bar
+        const progress = document.getElementById('story-progress');
+        progress.style.width = '0%';
+        
+        // Force reflow
+        progress.offsetHeight;
+        
+        // Start progress animation
+        progress.style.width = '100%';
+        
+        // Auto-close after 5 seconds
+        if (storyTimer) clearTimeout(storyTimer);
+        storyTimer = setTimeout(() => {
+            closeStoryModal();
+        }, 5000);
+    }
+    
+    function closeStoryModal() {
+        document.getElementById('story-modal').classList.add('hidden');
+        document.getElementById('story-modal').classList.remove('flex');
+        if (storyTimer) clearTimeout(storyTimer);
+    }
+
+    // ==================== FOLLOW FUNCTIONALITY ====================
     document.querySelectorAll('.follow-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const username = this.dataset.username;
@@ -494,12 +1142,16 @@
                 }
                 
                 // Update follower count
-                document.querySelector('.follower-count').textContent = data.followers_count;
-            });
+                const followerCountEl = document.querySelector('.follower-count');
+                if (followerCountEl) {
+                    followerCountEl.textContent = data.followers_count;
+                }
+            })
+            .catch(error => console.error('Follow error:', error));
         });
     });
     
-    // Like functionality
+    // ==================== LIKE FUNCTIONALITY ====================
     document.querySelectorAll('.like-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const postId = this.dataset.postId;
@@ -521,17 +1173,204 @@
                     icon.classList.remove('text-red-600');
                 }
                 countSpan.textContent = data.likes_count;
-            });
+            })
+            .catch(error => console.error('Like error:', error));
         });
     });
     
-    // Toggle comments
+    // ==================== COMMENT FUNCTIONALITY ====================
     document.querySelectorAll('.comment-toggle').forEach(btn => {
         btn.addEventListener('click', function() {
             const postId = this.dataset.postId;
             const commentsSection = document.getElementById(`comments-${postId}`);
-            commentsSection.classList.toggle('hidden');
+            if (commentsSection) {
+                commentsSection.classList.toggle('hidden');
+            }
         });
+    });
+
+    // ==================== SHARE FUNCTIONALITY ====================
+    function sharePost(postId) {
+        if (navigator.share) {
+            navigator.share({
+                title: 'Check out this post',
+                url: window.location.origin + '/post/' + postId + '/'
+            }).catch(console.error);
+        } else {
+            // Fallback - copy to clipboard
+            const url = window.location.origin + '/post/' + postId + '/';
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Link copied to clipboard!');
+            }).catch(() => {
+                prompt('Copy this link:', url);
+            });
+        }
+    }
+
+    // ==================== PHOTO UPLOAD FUNCTIONALITY ====================
+    
+    // Profile photo upload handler
+    function handlePhotoUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const photoMessage = document.getElementById('photo-message');
+        const profileImg = document.getElementById('profile-photo-img');
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            showMessage(photoMessage, 'Please select an image file', 'error');
+            return;
+        }
+        
+        // Validate file size (5MB max)
+        if (file.size > 5 * 1024 * 1024) {
+            showMessage(photoMessage, 'Image size must be less than 5MB', 'error');
+            return;
+        }
+        
+        // Show loading
+        showMessage(photoMessage, 'Uploading...', 'loading');
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        fetch("{% url 'api-update-photo' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Force image refresh with cache busting
+                if (profileImg) {
+                    const timestamp = Date.now();
+                    profileImg.src = data.url + '?t=' + timestamp;
+                }
+                showMessage(photoMessage, '✓ ' + data.message, 'success');
+            } else {
+                showMessage(photoMessage, 'Error: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Upload error:', error);
+            showMessage(photoMessage, 'Upload failed. Please try again.', 'error');
+        })
+        .finally(() => {
+            input.value = '';
+        });
+    }
+    
+    // Cover photo upload handler
+    function handleCoverUpload(input) {
+        const file = input.files[0];
+        if (!file) return;
+        
+        const coverMessage = document.getElementById('cover-message');
+        const coverContainer = document.getElementById('cover-container');
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            showMessage(coverMessage, 'Please select an image file', 'error');
+            return;
+        }
+        
+        // Validate file size (10MB max for cover)
+        if (file.size > 10 * 1024 * 1024) {
+            showMessage(coverMessage, 'Image size must be less than 10MB', 'error');
+            return;
+        }
+        
+        // Show loading
+        showMessage(coverMessage, 'Uploading...', 'loading');
+        
+        const formData = new FormData();
+        formData.append('file', file);
+        
+        fetch("{% url 'api-update-cover' %}", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}'
+            },
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update cover image
+                const coverImg = document.getElementById('cover-photo-img');
+                if (coverImg) {
+                    const timestamp = Date.now();
+                    coverImg.src = data.url + '?t=' + timestamp;
+                } else {
+                    // Create cover image if it doesn't exist
+                    const newImg = document.createElement('img');
+                    newImg.id = 'cover-photo-img';
+                    newImg.className = 'w-full h-full object-cover';
+                    newImg.src = data.url + '?t=' + Date.now();
+                    newImg.alt = 'Cover';
+                    coverContainer.prepend(newImg);
+                }
+                showMessage(coverMessage, '✓ ' + data.message, 'success');
+            } else {
+                showMessage(coverMessage, 'Error: ' + data.error, 'error');
+            }
+        })
+        .catch(error => {
+            console.error('Upload error:', error);
+            showMessage(coverMessage, 'Upload failed. Please try again.', 'error');
+        })
+        .finally(() => {
+            input.value = '';
+        });
+    }
+    
+    // Helper function to show messages
+    function showMessage(element, message, type) {
+        if (!element) return;
+        
+        let colorClass = '';
+        if (type === 'success') colorClass = 'text-green-600';
+        else if (type === 'error') colorClass = 'text-red-600';
+        else if (type === 'loading') colorClass = 'text-indigo-600';
+        else colorClass = 'text-gray-600';
+        
+        element.innerHTML = `<span class="${colorClass} text-sm">${message}</span>`;
+        
+        if (type === 'success' || type === 'error') {
+            setTimeout(() => {
+                element.innerHTML = '';
+            }, 3000);
+        }
+    }
+
+    // ==================== HTMX RESPONSE HANDLER ====================
+    document.addEventListener('htmx:afterRequest', function(evt) {
+        if (evt.detail.target.id === 'photo-message' || evt.detail.target.id === 'cover-message') {
+            if (evt.detail.successful) {
+                try {
+                    const response = JSON.parse(evt.detail.xhr.responseText);
+                    if (response.success) {
+                        if (evt.detail.target.id === 'photo-message') {
+                            const profileImg = document.getElementById('profile-photo-img');
+                            if (profileImg) {
+                                profileImg.src = response.url + '?t=' + Date.now();
+                            }
+                        } else {
+                            const coverImg = document.getElementById('cover-photo-img');
+                            if (coverImg) {
+                                coverImg.src = response.url + '?t=' + Date.now();
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error('Error parsing HTMX response:', e);
+                }
+            }
+        }
     });
 </script>
 {% endblock %}

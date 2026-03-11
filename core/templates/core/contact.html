@@ -1,0 +1,526 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Contact Us - Campus Network{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contact-info-card {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        text-align: center;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        transition: all 0.3s ease;
+        height: 100%;
+    }
+    
+    .contact-info-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(79, 70, 229, 0.1);
+    }
+    
+    .contact-icon {
+        width: 60px;
+        height: 60px;
+        background: #4f46e5;
+        color: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin: 0 auto 20px;
+    }
+    
+    .faq-item {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 16px 0;
+    }
+
+    .faq-item:last-child {
+        border-bottom: none;
+    }
+
+    .faq-question {
+        font-weight: 500;
+        color: #1f2937;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        transition: color 0.2s ease;
+    }
+
+    .faq-question:hover {
+        color: #4f46e5;
+    }
+
+    .faq-answer {
+        color: #6b7280;
+        margin-top: 12px;
+        line-height: 1.6;
+        font-size: 0.95rem;
+        padding-right: 20px;
+    }
+
+    .faq-answer ul {
+        margin-top: 8px;
+        margin-left: 20px;
+    }
+
+    .faq-answer li {
+        margin-bottom: 4px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-16">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-4xl font-bold mb-4">Get in Touch</h1>
+        <p class="text-xl text-indigo-100 max-w-2xl mx-auto">
+            Have questions? We'd love to hear from you. Send us a message and we'll respond as soon as possible.
+        </p>
+    </div>
+</div>
+
+<!-- Contact Info Cards -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 -mt-10">
+    <div class="grid md:grid-cols-3 gap-6">
+        <div class="contact-info-card">
+            <div class="contact-icon">
+                <i class="fas fa-map-marker-alt"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Visit Us</h3>
+            <p class="text-gray-600">
+                Campus Social Network HQ<br>
+                University Campus, Building C<br>
+                Dhaka, Bangladesh
+            </p>
+        </div>
+        
+        <div class="contact-info-card">
+            <div class="contact-icon">
+                <i class="fas fa-envelope"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Email Us</h3>
+            <p class="text-gray-600">
+                support@campusnetwork.edu<br>
+                info@campusnetwork.edu<br>
+                careers@campusnetwork.edu
+            </p>
+        </div>
+        
+        <div class="contact-info-card">
+            <div class="contact-icon">
+                <i class="fas fa-phone-alt"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-900 mb-2">Call Us</h3>
+            <p class="text-gray-600">
+                +880 1234 567890<br>
+                +880 1987 654321<br>
+                Mon-Fri, 9am-6pm
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Contact Form & Map -->
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    <div class="grid md:grid-cols-2 gap-12">
+        <!-- Contact Form -->
+        <div>
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">Send us a Message</h2>
+            <form method="post" action="{% url 'contact' %}" class="space-y-6">
+                {% csrf_token %}
+                
+                <!-- Display user info (read-only) -->
+                <div class="bg-indigo-50 rounded-lg p-4 mb-4">
+                    <p class="text-sm text-indigo-800">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        You are logged in as <strong>{{ user.get_full_name|default:user.username }}</strong> 
+                        ({{ user.email }}). This email will be used for all communications.
+                    </p>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Subject *</label>
+                    <input type="text" name="subject" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                        placeholder="How can we help?">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Message *</label>
+                    <textarea name="message" rows="5" required
+                            class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                            placeholder="Tell us more about your inquiry..."></textarea>
+                </div>
+                
+                <div>
+                    <label class="flex items-center">
+                        <input type="checkbox" required class="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50">
+                        <span class="ml-2 text-sm text-gray-600">
+                            I agree to the <a href="{% url 'privacy' %}" class="text-indigo-600 hover:underline">Privacy Policy</a> and <a href="{% url 'terms' %}" class="text-indigo-600 hover:underline">Terms of Service</a>
+                        </span>
+                    </label>
+                </div>
+                
+                <button type="submit" 
+                        class="w-full px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition font-medium">
+                    Send Message
+                </button>
+            </form>
+        </div>
+        
+        
+        <!-- Map & Office Hours -->
+        <div>
+            <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Office Hours</h3>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Monday - Friday</span>
+                        <span class="font-medium text-gray-900">9:00 AM - 6:00 PM</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Saturday</span>
+                        <span class="font-medium text-gray-900">10:00 AM - 4:00 PM</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Sunday</span>
+                        <span class="font-medium text-gray-500">Closed</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-50 rounded-xl p-6">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Emergency Contacts</h3>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-sm text-gray-500">Technical Support</p>
+                        <p class="text-indigo-600 font-medium">tech@campusnetwork.edu</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Security Concerns</p>
+                        <p class="text-indigo-600 font-medium">security@campusnetwork.edu</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Press & Media</p>
+                        <p class="text-indigo-600 font-medium">press@campusnetwork.edu</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- FAQ Section -->
+<div class="bg-gray-50 py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <h2 class="text-3xl font-bold text-gray-900 text-center mb-12">Frequently Asked Questions</h2>
+        
+        <div class="bg-white rounded-xl shadow-md p-8">
+            <!-- General Questions -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-info-circle text-indigo-600 mr-2"></i>
+                    General Questions
+                </h3>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>What is Campus Network?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Campus Network is a social platform designed exclusively for university students to connect, share updates, and stay informed about campus events, announcements, and departmental news. It's your digital campus community!
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Who can join Campus Network?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Currently, Campus Network is open to all university students, faculty members, and staff with a valid university email address. We verify each registration to maintain a safe and authentic campus community.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Is Campus Network free to use?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Yes! Campus Network is completely free for all university students and faculty members. We believe in providing accessible communication tools for the entire campus community.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Account & Profile -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-user-circle text-indigo-600 mr-2"></i>
+                    Account & Profile
+                </h3>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How do I create an account?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Click on the "Register" button and fill in your details. You'll need your university email address for verification. After registration, you can set up your profile with your photo, department, and batch information.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How do I change my department or batch?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Go to your Profile Settings (click on your username in the top right, then "Settings"). There you can update your department, batch, and other profile information. Changes will be reflected immediately.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Can I delete my account?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Yes, you can delete your account from the Profile Settings page. Go to the "Danger Zone" section and click "Delete Account". Please note that this action is permanent and will remove all your posts, comments, and data from our platform.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>I forgot my password. What should I do?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Click on "Forgot Password" on the login page. Enter your email address, and we'll send you a password reset link. Follow the instructions to create a new password.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Posts & Content -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-pen-fancy text-indigo-600 mr-2"></i>
+                    Posts & Content
+                </h3>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>What kind of content can I post?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        You can share text posts, images, and engage with your campus community. Feel free to share updates, ask questions, discuss course materials, promote events, or just connect with fellow students. Just remember to keep it respectful and follow our community guidelines.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>What are the privacy settings for posts?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        When creating a post, you can choose from three privacy options:
+                        <ul class="list-disc list-inside mt-2 space-y-1">
+                            <li><strong>Public:</strong> Visible to everyone on Campus Network</li>
+                            <li><strong>Followers Only:</strong> Visible only to your followers</li>
+                            <li><strong>Private:</strong> Visible only to you</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Can I edit or delete my posts?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Yes! Click on the three dots menu on your post to access edit and delete options. You can edit your post content or delete it entirely. Edited posts will show an "(edited)" indicator.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How do comments and replies work?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        You can comment on any post by typing in the comment box. To reply to a specific comment, click the "Reply" button under that comment. Replies are nested and indented for easy reading, creating threaded conversations.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Announcements & Departments -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-bullhorn text-indigo-600 mr-2"></i>
+                    Announcements & Departments
+                </h3>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>What are departmental announcements?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Departmental announcements are official notices, events, and news posted by department authorities. These can include exam schedules, class updates, departmental events, important deadlines, and other official communications.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Who can post announcements?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Only authorized users (department heads, faculty members, or designated student representatives) can create announcements. If you need posting privileges for your department, please contact the administration.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How do I see announcements from my department?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Make sure your profile has the correct department selected. Then visit the Explore page where you'll see announcements targeted to your department. You can also filter announcements by department using the sidebar filters.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Privacy & Safety -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-shield-alt text-indigo-600 mr-2"></i>
+                    Privacy & Safety
+                </h3>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How is my data protected?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        We take data protection seriously. All connections are encrypted using HTTPS, passwords are securely hashed, and we never share your personal information with third parties. Read our Privacy Policy for detailed information.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How do I report inappropriate content?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Click on the three dots menu on any post or comment and select "Report". Choose the reason for reporting, and our moderation team will review it promptly. You can also report users directly from their profile.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Can I block another user?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Yes, go to the user's profile, click on the three dots menu, and select "Block User". Blocked users cannot see your posts, follow you, or send you messages. You can unblock them anytime from your settings.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Technical Issues -->
+            <div class="mb-8">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-cog text-indigo-600 mr-2"></i>
+                    Technical Issues
+                </h3>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>I can't upload photos. What should I do?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Make sure your image is under 5MB for profile photos and 10MB for post images. Supported formats are JPG, PNG, and GIF. If you're still having issues, try clearing your browser cache or using a different browser.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>Why am I not receiving notifications?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Check your browser settings to ensure notifications are enabled for Campus Network. Also verify your email settings in your profile. You can manage notification preferences in your account settings.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>The site is loading slowly. What can I do?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        Try clearing your browser cache, disabling browser extensions, or using an incognito/private window. If the problem persists, contact our support team with details about your browser and operating system.
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact & Support -->
+            <div class="mb-0">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                    <i class="fas fa-headset text-indigo-600 mr-2"></i>
+                    Contact & Support
+                </h3>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>How can I contact support?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        You can reach our support team through the Contact page, email us at support@campusnetwork.edu, or visit us at our campus office. We typically respond within 24 hours on weekdays.
+                    </div>
+                </div>
+                
+                <div class="faq-item">
+                    <div class="faq-question" onclick="toggleFaq(this)">
+                        <span>I have a suggestion for improvement. Where can I share it?</span>
+                        <i class="fas fa-chevron-down text-gray-400"></i>
+                    </div>
+                    <div class="faq-answer hidden">
+                        We'd love to hear your suggestions! Use the Contact form or email us at feedback@campusnetwork.edu. Your input helps us make Campus Network better for everyone.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function toggleFaq(element) {
+        const answer = element.nextElementSibling;
+        const icon = element.querySelector('i');
+        
+        if (answer.classList.contains('hidden')) {
+            answer.classList.remove('hidden');
+            icon.classList.remove('fa-chevron-down');
+            icon.classList.add('fa-chevron-up');
+        } else {
+            answer.classList.add('hidden');
+            icon.classList.remove('fa-chevron-up');
+            icon.classList.add('fa-chevron-down');
+        }
+    }
+</script>
+{% endblock %}

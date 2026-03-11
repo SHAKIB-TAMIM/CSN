@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+            border-radius: 10px 10px 0 0;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .content {
+            background-color: white;
+            padding: 30px;
+            border-radius: 0 0 10px 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .otp-box {
+            background-color: #f5f5f5;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            margin: 20px 0;
+            border: 2px dashed #4f46e5;
+        }
+        .otp-code {
+            font-size: 36px;
+            font-weight: bold;
+            letter-spacing: 5px;
+            color: #4f46e5;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 14px;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔐 Email Verification</h1>
+        </div>
+        
+        <div class="content">
+            <p>Hello <strong>{{ user.username }}</strong>,</p>
+            
+            <p>Thank you for registering with Campus Network! Please verify your email address to complete your registration.</p>
+            
+            <div class="otp-box">
+                <div style="margin-bottom: 10px; color: #666;">Your Verification Code:</div>
+                <div class="otp-code">{{ otp }}</div>
+            </div>
+            
+            <p>Enter this code on the verification page to activate your account.</p>
+            
+            <div class="warning">
+                <strong>⚠️ Important:</strong>
+                <ul style="margin: 10px 0 0 20px; padding: 0;">
+                    <li>This code will expire in <strong>{{ expiry_minutes }} minutes</strong></li>
+                    <li>Do not share this code with anyone</li>
+                    <li>If you didn't request this, please ignore this email</li>
+                </ul>
+            </div>
+            
+            <p>After verification, you'll be able to complete your profile with your department, batch, and student ID.</p>
+            
+            <p style="margin-top: 30px;">Best regards,<br><strong>The Campus Network Team</strong></p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated message from Campus Network. Please do not reply to this email.</p>
+            <p>&copy; {% now "Y" %} Campus Network. All rights reserved.</p>
+        </div>
+    </div>
+</body>
+</html>

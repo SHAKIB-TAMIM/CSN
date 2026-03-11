@@ -1,86 +1,78 @@
-{%extends 'core/base2.html'%}
-{% block body %}
 
-
+{% extends 'core/base_landing.html' %}
 {% load static %}
 
-  <style type="text/css">
-    #bg{
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 100%;
-  }
-  </style>
+{% block title %}Welcome to Campus Social Network{% endblock %}
 
-
-<link rel="stylesheet" type="text/css" href="{% static 'core/bootstrap.min.css' %}">
-
-
-    <div class="container-fluid" style="padding-top: 110px">
-    	<div class="row">
-    		
-
-    		<div class="col-sm-4">
-    			
-    		</div>
-
-
-
-
-
-    		<div class="col-sm-3">
-                      
-                <div class="panel panel-default">
-
-                      <div class="panel-heading">
-                        <center><h3 class="panel-title" style="color: #184a45">Please Sign In</h3></center>
-                     </div>
-                      <div class="panel-body">
-                        <form class="card" style="background-color: #184a45" method="POST" action="">
-                          {% csrf_token %}
-                        <fieldset>
-                              <div class="form-group">
-                                <input class="form-control" placeholder="Username" name="username" type="text" required="">
-                            </div>
-                            <div class="form-group">
-                                <input class="form-control" placeholder="Password" name="password" type="password" value="" required="">
-                            </div>
-
-                            <input class="btn btn-lg btn-success btn-block" type="submit" value="Login" style="background-color: #fcf66a;color: #184a45">
-                            <br>
-                            <br>
-                              {% for message in messages %}
-                    <center><a class="alert alert-danger" style="color:red;"> {{ message }}</a></center>
-                {% endfor %}
-                            <br>
-
-
-
-                        </fieldset>
-                          </form>
-                     <div class="text-center text-muted">
-                Don't have account yet? <a href="{% url 'register'%}">Sign up</a>
-              </div>
-                    </div>
-                </div>
-   
-        </div>
-
-
-    			
-
-
-
-
-
-
-    		<div class="col-sm-4">
-    			
-    		</div>
-    	</div>
-
-
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Hero Section -->
+    <div class="text-center mb-12">
+        <h1 class="text-5xl font-bold text-gray-900 mb-4">
+            Welcome to 
+            <span class="text-indigo-600">Campus</span>
+            <span class="text-purple-600">Network</span>
+        </h1>
+        <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+            Connect with your campus friends, share moments, and stay in touch with your academic community.
+        </p>
     </div>
 
+    <!-- Features Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+        <div class="bg-white rounded-xl shadow-md p-8 text-center hover:shadow-lg transition">
+            <div class="w-16 h-16 bg-indigo-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-users text-2xl text-indigo-600"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">Connect with Friends</h3>
+            <p class="text-gray-600">Find and connect with classmates, share updates, and build your campus community.</p>
+        </div>
 
+        <div class="bg-white rounded-xl shadow-md p-8 text-center hover:shadow-lg transition">
+            <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-comments text-2xl text-purple-600"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">Real-time Chat</h3>
+            <p class="text-gray-600">Chat instantly with friends, share media, and stay connected in real-time.</p>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-8 text-center hover:shadow-lg transition">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-share-alt text-2xl text-green-600"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-900 mb-2">Share Moments</h3>
+            <p class="text-gray-600">Post updates, share photos, and engage with content from your campus network.</p>
+        </div>
+    </div>
+
+    <!-- Call to Action -->
+    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-xl p-12 text-center">
+        <h2 class="text-3xl font-bold text-white mb-4">Ready to join your campus community?</h2>
+        <p class="text-xl text-indigo-100 mb-8">Create your account today and start connecting!</p>
+        <div class="flex justify-center space-x-4">
+            <a href="{% url 'register' %}" class="bg-white text-indigo-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition">
+                Create Account
+            </a>
+            <a href="{% url 'login' %}" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-indigo-600 transition">
+                Sign In
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mt-16">
+        {% for stat in statistics %}
+        <div class="text-center">
+            <div class="text-3xl font-bold text-indigo-600">
+                {% if stat.name == 'active_community' %}
+                    {{ stat.value }}
+                {% else %}
+                    {{ stat.value }}+
+                {% endif %}
+            </div>
+            <div class="text-gray-600">{{ stat.display_name }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
 {% endblock %}

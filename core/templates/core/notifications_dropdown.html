@@ -1,0 +1,22 @@
+
+{% load humanize %}
+
+{% if notifications %}
+    {% for notification in notifications %}
+    <a href="{{ notification.url|default:'#' }}" class="block p-3 hover:bg-gray-50 border-b border-gray-100 {% if not notification.is_read %}bg-indigo-50{% endif %}">
+        <div class="flex items-start space-x-3">
+            <img src="{{ notification.actor.profile.profile_photo.url }}" class="w-8 h-8 rounded-full">
+            <div class="flex-1">
+                <p class="text-sm text-gray-800">
+                    <strong>{{ notification.actor.username }}</strong> {{ notification.text }}
+                </p>
+                <p class="text-xs text-gray-500 mt-1">{{ notification.created_at|timesince }} ago</p>
+            </div>
+        </div>
+    </a>
+    {% empty %}
+    <p class="text-sm text-gray-500 text-center py-4">No notifications</p>
+    {% endfor %}
+{% else %}
+    <p class="text-sm text-gray-500 text-center py-4">No notifications</p>
+{% endif %}

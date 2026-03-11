@@ -132,3 +132,8 @@ def send_daily_digest():
                 html_message=html_message,
                 fail_silently=True,
             )
+
+@shared_task
+def update_statistics():
+    from django.core.management import call_command
+    call_command('update_statistics')            

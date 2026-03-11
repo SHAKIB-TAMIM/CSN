@@ -1,0 +1,32 @@
+
+{% extends 'core/base.html' %}
+
+{% block title %}Password Changed - Campus Social Network{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-8">
+    <div class="max-w-md mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+            <div class="bg-green-600 px-6 py-8 text-center">
+                <i class="fas fa-check-circle text-5xl text-white mb-4"></i>
+                <h1 class="text-2xl font-bold text-white">Password Changed!</h1>
+            </div>
+            
+            <div class="p-6 text-center">
+                <p class="text-gray-600 mb-6">Your password has been successfully updated.</p>
+                
+                <div class="space-y-3">
+                    <a href="{% url 'profile' user.username %}" 
+                       class="block w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                        Go to Profile
+                    </a>
+                    <a href="{% url 'feed' %}" 
+                       class="block w-full px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
+                        Return to Feed
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

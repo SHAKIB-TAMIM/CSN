@@ -1,0 +1,643 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ announcement.title }} - Campus Network{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ===== Global Styles ===== */
+    :root {
+        --primary: #4f46e5;
+        --primary-dark: #4338ca;
+        --danger: #ef4444;
+    }
+
+    /* ===== Announcement Header ===== */
+    .announcement-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px 0;
+        margin-bottom: 30px;
+    }
+    
+    /* ===== Type Badges ===== */
+    .type-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.35rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .type-badge.notice { background: #dbeafe; color: #1e40af; }
+    .type-badge.event { background: #fef3c7; color: #92400e; }
+    .type-badge.news { background: #dcfce7; color: #166534; }
+    .type-badge.academic { background: #e0e7ff; color: #3730a3; }
+    .type-badge.exam { background: #fee2e2; color: #991b1b; }
+    .type-badge.result { background: #f3e8ff; color: #6b21a8; }
+    .type-badge.holiday { background: #ccfbf1; color: #115e59; }
+    .type-badge.emergency { background: #fee2e2; color: #991b1b; animation: pulse 2s infinite; }
+    
+    /* ===== Content Sections ===== */
+    .content-section {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .meta-info {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin: 20px 0;
+        padding: 20px;
+        background: #f9fafb;
+        border-radius: 12px;
+    }
+    
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #4b5563;
+        font-size: 0.9rem;
+    }
+    
+    .meta-item i {
+        width: 20px;
+        color: var(--primary);
+    }
+    
+    .featured-image {
+        width: 100%;
+        max-height: 400px;
+        object-fit: cover;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+    
+    .attachment-card {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        padding: 15px;
+        background: #f9fafb;
+        border-radius: 8px;
+        transition: all 0.2s;
+    }
+    
+    .attachment-card:hover {
+        background: #f3f4f6;
+        transform: translateX(5px);
+    }
+    
+    /* ===== Comments Section ===== */
+    .comment-box {
+        background: #f9fafb;
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 15px;
+    }
+    
+    .comment-item {
+        transition: background-color 0.2s ease;
+        padding: 12px;
+        border-radius: 8px;
+        background: white;
+        border: 1px solid #f3f4f6;
+    }
+    
+    .comment-item:hover {
+        background-color: #f9fafb;
+    }
+    
+    /* Nested replies styling */
+    .nested-replies {
+        border-left: 2px solid #e5e7eb;
+    }
+    
+    .nested-replies .comment-item {
+        background: #fafafa;
+    }
+    
+    /* Comment actions appear on hover */
+    .comment-actions {
+        opacity: 0;
+        transition: opacity 0.2s ease;
+    }
+    
+    .comment-item:hover .comment-actions {
+        opacity: 1;
+    }
+    
+    .comment-avatar {
+        width: 32px !important;
+        height: 32px !important;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+    
+    /* ===== Action Buttons ===== */
+    .action-buttons {
+        display: flex;
+        gap: 20px;
+        padding: 20px 0;
+        border-top: 1px solid #e5e7eb;
+        margin-top: 20px;
+    }
+    
+    .action-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: #6b7280;
+        transition: all 0.2s;
+    }
+    
+    .action-btn:hover {
+        color: var(--primary);
+    }
+    
+    .like-btn.active i {
+        color: var(--danger);
+    }
+    
+    /* ===== Animations ===== */
+    @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.7; }
+    }
+    
+    @keyframes slideDown {
+        from {
+            opacity: 0;
+            transform: translateY(-10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .reply-form-enter {
+        animation: slideDown 0.2s ease-out;
+    }
+    
+    /* ===== Utility Classes ===== */
+    .prose {
+        max-width: none;
+        line-height: 1.6;
+    }
+    /* ===== Comment Styling ===== */
+.comment-wrapper {
+    margin-bottom: 1rem;
+}
+
+.comment-item {
+    background: white;
+    border-radius: 8px;
+    padding: 1rem;
+    border: 1px solid #f3f4f6;
+    transition: all 0.2s ease;
+}
+
+.comment-item:hover {
+    background-color: #f9fafb;
+    border-color: #e5e7eb;
+}
+
+/* Nested replies styling */
+.nested-replies {
+    border-left: 2px solid #e5e7eb;
+    padding-left: 1rem;
+}
+
+.nested-replies .comment-item {
+    background-color: #fafafa;
+    border-color: #f0f0f0;
+}
+
+.nested-replies .comment-item:hover {
+    background-color: #f5f5f5;
+}
+
+/* Comment actions */
+.comment-actions {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+.comment-item:hover .comment-actions {
+    opacity: 1;
+}
+
+/* Reply form */
+.reply-form-container {
+    animation: slideDown 0.2s ease-out;
+}
+
+.reply-form-container input {
+    transition: all 0.2s ease;
+}
+
+.reply-form-container input:focus {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
+/* Avatar sizes */
+.w-8.h-8 {
+    width: 2rem;
+    height: 2rem;
+}
+
+.w-6.h-6 {
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.w-10.h-10 {
+    width: 2.5rem;
+    height: 2.5rem;
+}
+
+/* Animation */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive adjustments */
+@media (max-width: 640px) {
+    .nested-replies {
+        margin-left: 0.5rem !important;
+        padding-left: 0.5rem !important;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="announcement-header">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center gap-4 mb-4">
+            <span class="type-badge {{ announcement.announcement_type }}">
+                <i class="fas fa-{% if announcement.announcement_type == 'notice' %}bullhorn{% elif announcement.announcement_type == 'event' %}calendar{% elif announcement.announcement_type == 'news' %}newspaper{% elif announcement.announcement_type == 'exam' %}pencil-alt{% elif announcement.announcement_type == 'result' %}chart-bar{% else %}info-circle{% endif %} mr-2"></i>
+                {{ announcement.get_announcement_type_display }}
+            </span>
+            
+            {% if announcement.is_pinned %}
+            <span class="bg-yellow-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                <i class="fas fa-thumbtack mr-1"></i> Pinned
+            </span>
+            {% endif %}
+            
+            {% if announcement.is_important %}
+            <span class="bg-red-500 text-white px-3 py-1 rounded-full text-xs font-medium">
+                <i class="fas fa-exclamation-circle mr-1"></i> Important
+            </span>
+            {% endif %}
+        </div>
+        
+        <h1 class="text-4xl font-bold mb-4">{{ announcement.title }}</h1>
+        
+        <div class="flex items-center gap-4 text-white/80">
+            <div class="flex items-center gap-2">
+                <img src="{{ announcement.author.profile.profile_photo.url }}" class="w-8 h-8 rounded-full">
+                <span>{{ announcement.author.get_full_name|default:announcement.author.username }}</span>
+            </div>
+            <span>•</span>
+            <span><i class="far fa-calendar mr-2"></i>{{ announcement.published_at|date:"F j, Y" }}</span>
+            <span>•</span>
+            <span><i class="far fa-clock mr-2"></i>{{ announcement.published_at|time }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+    <!-- Back button -->
+    <a href="{% url 'explore' %}" class="inline-flex items-center text-indigo-600 hover:text-indigo-800 mb-6">
+        <i class="fas fa-arrow-left mr-2"></i> Back to Explore
+    </a>
+    
+    <!-- Main content -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Main column -->
+        <div class="lg:col-span-2">
+            <!-- Featured Image -->
+            {% if announcement.featured_image %}
+            <div class="content-section">
+                <img src="{{ announcement.featured_image.url }}" alt="{{ announcement.title }}" class="featured-image">
+            </div>
+            {% endif %}
+            
+            <!-- Content -->
+            <div class="content-section">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Details</h2>
+                
+                {% if announcement.summary %}
+                <div class="bg-indigo-50 border-l-4 border-indigo-600 p-4 mb-6">
+                    <p class="text-indigo-800">{{ announcement.summary }}</p>
+                </div>
+                {% endif %}
+                
+                <div class="prose max-w-none text-gray-700 leading-relaxed">
+                    {{ announcement.content|linebreaks }}
+                </div>
+            </div>
+            
+            <!-- Event Details -->
+            {% if announcement.announcement_type == 'event' %}
+            <div class="content-section">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">Event Details</h2>
+                
+                <div class="meta-info">
+                    {% if announcement.event_start_date %}
+                    <div class="meta-item">
+                        <i class="fas fa-calendar-alt"></i>
+                        <div>
+                            <div class="font-medium">Start Date</div>
+                            <div>{{ announcement.event_start_date|date:"l, F j, Y" }} at {{ announcement.event_start_date|time }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if announcement.event_end_date %}
+                    <div class="meta-item">
+                        <i class="fas fa-calendar-check"></i>
+                        <div>
+                            <div class="font-medium">End Date</div>
+                            <div>{{ announcement.event_end_date|date:"l, F j, Y" }} at {{ announcement.event_end_date|time }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if announcement.location %}
+                    <div class="meta-item">
+                        <i class="fas fa-map-marker-alt"></i>
+                        <div>
+                            <div class="font-medium">Location</div>
+                            <div>{{ announcement.location }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if announcement.is_virtual and announcement.meeting_link %}
+                    <div class="meta-item">
+                        <i class="fas fa-video"></i>
+                        <div>
+                            <div class="font-medium">Virtual Meeting</div>
+                            <a href="{{ announcement.meeting_link }}" target="_blank" class="text-indigo-600 hover:underline">Join Meeting</a>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Deadline -->
+            {% if announcement.deadline %}
+            <div class="content-section">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900">Deadline</h3>
+                        <p class="text-gray-600">{{ announcement.deadline|date:"l, F j, Y" }} at {{ announcement.deadline|time }}</p>
+                    </div>
+                    <div class="bg-orange-100 text-orange-600 px-4 py-2 rounded-full font-medium">
+                        <i class="fas fa-hourglass-half mr-2"></i>
+                        {% if announcement.deadline > now %}
+                            {{ announcement.deadline|timeuntil }} left
+                        {% else %}
+                            Past deadline
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Attachments -->
+            {% if announcement.attachment %}
+            <div class="content-section">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Attachments</h3>
+                <a href="{{ announcement.attachment.url }}" download class="attachment-card">
+                    <i class="fas fa-file-pdf text-2xl text-red-500"></i>
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-900">{{ announcement.attachment.name|cut:"announcements/attachments/" }}</div>
+                        <div class="text-sm text-gray-500">Click to download</div>
+                    </div>
+                    <i class="fas fa-download text-gray-400"></i>
+                </a>
+            </div>
+            {% endif %}
+            
+            <!-- External Link -->
+            {% if announcement.external_link %}
+            <div class="content-section">
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">External Link</h3>
+                <a href="{{ announcement.external_link }}" target="_blank" class="inline-flex items-center px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+                    <i class="fas fa-external-link-alt mr-2"></i> Visit External Link
+                </a>
+            </div>
+            {% endif %}
+            
+            <!-- Action Buttons -->
+            <div class="content-section">
+                <div class="action-buttons">
+                    <button class="action-btn like-announcement-btn" data-id="{{ announcement.id }}">
+                        <i class="fas fa-heart text-xl {% if user in announcement.likes.all %}text-red-600{% endif %}"></i>
+                        <span class="likes-count">{{ announcement.likes_count }}</span>
+                        <span>Likes</span>
+                    </button>
+                    
+                    <a href="#comments" class="action-btn">
+                        <i class="fas fa-comment text-xl"></i>
+                        <span>{{ announcement.comments_count }}</span>
+                        <span>Comments</span>
+                    </a>
+                    
+                    <button class="action-btn share-btn" onclick="shareAnnouncement()">
+                        <i class="fas fa-share-alt text-xl"></i>
+                        <span>Share</span>
+                    </button>
+                    
+                    <span class="action-btn">
+                        <i class="fas fa-eye text-xl"></i>
+                        <span>{{ announcement.views_count }}</span>
+                        <span>Views</span>
+                    </span>
+                </div>
+            </div>
+            
+            <!-- Comments Section -->
+            <div class="content-section" id="comments">
+                <h3 class="text-xl font-bold text-gray-900 mb-6">Comments ({{ announcement.comments_count }})</h3>
+                
+            <!-- Add Comment -->
+            <div class="comment-box">
+                <form method="post" action="{% url 'announcement-comment' announcement.id %}" 
+                    class="flex gap-3">
+                    {% csrf_token %}
+                    <img src="{{ user.profile.profile_photo.url }}" 
+                        class="w-10 h-10 rounded-full object-cover" 
+                        onerror="this.src='/static/default.jpg'">
+                    <div class="flex-1">
+                        <textarea name="content" rows="2" 
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                                placeholder="Write a comment..." required></textarea>
+                        <div class="flex justify-end mt-2">
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700">
+                                Post Comment
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Comments List -->
+            <div class="comments-list mt-6 space-y-4">
+                {% for comment in announcement.comments.all %}
+                    {% if not comment.parent %}
+                        {% include "core/includes/comment.html" with comment=comment %}
+                    {% endif %}
+                {% empty %}
+                <div class="text-center py-8 bg-gray-50 rounded-lg">
+                    <p class="text-gray-500">No comments yet. Be the first to comment!</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        
+        <!-- Sidebar -->
+        <div class="lg:col-span-1">
+            <!-- Author Info -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Posted by</h3>
+                <div class="flex items-center gap-3">
+                    <img src="{{ announcement.author.profile.profile_photo.url }}" class="w-16 h-16 rounded-full">
+                    <div>
+                        <a href="{% url 'profile' announcement.author.username %}" class="font-semibold text-gray-900 hover:text-indigo-600">
+                            {{ announcement.author.get_full_name|default:announcement.author.username }}
+                        </a>
+                        <p class="text-sm text-gray-500">@{{ announcement.author.username }}</p>
+                        <p class="text-xs text-gray-400 mt-1">Joined {{ announcement.author.date_joined|date:"F Y" }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Category & Department -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Information</h3>
+                
+                {% if announcement.category %}
+                <div class="flex items-center gap-3 mb-3">
+                    <i class="{{ announcement.category.icon }} text-indigo-600"></i>
+                    <div>
+                        <div class="text-sm text-gray-500">Category</div>
+                        <div class="font-medium">{{ announcement.category.name }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                {% if announcement.department %}
+                <div class="flex items-center gap-3 mb-3">
+                    <i class="fas fa-building text-indigo-600"></i>
+                    <div>
+                        <div class="text-sm text-gray-500">Department</div>
+                        <div class="font-medium">{{ announcement.department.name }}</div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-users text-indigo-600"></i>
+                    <div>
+                        <div class="text-sm text-gray-500">Target Audience</div>
+                        <div class="font-medium">{{ announcement.get_audience_display }}</div>
+                        {% if announcement.target_batch %}
+                        <div class="text-xs text-gray-500">Batch: {{ announcement.target_batch }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stats Card -->
+            <div class="bg-white rounded-xl shadow-md p-6">
+                <h3 class="font-semibold text-gray-800 mb-4">Statistics</h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-indigo-600">{{ announcement.views_count }}</div>
+                        <div class="text-xs text-gray-500">Views</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-red-600">{{ announcement.likes_count }}</div>
+                        <div class="text-xs text-gray-500">Likes</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600">{{ announcement.comments_count }}</div>
+                        <div class="text-xs text-gray-500">Comments</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-purple-600">0</div>
+                        <div class="text-xs text-gray-500">Shares</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Like functionality
+    document.querySelector('.like-announcement-btn')?.addEventListener('click', function() {
+        const announcementId = this.dataset.id;
+        const icon = this.querySelector('i');
+        const countSpan = this.querySelector('.likes-count');
+        
+        fetch(`/announcement/${announcementId}/like/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'liked') {
+                icon.classList.add('text-red-600');
+            } else {
+                icon.classList.remove('text-red-600');
+            }
+            countSpan.textContent = data.likes_count;
+        })
+        .catch(error => console.error('Like error:', error));
+    });
+    
+    // Share functionality
+    function shareAnnouncement() {
+        const url = window.location.href;
+        navigator.clipboard.writeText(url).then(() => {
+            alert('Link copied to clipboard!');
+        }).catch(() => {
+            prompt('Copy this link:', url);
+        });
+    }
+    
+    // Show reply form
+    function showReplyForm(commentId) {
+        const form = document.getElementById(`reply-form-${commentId}`);
+        form.classList.toggle('hidden');
+    }
+</script>
+{% endblock %}

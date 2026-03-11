@@ -1,0 +1,108 @@
+{% load humanize %}
+{% load static %}
+
+<!-- File Display Section -->
+{% if post.image %}
+<div class="mt-3 rounded-lg overflow-hidden">
+    <img src="{{ post.image.url }}" class="w-full max-h-96 object-cover" loading="lazy" 
+         onclick="openImageModal('{{ post.image.url }}')">
+</div>
+{% endif %}
+
+{% if post.video %}
+<div class="mt-3 rounded-lg overflow-hidden bg-black">
+    <video class="w-full max-h-96" controls preload="metadata" poster="{% static 'core/images/video-poster.jpg' %}">
+        <source src="{{ post.video.url }}" type="video/mp4">
+        <source src="{{ post.video.url }}" type="video/webm">
+        <source src="{{ post.video.url }}" type="video/ogg">
+        Your browser does not support the video tag.
+    </video>
+</div>
+{% endif %}
+
+{% if post.document %}
+<div class="mt-3">
+    {% with doc_ext=post.document.name|slice:"-4:"|lower %}
+    {% with doc_name=post.document.name|slice:"15:" %}
+    <a href="{{ post.document.url }}" target="_blank" 
+       class="flex items-center p-4 bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all group">
+        
+        <!-- Document Icon based on file extension -->
+        <div class="w-12 h-12 flex items-center justify-center rounded-lg
+            {% if doc_ext == '.pdf' %}bg-red-100
+            {% elif doc_ext in '.doc,.docx' %}bg-blue-100
+            {% elif doc_ext in '.ppt,.pptx' %}bg-orange-100
+            {% elif doc_ext in '.xls,.xlsx' %}bg-green-100
+            {% elif doc_ext == '.txt' %}bg-gray-100
+            {% elif doc_ext in '.zip,.rar' %}bg-purple-100
+            {% else %}bg-indigo-100{% endif %}">
+            
+            {% if doc_ext == '.pdf' %}
+            <i class="fas fa-file-pdf text-2xl text-red-600 group-hover:scale-110 transition-transform"></i>
+            {% elif doc_ext in '.doc,.docx' %}
+            <i class="fas fa-file-word text-2xl text-blue-600 group-hover:scale-110 transition-transform"></i>
+            {% elif doc_ext in '.ppt,.pptx' %}
+            <i class="fas fa-file-powerpoint text-2xl text-orange-600 group-hover:scale-110 transition-transform"></i>
+            {% elif doc_ext in '.xls,.xlsx' %}
+            <i class="fas fa-file-excel text-2xl text-green-600 group-hover:scale-110 transition-transform"></i>
+            {% elif doc_ext == '.txt' %}
+            <i class="fas fa-file-alt text-2xl text-gray-600 group-hover:scale-110 transition-transform"></i>
+            {% elif doc_ext in '.zip,.rar' %}
+            <i class="fas fa-file-archive text-2xl text-purple-600 group-hover:scale-110 transition-transform"></i>
+            {% else %}
+            <i class="fas fa-file text-2xl text-indigo-600 group-hover:scale-110 transition-transform"></i>
+            {% endif %}
+        </div>
+        
+        <div class="flex-1 ml-4">
+            <h4 class="font-medium text-gray-800 group-hover:text-indigo-600 transition-colors">
+                {{ doc_name|truncatechars:50 }}
+            </h4>
+            <div class="flex items-center text-xs text-gray-500 mt-1">
+                <span>{{ post.document.size|filesizeformat }}</span>
+                <span class="mx-2">•</span>
+                <span>Click to view/download</span>
+            </div>
+        </div>
+        
+        <i class="fas fa-download text-gray-400 group-hover:text-indigo-600 transition-colors mr-2"></i>
+    </a>
+    {% endwith %}
+    {% endwith %}
+</div>
+{% endif %}
+
+<!-- Image Modal for viewing full-size images -->
+<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden items-center justify-center" onclick="closeImageModal()">
+    <div class="relative max-w-5xl max-h-screen p-4">
+        <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white hover:text-gray-300 text-2xl z-10">
+            <i class="fas fa-times"></i>
+        </button>
+        <img id="modalImage" src="" class="max-w-full max-h-screen object-contain" alt="Full size image">
+    </div>
+</div>
+
+<script>
+function openImageModal(imageUrl) {
+    const modal = document.getElementById('imageModal');
+    const modalImg = document.getElementById('modalImage');
+    modalImg.src = imageUrl;
+    modal.classList.remove('hidden');
+    modal.classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeImageModal() {
+    const modal = document.getElementById('imageModal');
+    modal.classList.add('hidden');
+    modal.classList.remove('flex');
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeImageModal();
+    }
+});
+</script>

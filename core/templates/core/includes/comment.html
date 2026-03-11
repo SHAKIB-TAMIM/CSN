@@ -1,0 +1,87 @@
+{% load humanize %}
+
+<div class="comment-wrapper mb-4" id="comment-{{ comment.id }}">
+    <div class="comment-item bg-white rounded-lg p-4 border border-gray-100 hover:border-gray-200 transition">
+        <div class="flex items-start space-x-3">
+            <!-- Avatar -->
+            <a href="{% url 'profile' comment.user.username %}" class="flex-shrink-0">
+                <img src="{{ comment.user.profile.profile_photo.url }}" 
+                     class="w-8 h-8 rounded-full object-cover border border-gray-200"
+                     onerror="this.src='/static/default.jpg'">
+            </a>
+            
+            <div class="flex-1 min-w-0">
+                <!-- Header -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2 flex-wrap">
+                        <a href="{% url 'profile' comment.user.username %}" 
+                           class="font-semibold text-sm text-gray-800 hover:text-indigo-600">
+                            {{ comment.user.get_full_name|default:comment.user.username }}
+                        </a>
+                        <span class="text-xs text-gray-500">{{ comment.created_at|naturaltime }}</span>
+                        {% if comment.is_edited %}
+                        <span class="text-xs text-gray-400 italic">(edited)</span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Actions -->
+                    {% if user == comment.user or user.is_staff %}
+                    <div class="comment-actions flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition">
+                        <a href="{% url 'announcement-comment-edit' comment.id %}" 
+                           class="text-gray-400 hover:text-indigo-600 transition p-1"
+                           title="Edit comment">
+                            <i class="fas fa-edit text-sm"></i>
+                        </a>
+                        <form method="post" action="{% url 'announcement-comment-delete' comment.id %}" 
+                              onsubmit="return confirm('Delete this comment?');" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="text-gray-400 hover:text-red-600 transition p-1"
+                                    title="Delete comment">
+                                <i class="fas fa-trash text-sm"></i>
+                            </button>
+                        </form>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Content -->
+                <p class="text-sm text-gray-700 mt-1">{{ comment.content }}</p>
+                
+                <!-- Reply Button -->
+                <button class="text-xs text-indigo-600 hover:text-indigo-800 mt-2 font-medium reply-toggle" 
+                        data-comment-id="{{ comment.id }}">
+                    <i class="fas fa-reply mr-1"></i> Reply
+                </button>
+                
+                <!-- Reply Form -->
+                <div id="reply-form-{{ comment.id }}" class="reply-form hidden mt-3">
+                    <form method="post" action="{% url 'announcement-comment' comment.announcement.id %}" 
+                          class="flex items-start gap-2">
+                        {% csrf_token %}
+                        <input type="hidden" name="parent" value="{{ comment.id }}">
+                        <img src="{{ user.profile.profile_photo.url }}" 
+                             class="w-6 h-6 rounded-full object-cover flex-shrink-0" 
+                             onerror="this.src='/static/default.jpg'">
+                        <div class="flex-1 flex gap-2">
+                            <input type="text" name="content" 
+                                   class="flex-1 px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
+                                   placeholder="Write a reply...">
+                            <button type="submit" class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg hover:bg-indigo-700">
+                                Reply
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Nested Replies -->
+    {% if comment.replies.all %}
+    <div class="nested-replies ml-8 mt-2 space-y-3">
+        {% for reply in comment.replies.all %}
+            {% include "core/includes/comment.html" with comment=reply %}
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>

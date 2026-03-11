@@ -16,7 +16,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Security
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-development-key-change-in-production')
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+# DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = True
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
 
 # Application definition
@@ -37,7 +38,7 @@ INSTALLED_APPS = [
     'channels',
     'corsheaders',
     'crispy_forms',
-    'crispy_tailwind',
+    'crispy_bootstrap4',
     'widget_tweaks',
     'allauth',
     'allauth.account',
@@ -45,12 +46,13 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.github',
     'storages',
-    'debug_toolbar',
+    #'debug_toolbar',
     'django_extensions',
-    'notifications',
     'haystack',
+    'sslserver',
     'constance',
     'constance.backends.database',
+    
     
     # Local apps
     'core',
@@ -58,10 +60,10 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+   # 'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -130,7 +132,7 @@ CACHES = {
         'LOCATION': os.getenv('REDIS_URL', 'redis://localhost:6379/1'),
         'OPTIONS': {
             'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-            'PARSER_CLASS': 'redis.connection.HiredisParser',
+           # 'PARSER_CLASS': 'redis._parsers.HiredisParser',
             'CONNECTION_POOL_CLASS': 'redis.BlockingConnectionPool',
             'CONNECTION_POOL_CLASS_KWARGS': {
                 'max_connections': 50,
@@ -161,17 +163,17 @@ AUTHENTICATION_BACKENDS = [
 
 SITE_ID = 1
 LOGIN_URL = 'index'
-LOGIN_REDIRECT_URL = 'welcome'
+LOGIN_REDIRECT_URL = 'feed'
 LOGOUT_REDIRECT_URL = 'index'
 
-# Django AllAuth settings
+# AllAuth settings
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_USERNAME_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'  # or 'optional'
 ACCOUNT_AUTHENTICATION_METHOD = 'username_email'
-ACCOUNT_EMAIL_VERIFICATION = 'optional'
+ACCOUNT_LOGIN_ON_EMAIL_CONFIRMATION = True  # THIS IS KEY - auto login after verification
 ACCOUNT_CONFIRM_EMAIL_ON_GET = True
-ACCOUNT_LOGIN_ATTEMPTS_LIMIT = 5
-ACCOUNT_LOGIN_ATTEMPTS_TIMEOUT = 300
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
+ACCOUNT_LOGIN_ON_PASSWORD_RESET = True
 
 # Social Auth
 SOCIALACCOUNT_PROVIDERS = {
@@ -235,7 +237,7 @@ USE_L10N = True
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [BASE_DIR / 'core' / 'static']
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
 
 # Media files
 MEDIA_URL = '/media/'
@@ -254,17 +256,23 @@ if not DEBUG:
     AWS_S3_VERIFY = True
 
 # Crispy Forms
-CRISPY_ALLOWED_TEMPLATE_PACKS = 'tailwind'
-CRISPY_TEMPLATE_PACK = 'tailwind'
+CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap4"
+CRISPY_TEMPLATE_PACK = "bootstrap4"
 
-# Email
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend' if not DEBUG else 'django.core.mail.backends.console.EmailBackend'
-EMAIL_HOST = os.getenv('EMAIL_HOST', 'smtp.gmail.com')
-EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
-EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER', '')
-EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD', '')
-EMAIL_USE_TLS = os.getenv('EMAIL_USE_TLS', 'True') == 'True'
-DEFAULT_FROM_EMAIL = 'Campus Social Network <noreply@campusnetwork.com>'
+# Email Configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'  
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'shakibul18islam18@gmail.com'  
+EMAIL_HOST_PASSWORD = 'fmnc vyoq tulk xxdb'  # Use app-specific password for Gmail
+DEFAULT_FROM_EMAIL = 'Campus Network <shakibul18islam18@gmail.com>'
+
+# Admin email to receive contact messages
+ADMIN_EMAIL = 'shakibul18islam18@gmail.com' 
+
+# Site URL for email links
+SITE_URL = 'http://127.0.0.1:8000'  # Change for production
 
 # Celery
 CELERY_BROKER_URL = os.getenv('REDIS_URL', 'redis://localhost:6379/0')
@@ -318,8 +326,11 @@ if not DEBUG:
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Internal IPs for debug toolbar
-INTERNAL_IPS = ['127.0.0.1']
-
+INTERNAL_IPS = [
+   
+]
 # Custom user settings
 AUTH_PROFILE_MODULE = 'core.Profile'
 LOGIN_REQUIRED_URLS = ['/feed/', '/profile/', '/chat/']
+
+

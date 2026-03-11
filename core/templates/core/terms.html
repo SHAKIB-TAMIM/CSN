@@ -1,0 +1,334 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Terms of Service - Campus Network{% endblock %}
+
+{% block extra_css %}
+<style>
+    .terms-section {
+        background: white;
+        border-radius: 12px;
+        padding: 30px;
+        margin-bottom: 30px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+    }
+    
+    .terms-section h2 {
+        font-size: 1.5rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #f3f4f6;
+    }
+    
+    .terms-section h3 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #374151;
+        margin: 20px 0 10px;
+    }
+    
+    .terms-section p {
+        color: #4b5563;
+        line-height: 1.7;
+        margin-bottom: 15px;
+    }
+    
+    .terms-section ul, .terms-section ol {
+        margin: 15px 0;
+        padding-left: 20px;
+    }
+    
+    .terms-section li {
+        color: #4b5563;
+        margin-bottom: 8px;
+    }
+    
+    .terms-section ul li {
+        list-style-type: disc;
+    }
+    
+    .terms-section ol li {
+        list-style-type: decimal;
+    }
+    
+    .effective-date {
+        background: #f3f4f6;
+        padding: 10px 20px;
+        border-radius: 8px;
+        font-size: 0.9rem;
+        color: #6b7280;
+        margin-bottom: 30px;
+    }
+    
+    .highlight-box {
+        background: #f0f9ff;
+        border-left: 4px solid #4f46e5;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 0 8px 8px 0;
+    }
+    
+    .prohibited-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
+        margin: 20px 0;
+    }
+    
+    .prohibited-item {
+        background: #fef2f2;
+        color: #991b1b;
+        padding: 10px;
+        border-radius: 8px;
+        text-align: center;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white py-16">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+        <h1 class="text-4xl font-bold mb-4">Terms of Service</h1>
+        <p class="text-xl text-indigo-100">
+            Please read these terms carefully before using Campus Network.
+        </p>
+    </div>
+</div>
+
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+    <!-- Effective Date -->
+    <div class="effective-date">
+        <i class="fas fa-calendar-alt mr-2 text-indigo-600"></i>
+        Effective Date: February 28, 2026
+    </div>
+    
+    <!-- Agreement to Terms -->
+    <div class="terms-section">
+        <h2>1. Agreement to Terms</h2>
+        <p>
+            By accessing or using Campus Network ("the Platform"), you agree to be bound by these Terms of Service. If you disagree with any part of the terms, you may not access the Platform. These terms constitute a legally binding agreement between you and Campus Network.
+        </p>
+    </div>
+    
+    <!-- Eligibility -->
+    <div class="terms-section">
+        <h2>2. Eligibility</h2>
+        <p>By using Campus Network, you represent and warrant that:</p>
+        <ul>
+            <li>You are at least 18 years old or the age of majority in your jurisdiction</li>
+            <li>You are currently enrolled as a student, faculty, or staff member at an accredited educational institution</li>
+            <li>You have a valid university email address</li>
+            <li>You have the legal capacity to enter into these terms</li>
+            <li>Your use of the Platform complies with all applicable laws and regulations</li>
+        </ul>
+        
+        <div class="highlight-box">
+            <p class="font-medium text-indigo-800 mb-0">
+                <i class="fas fa-graduation-cap mr-2"></i>
+                Campus Network is exclusively for educational institution members. We verify university email addresses.
+            </p>
+        </div>
+    </div>
+    
+    <!-- Account Registration -->
+    <div class="terms-section">
+        <h2>3. Account Registration</h2>
+        <h3>3.1 Account Requirements</h3>
+        <ul>
+            <li>You must provide accurate and complete information</li>
+            <li>You are responsible for maintaining account security</li>
+            <li>You must notify us immediately of unauthorized access</li>
+            <li>One person may not maintain multiple accounts</li>
+        </ul>
+        
+        <h3>3.2 Account Security</h3>
+        <p>
+            You are solely responsible for all activities that occur under your account. We are not liable for any loss or damage arising from your failure to maintain account security.
+        </p>
+    </div>
+    
+    <!-- User Conduct -->
+    <div class="terms-section">
+        <h2>4. User Conduct</h2>
+        <p>You agree not to use Campus Network to:</p>
+        
+        <div class="prohibited-list">
+            <div class="prohibited-item">
+                <i class="fas fa-ban mr-2"></i> Harass others
+            </div>
+            <div class="prohibited-item">
+                <i class="fas fa-skull-crossbones mr-2"></i> Threaten violence
+            </div>
+            <div class="prohibited-item">
+                <i class="fas fa-eye-slash mr-2"></i> Post explicit content
+            </div>
+            <div class="prohibited-item">
+                <i class="fas fa-bug mr-2"></i> Spread malware
+            </div>
+            <div class="prohibited-item">
+                <i class="fas fa-fish mr-2"></i> Impersonate others
+            </div>
+            <div class="prohibited-item">
+                <i class="fas fa-copyright mr-2"></i> Infringe copyright
+            </div>
+        </div>
+        
+        <h3 class="mt-6">Additionally, you may not:</h3>
+        <ul>
+            <li>Post spam or unauthorized advertisements</li>
+            <li>Share another user's personal information without consent</li>
+            <li>Attempt to bypass security measures</li>
+            <li>Use automated scripts or bots</li>
+            <li>Interfere with platform operations</li>
+            <li>Post discriminatory or hateful content</li>
+        </ul>
+    </div>
+    
+    <!-- Content Ownership -->
+    <div class="terms-section">
+        <h2>5. Content Ownership and Rights</h2>
+        
+        <h3>5.1 Your Content</h3>
+        <p>
+            You retain ownership of all content you post on Campus Network. By posting content, you grant us a non-exclusive, worldwide, royalty-free license to:
+        </p>
+        <ul>
+            <li>Display your content within the Platform</li>
+            <li>Allow other users to interact with your content</li>
+            <li>Use content for platform improvements and analytics</li>
+            <li>Archive content as necessary</li>
+        </ul>
+        
+        <h3>5.2 Platform Content</h3>
+        <p>
+            All content provided by Campus Network (logos, designs, software) is our property and protected by intellectual property laws.
+        </p>
+        
+        <div class="highlight-box">
+            <p class="font-medium text-indigo-800 mb-0">
+                <i class="fas fa-copyright mr-2"></i>
+                You can delete your content at any time. Upon deletion, we will remove it from public view within a reasonable timeframe.
+            </p>
+        </div>
+    </div>
+    
+    <!-- Departmental Announcements -->
+    <div class="terms-section">
+        <h2>6. Departmental Announcements</h2>
+        <p>
+            Certain users may be granted permission to create departmental announcements. These users:
+        </p>
+        <ul>
+            <li>Must be authorized by their department or institution</li>
+            <li>Are responsible for the accuracy of posted information</li>
+            <li>Must follow institutional guidelines for official communications</li>
+            <li>May have their posting privileges revoked for misuse</li>
+        </ul>
+    </div>
+    
+    <!-- Privacy -->
+    <div class="terms-section">
+        <h2>7. Privacy</h2>
+        <p>
+            Your use of Campus Network is subject to our Privacy Policy. By using the Platform, you consent to the collection and use of your information as described there.
+        </p>
+        <p>
+            <a href="{% url 'privacy' %}" class="text-indigo-600 hover:underline">
+                Read our Privacy Policy <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </p>
+    </div>
+    
+    <!-- Termination -->
+    <div class="terms-section">
+        <h2>8. Termination</h2>
+        
+        <h3>8.1 By You</h3>
+        <p>
+            You may terminate your account at any time through account settings or by contacting support.
+        </p>
+        
+        <h3>8.2 By Us</h3>
+        <p>
+            We may suspend or terminate your account for:
+        </p>
+        <ul>
+            <li>Violation of these terms</li>
+            <li>Illegal activities</li>
+            <li>Harassment of other users</li>
+            <li>Extended inactivity</li>
+            <li>At our discretion, with or without notice</li>
+        </ul>
+        
+        <h3>8.3 Effect of Termination</h3>
+        <p>
+            Upon termination, your access ceases immediately. We may delete your content, but may retain certain information as required by law.
+        </p>
+    </div>
+    
+    <!-- Disclaimer of Warranties -->
+    <div class="terms-section">
+        <h2>9. Disclaimer of Warranties</h2>
+        <p>
+            Campus Network is provided "as is" without warranties of any kind. We do not guarantee that:
+        </p>
+        <ul>
+            <li>The Platform will be uninterrupted or error-free</li>
+            <li>Content is accurate or reliable</li>
+            <li>Defects will be corrected</li>
+            <li>The Platform is free of viruses or harmful components</li>
+        </ul>
+    </div>
+    
+    <!-- Limitation of Liability -->
+    <div class="terms-section">
+        <h2>10. Limitation of Liability</h2>
+        <p>
+            To the maximum extent permitted by law, Campus Network shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of the Platform.
+        </p>
+    </div>
+    
+    <!-- Changes to Terms -->
+    <div class="terms-section">
+        <h2>11. Changes to Terms</h2>
+        <p>
+            We may modify these terms at any time. Changes will be effective immediately upon posting. Your continued use of the Platform constitutes acceptance of modified terms.
+        </p>
+    </div>
+    
+    <!-- Governing Law -->
+    <div class="terms-section">
+        <h2>12. Governing Law</h2>
+        <p>
+            These terms shall be governed by the laws of Bangladesh, without regard to its conflict of law provisions.
+        </p>
+    </div>
+    
+    <!-- Contact -->
+    <div class="terms-section">
+        <h2>13. Contact Information</h2>
+        <p>For questions about these Terms:</p>
+        <ul class="list-none pl-0">
+            <li class="mb-2"><i class="fas fa-envelope text-indigo-600 w-6 mr-2"></i> legal@campusnetwork.edu</li>
+            <li class="mb-2"><i class="fas fa-phone text-indigo-600 w-6 mr-2"></i> +880 1234 567890</li>
+        </ul>
+        <p class="mt-4">
+            <a href="{% url 'contact' %}" class="inline-flex items-center text-indigo-600 hover:text-indigo-800">
+                Contact our Legal Team <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </p>
+    </div>
+    
+    <!-- Acceptance -->
+    <div class="bg-indigo-50 rounded-xl p-6 text-center mt-8">
+        <p class="text-indigo-800">
+            <i class="fas fa-check-circle mr-2"></i>
+            By using Campus Network, you acknowledge that you have read, understood, and agree to be bound by these Terms of Service.
+        </p>
+    </div>
+</div>
+{% endblock %}

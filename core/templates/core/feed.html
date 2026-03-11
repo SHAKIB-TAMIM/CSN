@@ -4,177 +4,450 @@
 
 {% block title %}Home - Campus Social Network{% endblock %}
 
+{% block extra_css %}
+<style>
+    /* ===== Global Styles ===== */
+    :root {
+        --primary: #4f46e5;
+        --primary-dark: #4338ca;
+        --secondary: #10b981;
+        --danger: #ef4444;
+        --warning: #f59e0b;
+        --dark: #1f2937;
+        --light: #f9fafb;
+        --gray: #6b7280;
+    }
+
+    /* ===== Post Card ===== */
+    .post-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid #f3f4f6;
+        position: relative;
+        overflow: hidden;
+    }
+
+    .post-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+
+    .post-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        border-color: #e5e7eb;
+    }
+
+    .post-card:hover::before {
+        transform: scaleX(1);
+    }
+
+    /* ===== Avatar ===== */
+    .avatar {
+        position: relative;
+        display: inline-block;
+    }
+
+    .avatar img {
+        width: 3rem;
+        height: 3rem;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid white;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease;
+    }
+
+    .avatar img:hover {
+        transform: scale(1.05);
+    }
+
+    /* ===== Privacy Badge ===== */
+    .privacy-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
+        font-size: 0.65rem;
+        font-weight: 500;
+        background: var(--light);
+        color: var(--gray);
+        margin-left: 0.5rem;
+        border: 1px solid #e5e7eb;
+    }
+
+    .privacy-badge.public {
+        background: #e0f2fe;
+        color: #0369a1;
+    }
+
+    .privacy-badge.followers {
+        background: #fef3c7;
+        color: #92400e;
+    }
+
+    .privacy-badge.private {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    /* ===== Action Buttons ===== */
+    .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.5rem 1rem;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: var(--gray);
+        background: transparent;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        border: none;
+    }
+
+    .action-btn i {
+        font-size: 1.25rem;
+        transition: all 0.2s ease;
+    }
+
+    .action-btn:hover {
+        background: var(--light);
+    }
+
+    .like-btn.active i {
+        color: var(--danger);
+        transform: scale(1.1);
+    }
+
+    .like-btn.active span {
+        color: var(--danger);
+    }
+
+    .comment-btn:hover i {
+        color: var(--primary);
+    }
+
+    /* ===== Report Modal ===== */
+    #report-modal {
+        transition: opacity 0.3s ease;
+    }
+
+    #report-modal .modal-content {
+        transform: scale(0.95);
+        transition: transform 0.3s ease;
+    }
+
+    #report-modal.show .modal-content {
+        transform: scale(1);
+    }
+
+    /* ===== Image Modal ===== */
+    #imageModal {
+        transition: opacity 0.3s ease;
+    }
+    #imageModal.hidden {
+        display: none;
+    }
+    #imageModal.flex {
+        display: flex;
+    }
+    
+    /* ===== Document Icons ===== */
+    .doc-icon {
+        transition: all 0.3s ease;
+    }
+    .doc-icon:hover {
+        transform: scale(1.1);
+    }
+</style>
+{% endblock %}
+
 {% block content %}
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <!-- Left Sidebar -->
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Left Sidebar - Stories -->
         <div class="lg:col-span-1">
-            <!-- Profile Card -->
-            <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
-                <div class="h-20 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
-                <div class="px-4 pb-4 text-center relative">
-                    <div class="flex justify-center -mt-12 mb-2">
-                        <img src="{{ user.profile.profile_photo.url }}" 
-                             alt="{{ user.username }}" 
-                             class="w-24 h-24 rounded-full border-4 border-white shadow-md object-cover">
-                    </div>
-                    <h2 class="text-xl font-bold text-gray-800">{{ user.get_full_name|default:user.username }}</h2>
-                    <p class="text-sm text-gray-500 mb-2">@{{ user.username }}</p>
-                    <p class="text-sm text-gray-600 mb-4">{{ user.profile.bio|truncatechars:100 }}</p>
-                    
-                    <div class="flex justify-center space-x-4 text-sm">
-                        <div>
-                            <span class="font-bold text-gray-800">{{ user.profile.posts_count }}</span>
-                            <span class="text-gray-500">Posts</span>
-                        </div>
-                        <div>
-                            <span class="font-bold text-gray-800">{{ user.profile.followers_count }}</span>
-                            <span class="text-gray-500">Followers</span>
-                        </div>
-                        <div>
-                            <span class="font-bold text-gray-800">{{ user.profile.following_count }}</span>
-                            <span class="text-gray-500">Following</span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            
-            <!-- Stories -->
-            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+            <div class="bg-white rounded-lg shadow-md p-4 mb-6 sticky top-20">
                 <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
                     <i class="fas fa-circle text-green-500 text-xs mr-2"></i>
                     Stories
+                    <span class="ml-auto text-xs text-gray-400">24h</span>
                 </h3>
                 <div class="space-y-3">
                     <!-- Your story -->
-                    <div class="flex items-center space-x-3">
+                    {% if user_story %}
+                    <div class="flex items-center space-x-3 group hover:bg-gray-50 p-2 rounded-lg transition cursor-pointer" 
+                         onclick="viewStory('{{ user_story.id }}', '{{ user.username }}', '{{ user.profile.profile_photo.url }}', '{{ user_story.text|escapejs }}', '{{ user_story.image.url }}')">
                         <div class="relative">
-                            <img src="{{ user.profile.profile_photo.url }}" class="w-12 h-12 rounded-full border-2 border-indigo-600 p-0.5">
-                            <button class="absolute -bottom-1 -right-1 bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-indigo-700">
-                                <i class="fas fa-plus"></i>
-                            </button>
+                            <img src="{{ user.profile.profile_photo.url }}" 
+                                 class="w-14 h-14 rounded-full border-2 border-indigo-600 p-0.5 object-cover">
+                            <span class="absolute -bottom-1 -right-1 bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md">
+                                <i class="fas fa-eye"></i>
+                            </span>
                         </div>
-                        <div>
+                        <div class="flex-1">
                             <p class="text-sm font-medium text-gray-800">Your Story</p>
-                            <p class="text-xs text-gray-500">Add to your story</p>
+                            <p class="text-xs text-gray-500">Tap to view</p>
                         </div>
                     </div>
+                    {% else %}
+                    <a href="{% url 'story-create' %}" class="flex items-center space-x-3 group hover:bg-gray-50 p-2 rounded-lg transition">
+                        <div class="relative">
+                            <img src="{{ user.profile.profile_photo.url }}" 
+                                 class="w-14 h-14 rounded-full border-2 border-indigo-600 p-0.5 object-cover">
+                            <span class="absolute -bottom-1 -right-1 bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md">
+                                <i class="fas fa-plus"></i>
+                            </span>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-medium text-gray-800">Your Story</p>
+                            <p class="text-xs text-gray-500">Tap to add</p>
+                        </div>
+                    </a>
+                    {% endif %}
                     
-                    <!-- Other stories -->
-                    {% for story in stories %}
-                    <div class="flex items-center space-x-3">
-                        <img src="{{ story.user.profile.profile_photo.url }}" 
-                             class="w-12 h-12 rounded-full border-2 border-indigo-600 p-0.5">
-                        <div>
-                            <p class="text-sm font-medium text-gray-800">{{ story.user.username }}</p>
-                            <p class="text-xs text-gray-500">{{ story.created_at|naturaltime }}</p>
-                        </div>
-                    </div>
-                    {% endfor %}
-                </div>
-            </div>
-            
-            <!-- Suggested Users -->
-            <div class="bg-white rounded-lg shadow-md p-4">
-                <h3 class="font-semibold text-gray-800 mb-4 flex items-center justify-between">
-                    <span>Suggested for you</span>
-                    <a href="#" class="text-xs text-indigo-600 hover:text-indigo-800">See All</a>
-                </h3>
-                <div class="space-y-3">
-                    {% for suggested in suggested_users %}
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center space-x-3">
-                            <img src="{{ suggested.profile.profile_photo.url }}" 
-                                 class="w-8 h-8 rounded-full">
-                            <div>
-                                <p class="text-sm font-medium text-gray-800">{{ suggested.username }}</p>
-                                <p class="text-xs text-gray-500">{{ suggested.profile.followers_count }} followers</p>
+                    <!-- Stories from followed users -->
+                    {% for story in all_stories %}
+                        {% if story.user.username != user.username %}
+                        <div class="flex items-center space-x-3 group hover:bg-gray-50 p-2 rounded-lg transition cursor-pointer" 
+                             onclick="viewStory('{{ story.id }}', '{{ story.user.username }}', '{{ story.user.profile.profile_photo.url }}', '{{ story.text|escapejs }}', '{{ story.image.url }}')">
+                            <div class="relative">
+                                <img src="{{ story.user.profile.profile_photo.url }}" 
+                                     class="w-14 h-14 rounded-full border-2 border-indigo-600 p-0.5 object-cover">
+                                {% if story.user.profile.is_online %}
+                                <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
+                                {% endif %}
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 truncate">{{ story.user.username }}</p>
+                                <p class="text-xs text-gray-500">{{ story.created_at|naturaltime }}</p>
                             </div>
                         </div>
-                        <button class="follow-btn text-xs bg-indigo-600 text-white px-3 py-1 rounded-full hover:bg-indigo-700"
-                                data-username="{{ suggested.username }}">
-                            Follow
-                        </button>
-                    </div>
+                        {% endif %}
                     {% empty %}
-                    <p class="text-sm text-gray-500 text-center">No suggestions</p>
+                        {% if not user_story %}
+                        <div class="text-center py-6">
+                            <p class="text-sm text-gray-500">No stories yet</p>
+                            <p class="text-xs text-gray-400 mt-1">Follow more users to see their stories</p>
+                        </div>
+                        {% endif %}
                     {% endfor %}
                 </div>
             </div>
         </div>
-        
-        <!-- Main Feed -->
+
+        <!-- Main Feed - Posts -->
         <div class="lg:col-span-2">
-            <!-- Create Post -->
-            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
-                <form method="POST" action="{% url 'post-create' %}" enctype="multipart/form-data" class="space-y-4">
-                    {% csrf_token %}
-                    <div class="flex items-start space-x-3">
-                        <img src="{{ user.profile.profile_photo.url }}" class="w-10 h-10 rounded-full">
-                        <div class="flex-1">
-                            <textarea name="content" rows="2" 
-                                      class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
-                                      placeholder="What's on your mind, {{ user.username }}?"></textarea>
-                            
-                            <!-- Post options (hidden initially) -->
-                            <div class="mt-3 flex items-center justify-between" x-data="{ showMedia: false }">
-                                <div class="flex space-x-2">
-                                    <button type="button" @click="showMedia = !showMedia" class="text-gray-500 hover:text-indigo-600">
-                                        <i class="fas fa-image text-xl"></i>
-                                    </button>
-                                    <button type="button" class="text-gray-500 hover:text-indigo-600">
-                                        <i class="fas fa-video text-xl"></i>
-                                    </button>
-                                    <button type="button" class="text-gray-500 hover:text-indigo-600">
-                                        <i class="fas fa-smile text-xl"></i>
-                                    </button>
-                                </div>
-                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-indigo-700">
-                                    Post
-                                </button>
-                            </div>
-                            
-                            <!-- Media upload (shown when toggled) -->
-                            <div x-show="showMedia" class="mt-3 p-3 border border-gray-200 rounded-lg" style="display: none;">
-                                <input type="file" name="image" accept="image/*" class="text-sm">
-                                <p class="text-xs text-gray-500 mt-1">Upload an image (max 10MB)</p>
-                            </div>
-                        </div>
-                    </div>
-                </form>
-            </div>
+            <h1 class="text-2xl font-bold text-gray-900 mb-6">Your Feed</h1>
             
-            <!-- Posts Feed with Infinite Scroll -->
-            <div id="posts-container" 
-                 hx-get="{% url 'api-feed' %}" 
-                 hx-trigger="load"
-                 hx-swap="innerHTML"
-                 hx-indicator="#loading">
-                <!-- Posts will be loaded here via HTMX -->
+            <!-- Posts Container -->
+            <div id="posts-container">
                 <div class="flex justify-center py-8" id="loading">
                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
                 </div>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Post Detail Modal -->
-<div id="post-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden" x-data="{ show: false }">
-    <div class="flex items-center justify-center min-h-screen px-4">
-        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto" @click.away="show = false">
-            <!-- Modal content will be loaded via HTMX -->
-            <div id="modal-content"></div>
+        <!-- Right Sidebar - Suggested Users -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow-md p-4 sticky top-20">
+                <h3 class="font-semibold text-gray-800 mb-4 flex items-center justify-between">
+                    <span>Suggested for you</span>
+                    <a href="{% url 'explore' %}" class="text-xs text-indigo-600 hover:text-indigo-800">See All</a>
+                </h3>
+                
+                <div class="space-y-4">
+                    {% for suggested in suggested_users %}
+                        {% if not suggested.is_staff and not suggested.is_superuser %}
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <img src="{{ suggested.profile.profile_photo.url }}" 
+                                     class="w-10 h-10 rounded-full object-cover"
+                                     alt="{{ suggested.username }}">
+                                <div>
+                                    <p class="text-sm font-medium text-gray-800">{{ suggested.username }}</p>
+                                    <p class="text-xs text-gray-500">{{ suggested.profile.followers_count }} followers</p>
+                                </div>
+                            </div>
+                            <button class="follow-btn text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-full hover:bg-indigo-700 transition"
+                                    data-username="{{ suggested.username }}"
+                                    data-action="follow">
+                                Follow
+                            </button>
+                        </div>
+                        {% endif %}
+                    {% empty %}
+                    <p class="text-sm text-gray-500 text-center py-4">No suggestions available</p>
+                    {% endfor %}
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
+<!-- Story Viewer Modal -->
+<div id="story-modal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden items-center justify-center">
+    <div class="relative w-full max-w-lg mx-4">
+        <button onclick="closeStoryModal()" class="absolute -top-12 right-0 text-white hover:text-gray-300 transition z-10">
+            <i class="fas fa-times text-2xl"></i>
+        </button>
+        
+        <div id="story-content" class="bg-black rounded-lg overflow-hidden relative">
+            <div class="story-progress-bar absolute top-0 left-0 right-0 z-10">
+                <div id="story-progress" class="story-progress-fill"></div>
+            </div>
+            <img id="story-image" src="" class="w-full h-auto" alt="Story">
+            <div class="absolute inset-0 flex flex-col justify-between p-4">
+                <div class="flex items-center space-x-2">
+                    <img id="story-user-avatar" src="" class="w-8 h-8 rounded-full border-2 border-white">
+                    <span id="story-username" class="text-white font-medium"></span>
+                </div>
+                <div class="text-center">
+                    <p id="story-caption" class="text-white text-lg"></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex justify-between mt-4">
+            <button class="text-white hover:text-indigo-400 transition" onclick="previousStory()">
+                <i class="fas fa-chevron-left text-2xl"></i>
+            </button>
+            <button class="text-white hover:text-indigo-400 transition" onclick="nextStory()">
+                <i class="fas fa-chevron-right text-2xl"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div id="imageModal" class="fixed inset-0 bg-black bg-opacity-90 z-50 hidden items-center justify-center" onclick="closeImageModal()">
+    <div class="relative max-w-5xl max-h-screen p-4">
+        <button onclick="closeImageModal()" class="absolute top-4 right-4 text-white hover:text-gray-300 text-2xl z-10">
+            <i class="fas fa-times"></i>
+        </button>
+        <img id="modalImage" src="" class="max-w-full max-h-screen object-contain" alt="Full size image">
+    </div>
+</div>
+
+<!-- Report Modal -->
+<div id="report-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden items-center justify-center">
+    <div class="bg-white rounded-lg max-w-md w-full p-6 modal-content">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Report Post</h3>
+        <p class="text-sm text-gray-600 mb-4" id="report-post-info"></p>
+        
+        <form id="report-form">
+            {% csrf_token %}
+            <input type="hidden" name="post_id" id="report-post-id">
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Reason for reporting</label>
+                <select name="reason" id="report-reason" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600" required>
+                    <option value="">Select a reason</option>
+                    <option value="spam">Spam</option>
+                    <option value="harassment">Harassment</option>
+                    <option value="inappropriate">Inappropriate Content</option>
+                    <option value="fake">Fake Information</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Additional details (optional)</label>
+                <textarea name="description" id="report-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"></textarea>
+            </div>
+            
+            <div class="flex justify-end space-x-3">
+                <button type="button" onclick="closeReportModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg">
+                    Cancel
+                </button>
+                <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                    Submit Report
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
-    // Infinite scroll
+    // ===== Story Functionality =====
+    let storyTimer = null;
+    
+    function viewStory(storyId, username, avatar, caption, imageUrl) {
+        const modal = document.getElementById('story-modal');
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        
+        document.getElementById('story-image').src = imageUrl;
+        document.getElementById('story-user-avatar').src = avatar;
+        document.getElementById('story-username').textContent = username;
+        document.getElementById('story-caption').textContent = caption || '';
+        
+        const progress = document.getElementById('story-progress');
+        progress.style.animation = 'none';
+        progress.offsetHeight;
+        progress.style.animation = 'progress 5s linear forwards';
+        
+        if (storyTimer) clearTimeout(storyTimer);
+        storyTimer = setTimeout(closeStoryModal, 5000);
+    }
+    
+    function closeStoryModal() {
+        document.getElementById('story-modal').classList.add('hidden');
+        document.getElementById('story-modal').classList.remove('flex');
+        if (storyTimer) clearTimeout(storyTimer);
+    }
+    
+    function previousStory() {
+        console.log('Previous story');
+    }
+    
+    function nextStory() {
+        console.log('Next story');
+    }
+    
+    // ===== Image Modal Functionality =====
+    function openImageModal(imageUrl) {
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        if (!modal || !modalImg) return;
+        
+        modalImg.src = imageUrl;
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeImageModal() {
+        const modal = document.getElementById('imageModal');
+        if (modal) {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+            document.body.style.overflow = 'auto';
+        }
+    }
+    
+    // ===== Post Loading =====
     let page = 1;
     let loading = false;
     let hasNext = true;
     
+    document.addEventListener('DOMContentLoaded', function() {
+        loadPosts(1);
+    });
+
     window.addEventListener('scroll', () => {
         if (loading || !hasNext) return;
         
@@ -183,58 +456,198 @@
         const clientHeight = document.documentElement.clientHeight;
         
         if (scrollTop + clientHeight >= scrollHeight - 500) {
-            loading = true;
-            page++;
-            
-            fetch(`/api/feed/?page=${page}`)
-                .then(response => response.json())
-                .then(data => {
-                    if (data.posts.length > 0) {
-                        appendPosts(data.posts);
-                    }
-                    hasNext = data.has_next;
-                    loading = false;
-                });
+            loadMorePosts();
         }
     });
+    
+    function loadPosts(pageNum) {
+        loading = true;
+        
+        fetch(`/api/feed/?page=${pageNum}`)
+            .then(response => response.json())
+            .then(data => {
+                const container = document.getElementById('posts-container');
+                document.getElementById('loading').style.display = 'none';
+                
+                if (data.posts.length > 0) {
+                    appendPosts(data.posts);
+                } else {
+                    container.innerHTML = '<p class="text-center text-gray-500 py-8">No posts to show</p>';
+                }
+                
+                hasNext = data.has_next;
+                loading = false;
+            })
+            .catch(() => {
+                loading = false;
+            });
+    }
+    
+    function loadMorePosts() {
+        page++;
+        loadPosts(page);
+    }
     
     function appendPosts(posts) {
         const container = document.getElementById('posts-container');
         posts.forEach(post => {
-            const postHtml = createPostHtml(post);
-            container.insertAdjacentHTML('beforeend', postHtml);
+            container.insertAdjacentHTML('beforeend', createPostHtml(post));
         });
     }
     
     function createPostHtml(post) {
+        const date = new Date(post.created_at);
+        const timeAgo = formatTimeAgo(date);
+        const content = post.content && post.content.trim() ? post.content : '';
+        
+        const privacyBadge = {
+            'public': '<span class="ml-2 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600"><i class="fas fa-globe mr-1"></i>Public</span>',
+            'followers': '<span class="ml-2 text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-600"><i class="fas fa-users mr-1"></i>Followers</span>',
+            'private': '<span class="ml-2 text-xs px-2 py-1 rounded-full bg-red-100 text-red-600"><i class="fas fa-lock mr-1"></i>Private</span>'
+        }[post.privacy] || '';
+        
+        const editedHtml = post.is_edited ? '<span class="text-xs text-gray-400 ml-1">(edited)</span>' : '';
+        
+        // Build image HTML if exists
+        const imageHtml = post.image ? 
+            `<div class="mt-3 rounded-lg overflow-hidden">
+                <img src="${post.image}" class="w-full max-h-96 object-cover cursor-pointer" onclick="openImageModal('${post.image}')">
+            </div>` : '';
+        
+        // Build video HTML if exists
+        const videoHtml = post.video ? 
+            `<div class="mt-3 rounded-lg overflow-hidden bg-black">
+                <video class="w-full max-h-96" controls preload="metadata">
+                    <source src="${post.video}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>` : '';
+        
+        // Build document HTML if exists
+        const documentHtml = post.document ? (() => {
+            const docExt = post.document.split('.').pop().toLowerCase();
+            const docName = post.document.split('/').pop();
+            
+            // Determine icon and color based on extension
+            let iconClass = 'fas fa-file text-2xl text-indigo-600';
+            let bgClass = 'bg-indigo-100';
+            
+            if (docExt === 'pdf') {
+                iconClass = 'fas fa-file-pdf text-2xl text-red-600';
+                bgClass = 'bg-red-100';
+            } else if (['doc', 'docx'].includes(docExt)) {
+                iconClass = 'fas fa-file-word text-2xl text-blue-600';
+                bgClass = 'bg-blue-100';
+            } else if (['xls', 'xlsx'].includes(docExt)) {
+                iconClass = 'fas fa-file-excel text-2xl text-green-600';
+                bgClass = 'bg-green-100';
+            } else if (['ppt', 'pptx'].includes(docExt)) {
+                iconClass = 'fas fa-file-powerpoint text-2xl text-orange-600';
+                bgClass = 'bg-orange-100';
+            } else if (docExt === 'txt') {
+                iconClass = 'fas fa-file-alt text-2xl text-gray-600';
+                bgClass = 'bg-gray-100';
+            } else if (['zip', 'rar'].includes(docExt)) {
+                iconClass = 'fas fa-file-archive text-2xl text-purple-600';
+                bgClass = 'bg-purple-100';
+            }
+            
+            return `
+                <div class="mt-3">
+                    <a href="${post.document}" target="_blank" 
+                       class="flex items-center p-4 bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all group">
+                        <div class="w-12 h-12 flex items-center justify-center rounded-lg ${bgClass}">
+                            <i class="${iconClass} group-hover:scale-110 transition-transform"></i>
+                        </div>
+                        <div class="flex-1 ml-4">
+                            <h4 class="font-medium text-gray-800 group-hover:text-indigo-600 transition-colors">
+                                ${docName.substring(0, 50)}${docName.length > 50 ? '...' : ''}
+                            </h4>
+                            <div class="flex items-center text-xs text-gray-500 mt-1">
+                                <span>${post.document_size || 'Unknown size'}</span>
+                                <span class="mx-2">•</span>
+                                <span>Click to view/download</span>
+                            </div>
+                        </div>
+                        <i class="fas fa-download text-gray-400 group-hover:text-indigo-600 transition-colors mr-2"></i>
+                    </a>
+                </div>
+            `;
+        })() : '';
+        
         return `
-            <div class="bg-white rounded-lg shadow-md p-4 mb-4 post-card" data-post-id="${post.id}">
+            <div class="bg-white rounded-lg shadow-md p-6 mb-4 post-card hover:shadow-lg transition" data-post-id="${post.id}">
                 <div class="flex items-start space-x-3">
-                    <img src="${post.user.profile_photo}" class="w-10 h-10 rounded-full">
-                    <div class="flex-1">
+                    <a href="/profile/${post.user.username}/" class="flex-shrink-0">
+                        <img src="${post.user.profile_photo}" class="w-12 h-12 rounded-full object-cover border-2 border-indigo-600" onerror="this.src='/static/default.jpg'">
+                    </a>
+                    <div class="flex-1 min-w-0">
                         <div class="flex items-center justify-between">
                             <div>
-                                <a href="/profile/${post.user.username}/" class="font-semibold text-gray-800 hover:text-indigo-600">${post.user.username}</a>
-                                <p class="text-xs text-gray-500">${post.created_at}</p>
+                                <a href="/profile/${post.user.username}/" class="font-semibold text-gray-900 hover:text-indigo-600">${post.user.username}</a>
+                                <span class="text-xs text-gray-500 ml-2">${timeAgo}</span>
+                                ${privacyBadge}
+                                ${editedHtml}
                             </div>
-                            <button class="text-gray-400 hover:text-gray-600">
-                                <i class="fas fa-ellipsis-h"></i>
-                            </button>
+                            
+                            <div class="relative" x-data="{ open: false }">
+                                <button @click="open = !open" class="text-gray-400 hover:text-gray-600">
+                                    <i class="fas fa-ellipsis-h"></i>
+                                </button>
+                                
+                                <div x-show="open" @click.away="open = false" 
+                                     class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50"
+                                     style="display: none;">
+                                    
+                                    {% if user == post.user or user.is_staff %}
+                                    <a href="/post/${post.id}/edit/" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                        <i class="fas fa-edit mr-2"></i> Edit Post
+                                    </a>
+                                    {% endif %}
+                                    
+                                    {% if user == post.user or user.is_staff %}
+                                    <form method="post" action="/post/${post.id}/delete/"
+                                          onsubmit="return confirm('Are you sure you want to delete this post?');">
+                                        {% csrf_token %}
+                                        <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                            <i class="fas fa-trash mr-2"></i> Delete Post
+                                        </button>
+                                    </form>
+                                    {% endif %}
+                                    
+                                    {% if user != post.user %}
+                                    <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            onclick="openReportModal(${post.id}, '${post.user.username}')">
+                                        <i class="fas fa-flag mr-2"></i> Report Post
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </div>
                         </div>
-                        <p class="mt-2 text-gray-700">${post.content}</p>
-                        ${post.image ? `<img src="${post.image}" class="mt-3 rounded-lg max-h-96 object-cover">` : ''}
                         
-                        <div class="mt-4 flex items-center space-x-4">
-                            <button class="like-btn flex items-center space-x-1 text-gray-500 hover:text-red-600" data-post-id="${post.id}">
-                                <i class="fas fa-heart ${post.is_liked ? 'text-red-600' : ''}"></i>
-                                <span class="likes-count text-sm">${post.likes_count}</span>
+                        ${content ? `<p class="mt-3 text-gray-800 whitespace-pre-wrap">${content}</p>` : ''}
+                        
+                        ${imageHtml}
+                        ${videoHtml}
+                        ${documentHtml}
+                        
+                        <div class="mt-4 flex items-center space-x-6 pt-3 border-t border-gray-100">
+                            <button class="like-btn flex items-center space-x-2 text-gray-500 hover:text-red-600 transition" 
+                                    data-post-id="${post.id}"
+                                    onclick="toggleLike(this)">
+                                <i class="fas fa-heart text-lg ${post.is_liked ? 'text-red-600' : ''}"></i>
+                                <span class="likes-count text-sm font-medium">${post.likes_count}</span>
                             </button>
-                            <button class="comment-btn flex items-center space-x-1 text-gray-500 hover:text-indigo-600" data-post-id="${post.id}">
-                                <i class="fas fa-comment"></i>
-                                <span class="text-sm">${post.comments_count}</span>
-                            </button>
-                            <button class="share-btn flex items-center space-x-1 text-gray-500 hover:text-indigo-600">
-                                <i class="fas fa-share"></i>
+                            
+                            <a href="/post/${post.id}/" class="flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition">
+                                <i class="fas fa-comment text-lg"></i>
+                                <span class="text-sm font-medium">${post.comments_count}</span>
+                            </a>
+                            
+                            <button class="flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition ml-auto"
+                                    onclick="sharePost('${post.id}')">
+                                <i class="fas fa-share text-lg"></i>
+                                <span class="text-sm font-medium">Share</span>
                             </button>
                         </div>
                     </div>
@@ -243,14 +656,66 @@
         `;
     }
     
-    // Like functionality
+    function formatTimeAgo(date) {
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+        
+        if (diffInSeconds < 60) return 'Just now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
+        if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
+        return date.toLocaleDateString();
+    }
+    
+    // ===== Like Functionality =====
+    function toggleLike(button) {
+        const postId = button.dataset.postId;
+        const icon = button.querySelector('i');
+        const countSpan = button.querySelector('.likes-count');
+        
+        fetch(`/post/${postId}/like/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'liked') {
+                icon.classList.add('text-red-600');
+            } else {
+                icon.classList.remove('text-red-600');
+            }
+            countSpan.textContent = data.likes_count;
+        })
+        .catch(error => console.error('Like error:', error));
+    }
+    
+    // ===== Share Functionality =====
+    function sharePost(postId) {
+        if (navigator.share) {
+            navigator.share({
+                title: 'Check out this post',
+                url: window.location.origin + '/post/' + postId + '/'
+            }).catch(console.error);
+        } else {
+            const url = window.location.origin + '/post/' + postId + '/';
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Link copied to clipboard!');
+            }).catch(() => {
+                prompt('Copy this link:', url);
+            });
+        }
+    }
+    
+    // ===== Follow Functionality =====
     document.addEventListener('click', function(e) {
-        if (e.target.closest('.like-btn')) {
-            const btn = e.target.closest('.like-btn');
-            const postId = btn.dataset.postId;
-            const likesSpan = btn.querySelector('.likes-count');
+        if (e.target.closest('.follow-btn')) {
+            const btn = e.target.closest('.follow-btn');
+            const username = btn.dataset.username;
             
-            fetch(`/post/${postId}/like/`, {
+            fetch(`/follow/${username}/`, {
                 method: 'POST',
                 headers: {
                     'X-CSRFToken': '{{ csrf_token }}',
@@ -259,13 +724,79 @@
             })
             .then(response => response.json())
             .then(data => {
-                if (data.status === 'liked') {
-                    btn.querySelector('i').classList.add('text-red-600');
+                if (data.status === 'followed') {
+                    btn.innerHTML = 'Following';
+                    btn.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                    btn.classList.add('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+                    btn.dataset.action = 'unfollow';
                 } else {
-                    btn.querySelector('i').classList.remove('text-red-600');
+                    btn.innerHTML = 'Follow';
+                    btn.classList.remove('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+                    btn.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
+                    btn.dataset.action = 'follow';
                 }
-                likesSpan.textContent = data.likes_count;
             });
+        }
+    });
+    
+    // ===== Report Functionality =====
+    function openReportModal(postId, authorName) {
+        document.getElementById('report-post-id').value = postId;
+        document.getElementById('report-post-info').innerHTML = `Reporting post by <strong>${authorName}</strong>`;
+        document.getElementById('report-modal').classList.remove('hidden');
+        document.getElementById('report-modal').classList.add('flex');
+    }
+    
+    function closeReportModal() {
+        document.getElementById('report-modal').classList.add('hidden');
+        document.getElementById('report-modal').classList.remove('flex');
+        document.getElementById('report-form').reset();
+    }
+    
+    document.getElementById('report-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const postId = document.getElementById('report-post-id').value;
+        const reason = document.getElementById('report-reason').value;
+        const description = document.getElementById('report-description').value;
+        
+        if (!reason) {
+            alert('Please select a reason for reporting');
+            return;
+        }
+        
+        fetch('/report-post/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                post_id: postId,
+                reason: reason,
+                description: description
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Report submitted successfully. Admin will review it.');
+                closeReportModal();
+            } else {
+                alert('Error submitting report. Please try again.');
+            }
+        })
+        .catch(error => {
+            console.error('Report error:', error);
+            alert('Error submitting report. Please try again.');
+        });
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeImageModal();
+            closeReportModal();
         }
     });
 </script>

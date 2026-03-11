@@ -1,0 +1,389 @@
+{% extends 'core/base.html' %}
+{% load static %}
+
+{% block title %}Create Announcement - Campus Network{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Form styling */
+    .form-container {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .form-section {
+        background: white;
+        border-radius: 12px;
+        padding: 24px;
+        margin-bottom: 24px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        border: 1px solid #e5e7eb;
+    }
+    
+    .form-section h2 {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #1f2937;
+        margin-bottom: 20px;
+        padding-bottom: 10px;
+        border-bottom: 2px solid #e5e7eb;
+    }
+    
+    .form-group {
+        margin-bottom: 20px;
+    }
+    
+    .form-group label {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #374151;
+        margin-bottom: 6px;
+    }
+    
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        transition: all 0.2s;
+    }
+    
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+        outline: none;
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+    }
+    
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+    }
+    
+    .form-checkbox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .form-checkbox input {
+        width: auto;
+    }
+    
+    .help-text {
+        font-size: 0.8rem;
+        color: #6b7280;
+        margin-top: 4px;
+    }
+    
+    .errorlist {
+        color: #dc2626;
+        font-size: 0.85rem;
+        margin-top: 4px;
+        list-style: none;
+        padding: 0;
+    }
+    
+    .btn-primary {
+        background: #4f46e5;
+        color: white;
+        padding: 12px 30px;
+        border: none;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-primary:hover {
+        background: #4338ca;
+        transform: translateY(-1px);
+        box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+    }
+    
+    .btn-secondary {
+        background: white;
+        color: #374151;
+        padding: 12px 30px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        font-size: 1rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: inline-block;
+    }
+    
+    .btn-secondary:hover {
+        background: #f9fafb;
+        border-color: #9ca3af;
+    }
+    
+    .button-group {
+        display: flex;
+        gap: 12px;
+        justify-content: flex-end;
+        margin-top: 30px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="form-container">
+        <div class="mb-6">
+            <h1 class="text-2xl font-bold text-gray-900">
+                {% if object %}Edit{% else %}Create New{% endif %} Announcement
+            </h1>
+            <p class="text-gray-600 mt-2">
+                Fill in the details below to {% if object %}update the{% else %}create a new{% endif %} announcement
+            </p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Basic Information -->
+            <div class="form-section">
+                <h2>Basic Information</h2>
+                
+                <div class="form-group">
+                    <label for="{{ form.title.id_for_label }}">Title *</label>
+                    {{ form.title }}
+                    {% if form.title.errors %}
+                        <div class="errorlist">{{ form.title.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.announcement_type.id_for_label }}">Type *</label>
+                        {{ form.announcement_type }}
+                        {% if form.announcement_type.errors %}
+                            <div class="errorlist">{{ form.announcement_type.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.category.id_for_label }}">Category</label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                            <div class="errorlist">{{ form.category.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.summary.id_for_label }}">Summary</label>
+                    {{ form.summary }}
+                    <div class="help-text">Brief summary for cards (optional)</div>
+                    {% if form.summary.errors %}
+                        <div class="errorlist">{{ form.summary.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.content.id_for_label }}">Content *</label>
+                    {{ form.content }}
+                    {% if form.content.errors %}
+                        <div class="errorlist">{{ form.content.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Media & Links -->
+            <div class="form-section">
+                <h2>Media & Links</h2>
+                
+                <div class="form-group">
+                    <label for="{{ form.featured_image.id_for_label }}">Featured Image</label>
+                    {{ form.featured_image }}
+                    <div class="help-text">Upload an image to feature with this announcement</div>
+                    {% if form.featured_image.errors %}
+                        <div class="errorlist">{{ form.featured_image.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.attachment.id_for_label }}">Attachment</label>
+                    {{ form.attachment }}
+                    <div class="help-text">Upload a file attachment (PDF, DOC, etc.)</div>
+                    {% if form.attachment.errors %}
+                        <div class="errorlist">{{ form.attachment.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.external_link.id_for_label }}">External Link</label>
+                    {{ form.external_link }}
+                    <div class="help-text">Link to external resource (optional)</div>
+                    {% if form.external_link.errors %}
+                        <div class="errorlist">{{ form.external_link.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Audience Targeting -->
+            <div class="form-section">
+                <h2>Audience Targeting</h2>
+                
+                <div class="form-group">
+                    <label for="{{ form.audience.id_for_label }}">Target Audience *</label>
+                    {{ form.audience }}
+                    {% if form.audience.errors %}
+                        <div class="errorlist">{{ form.audience.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-row" id="department-field" style="display: none;">
+                    <div class="form-group">
+                        <label for="{{ form.target_department.id_for_label }}">Department</label>
+                        {{ form.target_department }}
+                        {% if form.target_department.errors %}
+                            <div class="errorlist">{{ form.target_department.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.target_batch.id_for_label }}">Batch</label>
+                        {{ form.target_batch }}
+                        <div class="help-text">e.g., 2024, 2023</div>
+                        {% if form.target_batch.errors %}
+                            <div class="errorlist">{{ form.target_batch.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Event Details -->
+            <div class="form-section" id="event-fields" style="display: none;">
+                <h2>Event Details</h2>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="{{ form.event_start_date.id_for_label }}">Start Date & Time</label>
+                        {{ form.event_start_date }}
+                        {% if form.event_start_date.errors %}
+                            <div class="errorlist">{{ form.event_start_date.errors }}</div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="{{ form.event_end_date.id_for_label }}">End Date & Time</label>
+                        {{ form.event_end_date }}
+                        {% if form.event_end_date.errors %}
+                            <div class="errorlist">{{ form.event_end_date.errors }}</div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.location.id_for_label }}">Location</label>
+                    {{ form.location }}
+                    {% if form.location.errors %}
+                        <div class="errorlist">{{ form.location.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-checkbox">
+                    {{ form.is_virtual }}
+                    <label for="{{ form.is_virtual.id_for_label }}">This is a virtual event</label>
+                </div>
+                
+                <div class="form-group" id="meeting-link-field" style="display: none;">
+                    <label for="{{ form.meeting_link.id_for_label }}">Meeting Link</label>
+                    {{ form.meeting_link }}
+                    {% if form.meeting_link.errors %}
+                        <div class="errorlist">{{ form.meeting_link.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    <label for="{{ form.deadline.id_for_label }}">Registration/Submission Deadline</label>
+                    {{ form.deadline }}
+                    {% if form.deadline.errors %}
+                        <div class="errorlist">{{ form.deadline.errors }}</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Additional Options -->
+            <div class="form-section">
+                <h2>Additional Options</h2>
+                
+                <div class="form-row">
+                    <div class="form-checkbox">
+                        {{ form.is_pinned }}
+                        <label for="{{ form.is_pinned.id_for_label }}">Pin this announcement</label>
+                    </div>
+                    
+                    <div class="form-checkbox">
+                        {{ form.is_important }}
+                        <label for="{{ form.is_important.id_for_label }}">Mark as important</label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <a href="{% url 'explore' %}" class="btn-secondary">Cancel</a>
+                <button type="submit" class="btn-primary">
+                    {% if object %}Update{% else %}Create{% endif %} Announcement
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Show/hide fields based on announcement type
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('{{ form.announcement_type.id_for_label }}');
+        const eventFields = document.getElementById('event-fields');
+        const audienceSelect = document.getElementById('{{ form.audience.id_for_label }}');
+        const departmentField = document.getElementById('department-field');
+        const isVirtualCheckbox = document.getElementById('{{ form.is_virtual.id_for_label }}');
+        const meetingLinkField = document.getElementById('meeting-link-field');
+        
+        function toggleEventFields() {
+            if (typeSelect.value === 'event') {
+                eventFields.style.display = 'block';
+            } else {
+                eventFields.style.display = 'none';
+            }
+        }
+        
+        function toggleDepartmentField() {
+            if (audienceSelect.value === 'department' || audienceSelect.value === 'batch') {
+                departmentField.style.display = 'grid';
+            } else {
+                departmentField.style.display = 'none';
+            }
+        }
+        
+        function toggleMeetingLink() {
+            if (isVirtualCheckbox.checked) {
+                meetingLinkField.style.display = 'block';
+            } else {
+                meetingLinkField.style.display = 'none';
+            }
+        }
+        
+        typeSelect.addEventListener('change', toggleEventFields);
+        audienceSelect.addEventListener('change', toggleDepartmentField);
+        isVirtualCheckbox.addEventListener('change', toggleMeetingLink);
+        
+        // Initial toggle
+        toggleEventFields();
+        toggleDepartmentField();
+        toggleMeetingLink();
+    });
+</script>
+{% endblock %}

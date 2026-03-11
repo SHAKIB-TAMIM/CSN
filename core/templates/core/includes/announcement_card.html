@@ -1,0 +1,146 @@
+{% load humanize %}
+
+<div class="announcement-card-content">
+    <!-- Header with type and badges -->
+    <div class="flex items-center justify-between mb-3">
+        <div class="flex items-center gap-2">
+            <span class="type-badge {{ announcement.announcement_type }}">
+                <i class="fas fa-{% if announcement.announcement_type == 'notice' %}bullhorn{% elif announcement.announcement_type == 'event' %}calendar{% elif announcement.announcement_type == 'news' %}newspaper{% elif announcement.announcement_type == 'exam' %}pencil-alt{% elif announcement.announcement_type == 'result' %}chart-bar{% else %}info-circle{% endif %} mr-1"></i>
+                {{ announcement.get_announcement_type_display }}
+            </span>
+            
+            {% if pinned %}
+            <span class="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded-full text-xs font-medium">
+                <i class="fas fa-thumbtack mr-1"></i> Pinned
+            </span>
+            {% endif %}
+            
+            {% if announcement.is_important %}
+            <span class="bg-red-100 text-red-600 px-2 py-0.5 rounded-full text-xs font-medium">
+                <i class="fas fa-exclamation-circle mr-1"></i> Important
+            </span>
+            {% endif %}
+        </div>
+        
+        {% if announcement.department %}
+        <span class="dept-badge">
+            <i class="fas fa-building mr-1"></i> {{ announcement.department.code }}
+        </span>
+        {% endif %}
+    </div>
+    
+    <!-- Title -->
+    <h3 class="font-semibold text-gray-900 mb-2">
+        <a href="{{ announcement.get_absolute_url }}" class="hover:text-indigo-600 transition">
+            {{ announcement.title }}
+        </a>
+    </h3>
+    
+    <!-- Summary -->
+    <p class="text-sm text-gray-600 mb-3">
+        {{ announcement.summary|default:announcement.content|truncatechars:120 }}
+    </p>
+    
+    <!-- Meta info -->
+    <div class="flex items-center text-xs text-gray-500 mb-3">
+        <img src="{{ announcement.author.profile.profile_photo.url }}" 
+             class="w-5 h-5 rounded-full mr-2 object-cover"
+             onerror="this.src='/static/default.jpg'">
+        <span>{{ announcement.author.get_full_name|default:announcement.author.username }}</span>
+        <span class="mx-2">•</span>
+        <span>{{ announcement.published_at|naturaltime }}</span>
+    </div>
+    
+    <!-- Event Date (if event) -->
+    {% if announcement.announcement_type == 'event' and announcement.event_start_date %}
+    <div class="flex items-center text-xs text-gray-500 mb-2">
+        <i class="far fa-calendar-alt mr-2 text-indigo-500"></i>
+        {{ announcement.event_start_date|date:"M d, Y" }}
+        {% if announcement.event_end_date %}
+        - {{ announcement.event_end_date|date:"M d, Y" }}
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- Location (if event) -->
+    {% if announcement.location %}
+    <div class="flex items-center text-xs text-gray-500 mb-2">
+        <i class="fas fa-map-marker-alt mr-2 text-indigo-500"></i>
+        {{ announcement.location|truncatechars:30 }}
+    </div>
+    {% endif %}
+    
+    <!-- Deadline (if any) -->
+    {% if announcement.deadline %}
+    <div class="flex items-center text-xs text-orange-600 mb-2">
+        <i class="fas fa-hourglass-end mr-2"></i>
+        Deadline: {{ announcement.deadline|date:"M d, Y" }}
+    </div>
+    {% endif %}
+    
+    <!-- Audience Badge -->
+    <div class="audience-badge mb-3">
+        <i class="fas fa-users mr-1"></i>
+        {{ announcement.get_audience_display }}
+        {% if announcement.target_batch %}
+        (Batch {{ announcement.target_batch }})
+        {% endif %}
+    </div>
+    
+    <!-- Action Buttons -->
+    <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+        <div class="flex items-center space-x-4">
+            <button class="like-announcement-btn flex items-center space-x-1 text-gray-500 hover:text-red-600 transition"
+                    data-id="{{ announcement.id }}">
+                <i class="fas fa-heart {% if user in announcement.likes.all %}text-red-600{% endif %}"></i>
+                <span class="likes-count text-xs">{{ announcement.likes_count }}</span>
+            </button>
+            
+            <a href="{{ announcement.get_absolute_url }}#comments" class="flex items-center space-x-1 text-gray-500 hover:text-indigo-600 transition">
+                <i class="fas fa-comment"></i>
+                <span class="text-xs">{{ announcement.comments_count }}</span>
+            </a>
+            
+            <span class="flex items-center space-x-1 text-gray-500">
+                <i class="fas fa-eye"></i>
+                <span class="text-xs">{{ announcement.views_count }}</span>
+            </span>
+        </div>
+        
+        <a href="{{ announcement.get_absolute_url }}" class="text-indigo-600 hover:text-indigo-800 text-sm font-medium">
+            Read More <i class="fas fa-arrow-right ml-1 text-xs"></i>
+        </a>
+    </div>
+</div>
+
+<script>
+    // Like functionality for cards
+    document.querySelectorAll('.like-announcement-btn').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const announcementId = this.dataset.id;
+            const icon = this.querySelector('i');
+            const countSpan = this.querySelector('.likes-count');
+            
+            fetch(`/announcement/${announcementId}/like/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'liked') {
+                    icon.classList.add('text-red-600');
+                } else {
+                    icon.classList.remove('text-red-600');
+                }
+                countSpan.textContent = data.likes_count;
+            })
+            .catch(error => console.error('Like error:', error));
+        });
+    });
+</script>

@@ -1,0 +1,822 @@
+{% extends 'core/base.html' %}
+{% load crispy_forms_tags %}
+
+{% block title %}Edit Profile - Campus Social Network{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Smooth transitions */
+    .fade-enter {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    .fade-enter-active {
+        opacity: 1;
+        transform: translateY(0);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    
+    /* Custom file input styling */
+    .custom-file-input {
+        opacity: 0;
+        position: absolute;
+        z-index: -1;
+    }
+    
+    .custom-file-label {
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .custom-file-label:hover {
+        background-color: #4f46e5;
+        color: white;
+    }
+    
+    /* Smooth hover effects */
+    .hover-lift {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .hover-lift:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* Animated gradient border */
+    @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+    }
+    
+    .gradient-border {
+        position: relative;
+        background: linear-gradient(90deg, #4f46e5, #7c3aed, #4f46e5);
+        background-size: 200% 200%;
+        animation: gradientShift 3s ease infinite;
+    }
+
+    /* Personal Info Card Styles */
+    .info-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 1px;
+        border-radius: 1rem;
+    }
+    
+    .info-card-content {
+        background: white;
+        border-radius: 0.95rem;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+    }
+    
+    .info-card-content:hover {
+        background: linear-gradient(135deg, #f9fafb 0%, #ffffff 100%);
+    }
+    
+    .info-field {
+        position: relative;
+        margin-bottom: 1.5rem;
+    }
+    
+    .info-field label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6b7280;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .info-field label i {
+        margin-right: 0.5rem;
+        font-size: 0.875rem;
+        color: #4f46e5;
+    }
+    
+    .info-field input,
+    .info-field textarea,
+    .info-field select {
+        width: 100%;
+        padding: 0.75rem 1rem;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        font-size: 0.95rem;
+        transition: all 0.2s ease;
+        background-color: #f9fafb;
+    }
+    
+    .info-field input:focus,
+    .info-field textarea:focus,
+    .info-field select:focus {
+        outline: none;
+        border-color: #4f46e5;
+        background-color: white;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    }
+    
+    .info-field textarea {
+        min-height: 100px;
+        resize: vertical;
+    }
+    
+    .info-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.25rem 0.75rem;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 9999px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-left: 0.5rem;
+    }
+    
+    /* Social link styling */
+    .social-input {
+        display: flex;
+        align-items: center;
+        background: #f9fafb;
+        border: 2px solid #e5e7eb;
+        border-radius: 0.75rem;
+        padding: 0.25rem;
+        transition: all 0.2s ease;
+    }
+    
+    .social-input:hover {
+        border-color: #4f46e5;
+        background: white;
+    }
+    
+    .social-input:focus-within {
+        border-color: #4f46e5;
+        background: white;
+        box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+    }
+    
+    .social-icon {
+        width: 3rem;
+        height: 3rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.5rem;
+        margin-right: 0.5rem;
+        transition: all 0.2s ease;
+    }
+    
+    .social-input input {
+        flex: 1;
+        padding: 0.75rem;
+        border: none;
+        background: transparent;
+        font-size: 0.95rem;
+    }
+    
+    .social-input input:focus {
+        outline: none;
+    }
+    
+    /* Progress bar */
+    .profile-complete-progress {
+        height: 8px;
+        background: #e5e7eb;
+        border-radius: 9999px;
+        overflow: hidden;
+    }
+    
+    .profile-complete-progress-bar {
+        height: 100%;
+        background: linear-gradient(90deg, #4f46e5, #7c3aed);
+        border-radius: 9999px;
+        transition: width 0.5s ease;
+    }
+    
+    /* Interactive tags */
+    .interest-tag {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.5rem 1rem;
+        background: #f3f4f6;
+        border-radius: 9999px;
+        font-size: 0.875rem;
+        color: #4b5563;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 2px solid transparent;
+    }
+    
+    .interest-tag:hover {
+        background: #e5e7eb;
+        transform: translateY(-1px);
+    }
+    
+    .interest-tag.selected {
+        background: #4f46e5;
+        color: white;
+    }
+    
+    .interest-tag i {
+        margin-right: 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    /* Stats Cards */
+    .stat-card {
+        background: linear-gradient(135deg, #f3f4f6 0%, #ffffff 100%);
+        border-radius: 1rem;
+        padding: 1.25rem;
+        border: 1px solid #e5e7eb;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 4px;
+        background: linear-gradient(90deg, #4f46e5, #7c3aed);
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+    }
+    
+    .stat-card:hover::before {
+        transform: scaleX(1);
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-indigo-50/30 py-8">
+    <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <!-- Header with Stats -->
+        <div class="mb-8">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                        Edit Profile
+                    </h1>
+                    <p class="text-gray-600 mt-2">Customize your profile and manage your account settings</p>
+                </div>
+                
+                <!-- Profile Completion -->
+                <div class="mt-4 md:mt-0 bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-sm font-medium text-gray-700">Profile Completion</span>
+                        <span class="text-sm font-bold text-indigo-600">75%</span>
+                    </div>
+                    <div class="profile-complete-progress">
+                        <div class="profile-complete-progress-bar" style="width: 75%"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Quick Stats -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                <div class="stat-card">
+                    <div class="text-2xl font-bold text-indigo-600">{{ user.profile.posts_count }}</div>
+                    <div class="text-sm text-gray-600">Posts</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-2xl font-bold text-indigo-600">{{ user.profile.followers_count }}</div>
+                    <div class="text-sm text-gray-600">Followers</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-2xl font-bold text-indigo-600">{{ user.profile.following_count }}</div>
+                    <div class="text-sm text-gray-600">Following</div>
+                </div>
+                <div class="stat-card">
+                    <div class="text-2xl font-bold text-indigo-600">{% now "Y" %}</div>
+                    <div class="text-sm text-gray-600">Member Since</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Form Card -->
+        <div class="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-gray-100 hover-lift">
+            <!-- Header with subtle pattern -->
+            <div class="relative gradient-border px-6 py-8">
+                <div class="absolute inset-0 bg-black opacity-10"></div>
+                <div class="relative flex items-center space-x-4">
+                    <div class="w-16 h-16 bg-white/20 backdrop-blur rounded-full flex items-center justify-center">
+                        <i class="fas fa-user-edit text-3xl text-white"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-white">Profile Settings</h2>
+                        <p class="text-indigo-100">Update your information below</p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Form -->
+            <form method="post" enctype="multipart/form-data" class="p-8">
+                {% csrf_token %}
+                
+                <!-- Messages with animations -->
+                {% if messages %}
+                <div class="space-y-3 mb-6">
+                    {% for message in messages %}
+                    <div class="fade-enter-active p-4 rounded-xl {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %} flex items-start">
+                        <div class="flex-shrink-0 mr-3">
+                            {% if message.tags == 'success' %}
+                            <i class="fas fa-check-circle text-green-500 text-xl"></i>
+                            {% elif message.tags == 'error' %}
+                            <i class="fas fa-exclamation-circle text-red-500 text-xl"></i>
+                            {% else %}
+                            <i class="fas fa-info-circle text-blue-500 text-xl"></i>
+                            {% endif %}
+                        </div>
+                        <p class="text-sm font-medium flex-1">{{ message }}</p>
+                        <button type="button" onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Left Column -->
+                    <div class="space-y-6">
+                        <!-- Account Information -->
+                        <div class="info-card">
+                            <div class="info-card-content">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <div class="w-8 h-8 bg-indigo-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-user text-indigo-600"></i>
+                                    </div>
+                                    Account Information
+                                    <span class="info-badge ml-auto">Primary</span>
+                                </h3>
+                                {{ form|crispy }}
+                            </div>
+                        </div>
+                        
+                        <!-- Password Section -->
+                        <div class="info-card">
+                            <div class="info-card-content">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-lock text-purple-600"></i>
+                                    </div>
+                                    Security
+                                </h3>
+                                <a href="{% url 'password_change' %}" 
+                                   class="inline-flex items-center px-4 py-3 bg-gradient-to-r from-purple-50 to-indigo-50 text-gray-700 rounded-xl hover:from-purple-100 hover:to-indigo-100 transition-all border border-purple-200 group w-full">
+                                    <i class="fas fa-key mr-3 text-purple-500 group-hover:scale-110 transition-transform"></i>
+                                    <span class="flex-1 font-medium">Change Password</span>
+                                    <i class="fas fa-chevron-right text-gray-400 group-hover:translate-x-1 transition-transform"></i>
+                                </a>
+                                <p class="text-xs text-gray-500 mt-3 ml-2">Last password change: {% if user.last_login %}{{ user.last_login|date:"F j, Y" }}{% else %}Never{% endif %}</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Right Column -->
+                    <div class="space-y-6">
+                        <!-- Profile Photos -->
+                        <div class="info-card">
+                            <div class="info-card-content">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-camera text-green-600"></i>
+                                    </div>
+                                    Profile Photos
+                                </h3>
+                                
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                                    <!-- Profile Photo -->
+                                    <div class="text-center">
+                                        <div class="relative group inline-block">
+                                            <div class="w-32 h-32 rounded-full overflow-hidden ring-4 ring-white shadow-lg mx-auto">
+                                                <img src="{{ user.profile.profile_photo.url }}" 
+                                                     alt="{{ user.username }}" 
+                                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                                     id="profile-photo-preview">
+                                            </div>
+                                            <label for="id_profile_photo" 
+                                                   class="absolute bottom-0 right-0 w-8 h-8 bg-indigo-600 text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-indigo-700 hover:scale-110 transition-all shadow-lg">
+                                                <i class="fas fa-camera text-sm"></i>
+                                            </label>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-2">Profile Photo</p>
+                                    </div>
+                                    
+                                    <!-- Cover Photo -->
+                                    <div class="text-center">
+                                        <div class="relative group">
+                                            <div class="w-32 h-20 rounded-lg overflow-hidden ring-4 ring-white shadow-lg mx-auto bg-gradient-to-r from-indigo-500 to-purple-600">
+                                                {% if user.profile.cover_photo %}
+                                                <img src="{{ user.profile.cover_photo.url }}" 
+                                                     alt="Cover" 
+                                                     class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                                                     id="cover-photo-preview">
+                                                {% else %}
+                                                <div class="w-full h-full flex items-center justify-center text-white text-xs">Add Cover</div>
+                                                {% endif %}
+                                            </div>
+                                            <label for="id_cover_photo" 
+                                                   class="absolute -bottom-2 right-4 w-8 h-8 bg-purple-600 text-white rounded-full flex items-center justify-center cursor-pointer hover:bg-purple-700 hover:scale-110 transition-all shadow-lg">
+                                                <i class="fas fa-camera text-sm"></i>
+                                            </label>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-2">Cover Photo</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4 flex justify-center gap-4">
+                                    <label for="id_profile_photo" class="text-xs text-indigo-600 hover:text-indigo-800 cursor-pointer">
+                                        <i class="fas fa-upload mr-1"></i>Upload profile photo
+                                    </label>
+                                    <span class="text-gray-300">|</span>
+                                    <label for="id_cover_photo" class="text-xs text-purple-600 hover:text-purple-800 cursor-pointer">
+                                        <i class="fas fa-upload mr-1"></i>Upload cover photo
+                                    </label>
+                                </div>
+                                
+                                <input type="file" name="profile_photo" id="id_profile_photo" 
+                                       class="hidden" accept="image/*"
+                                       onchange="previewImage(this, 'profile-photo-preview')">
+                                <input type="file" name="cover_photo" id="id_cover_photo" 
+                                       class="hidden" accept="image/*"
+                                       onchange="previewImage(this, 'cover-photo-preview')">
+                            </div>
+                        </div>
+                        
+                        <!-- Personal Information - Beautifully Enhanced -->
+                        <div class="info-card">
+                            <div class="info-card-content">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-id-card text-blue-600"></i>
+                                    </div>
+                                    Personal Information
+                                    <span class="info-badge ml-auto">Complete your profile</span>
+                                </h3>
+                                
+                                <div class="grid grid-cols-1 gap-4">
+                                    <!-- Bio Field - Enhanced -->
+                                    <div class="info-field">
+                                        <label>
+                                            <i class="fas fa-quote-right"></i>
+                                            Bio
+                                            <span class="text-xs text-gray-400 ml-2">Tell us about yourself</span>
+                                        </label>
+                                        <textarea name="bio" rows="4" placeholder="Write something about yourself...">{{ user.profile.bio|default:'' }}</textarea>
+                                        <div class="flex justify-between mt-1">
+                                            <span class="text-xs text-gray-400">Share your interests, studies, or anything you'd like</span>
+                                            <span class="text-xs text-gray-400"><span id="bio-count">{{ user.profile.bio|length|default:0 }}</span>/500</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Location Field with Icon -->
+                                    <div class="info-field">
+                                        <label>
+                                            <i class="fas fa-map-marker-alt"></i>
+                                            Location
+                                        </label>
+                                        <div class="relative">
+                                            <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
+                                            <input type="text" name="location" value="{{ user.profile.location|default:'' }}" 
+                                                   placeholder="e.g., Dhaka, Bangladesh" class="pl-10">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Interests/Tags Section -->
+                                    <div class="mb-4">
+                                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                                            <i class="fas fa-tags mr-2"></i>Interests
+                                        </label>
+                                        <div class="flex flex-wrap gap-2">
+                                            <span class="interest-tag selected"><i class="fas fa-code"></i>Programming</span>
+                                            <span class="interest-tag"><i class="fas fa-camera"></i>Photography</span>
+                                            <span class="interest-tag"><i class="fas fa-music"></i>Music</span>
+                                            <span class="interest-tag"><i class="fas fa-book"></i>Reading</span>
+                                            <span class="interest-tag"><i class="fas fa-gamepad"></i>Gaming</span>
+                                            <span class="interest-tag"><i class="fas fa-plane"></i>Travel</span>
+                                            <span class="interest-tag"><i class="fas fa-utensils"></i>Cooking</span>
+                                            <span class="interest-tag"><i class="fas fa-paint-brush"></i>Art</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Department & Batch in Grid -->
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="info-field">
+                                            <label>
+                                                <i class="fas fa-building"></i>
+                                                Department
+                                            </label>
+                                            <select name="department">
+                                                <option value="">Select Department</option>
+                                                {% for dept in departments %}
+                                                <option value="{{ dept.id }}" {% if user.profile.department_id == dept.id %}selected{% endif %}>
+                                                    {{ dept.name }} ({{ dept.code }})
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        
+                                        <div class="info-field">
+                                            <label>
+                                                <i class="fas fa-calendar-alt"></i>
+                                                Batch
+                                            </label>
+                                            <input type="text" name="batch" value="{{ user.profile.batch|default:'' }}" 
+                                                   placeholder="e.g., 2024">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Student ID & University -->
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="info-field">
+                                            <label>
+                                                <i class="fas fa-id-card"></i>
+                                                Student ID
+                                            </label>
+                                            <input type="text" name="student_id" value="{{ user.profile.student_id|default:'' }}" 
+                                                   placeholder="Enter your ID">
+                                        </div>
+                                        
+                                        <div class="info-field">
+                                            <label>
+                                                <i class="fas fa-university"></i>
+                                                University
+                                            </label>
+                                            <input type="text" name="university" value="{{ user.profile.university|default:'Campus University' }}" 
+                                                   placeholder="University name">
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Birth Date & Website -->
+                                    <div class="grid grid-cols-2 gap-4">
+                                        <div class="info-field">
+                                            <label>
+                                                <i class="fas fa-birthday-cake"></i>
+                                                Birth Date
+                                            </label>
+                                            <input type="date" name="birth_date" value="{{ user.profile.birth_date|date:'Y-m-d'|default:'' }}">
+                                        </div>
+                                        
+                                        <div class="info-field">
+                                            <label>
+                                                <i class="fas fa-globe"></i>
+                                                Website
+                                            </label>
+                                            <input type="url" name="website" value="{{ user.profile.website|default:'' }}" 
+                                                   placeholder="https://yourwebsite.com">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Social Links - Enhanced -->
+                        <div class="info-card">
+                            <div class="info-card-content">
+                                <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                                    <div class="w-8 h-8 bg-pink-100 rounded-lg flex items-center justify-center mr-3">
+                                        <i class="fas fa-share-alt text-pink-600"></i>
+                                    </div>
+                                    Social Links
+                                    <span class="info-badge ml-auto">Connect</span>
+                                </h3>
+                                
+                                <div class="space-y-3">
+                                    <!-- Facebook -->
+                                    <div class="social-input">
+                                        <div class="social-icon" style="background: #1877f2;">
+                                            <i class="fab fa-facebook-f text-white"></i>
+                                        </div>
+                                        <input type="url" name="facebook" value="{{ user.profile.facebook|default:'' }}" 
+                                               placeholder="https://facebook.com/username">
+                                    </div>
+                                    
+                                    <!-- Twitter -->
+                                    <div class="social-input">
+                                        <div class="social-icon" style="background: #1da1f2;">
+                                            <i class="fab fa-twitter text-white"></i>
+                                        </div>
+                                        <input type="url" name="twitter" value="{{ user.profile.twitter|default:'' }}" 
+                                               placeholder="https://twitter.com/username">
+                                    </div>
+                                    
+                                    <!-- Instagram -->
+                                    <div class="social-input">
+                                        <div class="social-icon" style="background: #e4405f;">
+                                            <i class="fab fa-instagram text-white"></i>
+                                        </div>
+                                        <input type="url" name="instagram" value="{{ user.profile.instagram|default:'' }}" 
+                                               placeholder="https://instagram.com/username">
+                                    </div>
+                                    
+                                    <!-- LinkedIn -->
+                                    <div class="social-input">
+                                        <div class="social-icon" style="background: #0077b5;">
+                                            <i class="fab fa-linkedin-in text-white"></i>
+                                        </div>
+                                        <input type="url" name="linkedin" value="{{ user.profile.linkedin|default:'' }}" 
+                                               placeholder="https://linkedin.com/in/username">
+                                    </div>
+                                    
+                                    <!-- GitHub -->
+                                    <div class="social-input">
+                                        <div class="social-icon" style="background: #333;">
+                                            <i class="fab fa-github text-white"></i>
+                                        </div>
+                                        <input type="url" name="github" value="{{ user.profile.github|default:'' }}" 
+                                               placeholder="https://github.com/username">
+                                    </div>
+                                    
+                                    <!-- YouTube -->
+                                    <div class="social-input">
+                                        <div class="social-icon" style="background: #ff0000;">
+                                            <i class="fab fa-youtube text-white"></i>
+                                        </div>
+                                        <input type="url" name="youtube" value="{{ user.profile.youtube|default:'' }}" 
+                                               placeholder="https://youtube.com/@username">
+                                    </div>
+                                </div>
+                                
+                                <!-- Social Connection Status -->
+                                <div class="mt-4 pt-4 border-t border-gray-100">
+                                    <p class="text-xs text-gray-500 flex items-center">
+                                        <i class="fas fa-info-circle mr-2"></i>
+                                        Add your social profiles to help others connect with you
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Form Actions -->
+                <div class="mt-8 pt-6 border-t border-gray-200 flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+                    <a href="{% url 'profile' user.username %}" 
+                       class="px-6 py-3 border-2 border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 hover:border-gray-300 transition-all text-center font-medium">
+                        <i class="fas fa-times mr-2"></i>
+                        Cancel
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl hover:from-indigo-700 hover:to-purple-700 transition-all flex items-center justify-center shadow-lg hover:shadow-xl font-medium">
+                        <i class="fas fa-save mr-2"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <!-- Danger Zone -->
+        <div class="mt-6 bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl overflow-hidden border border-red-200 hover:shadow-2xl transition-shadow">
+            <div class="bg-gradient-to-r from-red-600 to-pink-600 px-6 py-4">
+                <h2 class="text-lg font-semibold text-white flex items-center">
+                    <i class="fas fa-exclamation-triangle mr-2 animate-pulse"></i>
+                    Danger Zone
+                </h2>
+            </div>
+            <div class="p-6">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div>
+                        <h3 class="font-medium text-gray-800">Delete Account</h3>
+                        <p class="text-sm text-gray-500 mt-1">Once you delete your account, there is no going back. All your data will be permanently removed.</p>
+                    </div>
+                    <button onclick="showDeleteModal()" 
+                            class="px-6 py-3 bg-white text-red-600 rounded-xl hover:bg-red-600 hover:text-white transition-all border-2 border-red-600 hover:border-red-700 font-medium shadow-lg hover:shadow-xl flex items-center whitespace-nowrap">
+                        <i class="fas fa-trash-alt mr-2"></i>
+                        Delete Account
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Account Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4"
+     x-data="{ show: false }"
+     x-show="show"
+     x-transition:enter="fade-enter"
+     x-transition:enter-active="fade-enter-active"
+     x-transition:leave="fade-enter"
+     x-transition:leave-active="fade-enter-active"
+     x-cloak>
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl transform transition-all"
+         @click.away="show = false">
+        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <i class="fas fa-exclamation-triangle text-3xl text-red-600"></i>
+        </div>
+        <h3 class="text-xl font-bold text-gray-900 mb-2 text-center">Delete Account</h3>
+        <p class="text-gray-600 mb-6 text-center">This action cannot be undone. All your data will be permanently removed.</p>
+        
+        <form method="post" action="{% url 'delete-account' %}">
+            {% csrf_token %}
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Confirm your password</label>
+                <input type="password" name="password" required 
+                       class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all"
+                       placeholder="Enter your password">
+            </div>
+            <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+                <button type="button" onclick="hideDeleteModal()" 
+                        class="px-6 py-3 border-2 border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-all font-medium">
+                    <i class="fas fa-times mr-2"></i>
+                    Cancel
+                </button>
+                <button type="submit" 
+                        class="px-6 py-3 bg-gradient-to-r from-red-600 to-pink-600 text-white rounded-xl hover:from-red-700 hover:to-pink-700 transition-all shadow-lg font-medium">
+                    <i class="fas fa-trash-alt mr-2"></i>
+                    Delete Permanently
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+// Character counter for bio
+document.addEventListener('DOMContentLoaded', function() {
+    const bioTextarea = document.querySelector('textarea[name="bio"]');
+    if (bioTextarea) {
+        const bioCount = document.getElementById('bio-count');
+        bioTextarea.addEventListener('input', function() {
+            bioCount.textContent = this.value.length;
+        });
+    }
+});
+
+// Image preview function
+function previewImage(input, previewId) {
+    if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            document.getElementById(previewId).src = e.target.result;
+        }
+        reader.readAsDataURL(input.files[0]);
+    }
+}
+
+// Interest tags interaction
+document.addEventListener('DOMContentLoaded', function() {
+    const interestTags = document.querySelectorAll('.interest-tag');
+    interestTags.forEach(tag => {
+        tag.addEventListener('click', function() {
+            this.classList.toggle('selected');
+        });
+    });
+});
+
+// Modal functions
+function showDeleteModal() {
+    document.getElementById('deleteModal').classList.remove('hidden');
+    document.getElementById('deleteModal').classList.add('flex');
+    document.body.style.overflow = 'hidden';
+}
+
+function hideDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+    document.getElementById('deleteModal').classList.remove('flex');
+    document.body.style.overflow = 'auto';
+}
+
+// Close modal on escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        hideDeleteModal();
+    }
+});
+</script>
+
+<style>
+    [x-cloak] { display: none !important; }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+        background: #cbd5e0;
+        border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+</style>
+{% endblock %}
