@@ -1,0 +1,272 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Home - Campus Social Network{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Left Sidebar -->
+        <div class="lg:col-span-1">
+            <!-- Profile Card -->
+            <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+                <div class="h-20 bg-gradient-to-r from-indigo-500 to-purple-600"></div>
+                <div class="px-4 pb-4 text-center relative">
+                    <div class="flex justify-center -mt-12 mb-2">
+                        <img src="{{ user.profile.profile_photo.url }}" 
+                             alt="{{ user.username }}" 
+                             class="w-24 h-24 rounded-full border-4 border-white shadow-md object-cover">
+                    </div>
+                    <h2 class="text-xl font-bold text-gray-800">{{ user.get_full_name|default:user.username }}</h2>
+                    <p class="text-sm text-gray-500 mb-2">@{{ user.username }}</p>
+                    <p class="text-sm text-gray-600 mb-4">{{ user.profile.bio|truncatechars:100 }}</p>
+                    
+                    <div class="flex justify-center space-x-4 text-sm">
+                        <div>
+                            <span class="font-bold text-gray-800">{{ user.profile.posts_count }}</span>
+                            <span class="text-gray-500">Posts</span>
+                        </div>
+                        <div>
+                            <span class="font-bold text-gray-800">{{ user.profile.followers_count }}</span>
+                            <span class="text-gray-500">Followers</span>
+                        </div>
+                        <div>
+                            <span class="font-bold text-gray-800">{{ user.profile.following_count }}</span>
+                            <span class="text-gray-500">Following</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Stories -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                <h3 class="font-semibold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-circle text-green-500 text-xs mr-2"></i>
+                    Stories
+                </h3>
+                <div class="space-y-3">
+                    <!-- Your story -->
+                    <div class="flex items-center space-x-3">
+                        <div class="relative">
+                            <img src="{{ user.profile.profile_photo.url }}" class="w-12 h-12 rounded-full border-2 border-indigo-600 p-0.5">
+                            <button class="absolute -bottom-1 -right-1 bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-indigo-700">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">Your Story</p>
+                            <p class="text-xs text-gray-500">Add to your story</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Other stories -->
+                    {% for story in stories %}
+                    <div class="flex items-center space-x-3">
+                        <img src="{{ story.user.profile.profile_photo.url }}" 
+                             class="w-12 h-12 rounded-full border-2 border-indigo-600 p-0.5">
+                        <div>
+                            <p class="text-sm font-medium text-gray-800">{{ story.user.username }}</p>
+                            <p class="text-xs text-gray-500">{{ story.created_at|naturaltime }}</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Suggested Users -->
+            <div class="bg-white rounded-lg shadow-md p-4">
+                <h3 class="font-semibold text-gray-800 mb-4 flex items-center justify-between">
+                    <span>Suggested for you</span>
+                    <a href="#" class="text-xs text-indigo-600 hover:text-indigo-800">See All</a>
+                </h3>
+                <div class="space-y-3">
+                    {% for suggested in suggested_users %}
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <img src="{{ suggested.profile.profile_photo.url }}" 
+                                 class="w-8 h-8 rounded-full">
+                            <div>
+                                <p class="text-sm font-medium text-gray-800">{{ suggested.username }}</p>
+                                <p class="text-xs text-gray-500">{{ suggested.profile.followers_count }} followers</p>
+                            </div>
+                        </div>
+                        <button class="follow-btn text-xs bg-indigo-600 text-white px-3 py-1 rounded-full hover:bg-indigo-700"
+                                data-username="{{ suggested.username }}">
+                            Follow
+                        </button>
+                    </div>
+                    {% empty %}
+                    <p class="text-sm text-gray-500 text-center">No suggestions</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Feed -->
+        <div class="lg:col-span-2">
+            <!-- Create Post -->
+            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                <form method="POST" action="{% url 'post-create' %}" enctype="multipart/form-data" class="space-y-4">
+                    {% csrf_token %}
+                    <div class="flex items-start space-x-3">
+                        <img src="{{ user.profile.profile_photo.url }}" class="w-10 h-10 rounded-full">
+                        <div class="flex-1">
+                            <textarea name="content" rows="2" 
+                                      class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                                      placeholder="What's on your mind, {{ user.username }}?"></textarea>
+                            
+                            <!-- Post options (hidden initially) -->
+                            <div class="mt-3 flex items-center justify-between" x-data="{ showMedia: false }">
+                                <div class="flex space-x-2">
+                                    <button type="button" @click="showMedia = !showMedia" class="text-gray-500 hover:text-indigo-600">
+                                        <i class="fas fa-image text-xl"></i>
+                                    </button>
+                                    <button type="button" class="text-gray-500 hover:text-indigo-600">
+                                        <i class="fas fa-video text-xl"></i>
+                                    </button>
+                                    <button type="button" class="text-gray-500 hover:text-indigo-600">
+                                        <i class="fas fa-smile text-xl"></i>
+                                    </button>
+                                </div>
+                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-indigo-700">
+                                    Post
+                                </button>
+                            </div>
+                            
+                            <!-- Media upload (shown when toggled) -->
+                            <div x-show="showMedia" class="mt-3 p-3 border border-gray-200 rounded-lg" style="display: none;">
+                                <input type="file" name="image" accept="image/*" class="text-sm">
+                                <p class="text-xs text-gray-500 mt-1">Upload an image (max 10MB)</p>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Posts Feed with Infinite Scroll -->
+            <div id="posts-container" 
+                 hx-get="{% url 'api-feed' %}" 
+                 hx-trigger="load"
+                 hx-swap="innerHTML"
+                 hx-indicator="#loading">
+                <!-- Posts will be loaded here via HTMX -->
+                <div class="flex justify-center py-8" id="loading">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Post Detail Modal -->
+<div id="post-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden" x-data="{ show: false }">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto" @click.away="show = false">
+            <!-- Modal content will be loaded via HTMX -->
+            <div id="modal-content"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Infinite scroll
+    let page = 1;
+    let loading = false;
+    let hasNext = true;
+    
+    window.addEventListener('scroll', () => {
+        if (loading || !hasNext) return;
+        
+        const scrollHeight = document.documentElement.scrollHeight;
+        const scrollTop = document.documentElement.scrollTop;
+        const clientHeight = document.documentElement.clientHeight;
+        
+        if (scrollTop + clientHeight >= scrollHeight - 500) {
+            loading = true;
+            page++;
+            
+            fetch(`/api/feed/?page=${page}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.posts.length > 0) {
+                        appendPosts(data.posts);
+                    }
+                    hasNext = data.has_next;
+                    loading = false;
+                });
+        }
+    });
+    
+    function appendPosts(posts) {
+        const container = document.getElementById('posts-container');
+        posts.forEach(post => {
+            const postHtml = createPostHtml(post);
+            container.insertAdjacentHTML('beforeend', postHtml);
+        });
+    }
+    
+    function createPostHtml(post) {
+        return `
+            <div class="bg-white rounded-lg shadow-md p-4 mb-4 post-card" data-post-id="${post.id}">
+                <div class="flex items-start space-x-3">
+                    <img src="${post.user.profile_photo}" class="w-10 h-10 rounded-full">
+                    <div class="flex-1">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <a href="/profile/${post.user.username}/" class="font-semibold text-gray-800 hover:text-indigo-600">${post.user.username}</a>
+                                <p class="text-xs text-gray-500">${post.created_at}</p>
+                            </div>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-ellipsis-h"></i>
+                            </button>
+                        </div>
+                        <p class="mt-2 text-gray-700">${post.content}</p>
+                        ${post.image ? `<img src="${post.image}" class="mt-3 rounded-lg max-h-96 object-cover">` : ''}
+                        
+                        <div class="mt-4 flex items-center space-x-4">
+                            <button class="like-btn flex items-center space-x-1 text-gray-500 hover:text-red-600" data-post-id="${post.id}">
+                                <i class="fas fa-heart ${post.is_liked ? 'text-red-600' : ''}"></i>
+                                <span class="likes-count text-sm">${post.likes_count}</span>
+                            </button>
+                            <button class="comment-btn flex items-center space-x-1 text-gray-500 hover:text-indigo-600" data-post-id="${post.id}">
+                                <i class="fas fa-comment"></i>
+                                <span class="text-sm">${post.comments_count}</span>
+                            </button>
+                            <button class="share-btn flex items-center space-x-1 text-gray-500 hover:text-indigo-600">
+                                <i class="fas fa-share"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
+    // Like functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.like-btn')) {
+            const btn = e.target.closest('.like-btn');
+            const postId = btn.dataset.postId;
+            const likesSpan = btn.querySelector('.likes-count');
+            
+            fetch(`/post/${postId}/like/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'liked') {
+                    btn.querySelector('i').classList.add('text-red-600');
+                } else {
+                    btn.querySelector('i').classList.remove('text-red-600');
+                }
+                likesSpan.textContent = data.likes_count;
+            });
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,249 @@
+{% load static %}
+{% load notifications_tags %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <meta name="description" content="Campus Social Network - Connect with your campus friends">
+    <meta name="author" content="Campus Social Network">
+    
+    <title>{% block title %}Campus Social Network{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="{% static 'core/images/favicon.png' %}">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'core/css/style.css' %}">
+    {% block extra_css %}{% endblock %}
+    
+    <!-- Alpine.js for interactivity -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    
+    <!-- HTMX for dynamic content -->
+    <script src="https://unpkg.com/htmx.org@1.9.6"></script>
+    
+    <!-- Notifications -->
+    {% notifications_scripts %}
+</head>
+<body class="bg-gray-50 font-sans antialiased" x-data="{ darkMode: false }" :class="{ 'dark': darkMode }">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-lg border-b border-gray-200 fixed w-full z-50 top-0">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <!-- Logo -->
+                    <a href="{% url 'welcome' %}" class="flex items-center space-x-2">
+                        <i class="fas fa-graduation-cap text-2xl text-indigo-600"></i>
+                        <span class="font-bold text-xl text-gray-800">Campus<span class="text-indigo-600">Network</span></span>
+                    </a>
+                    
+                    <!-- Main Navigation -->
+                    <div class="hidden md:flex ml-10 space-x-8">
+                        <a href="{% url 'feed' %}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium {% if request.resolver_match.url_name == 'feed' %}text-indigo-600 border-b-2 border-indigo-600{% endif %}">
+                            <i class="fas fa-home mr-1"></i>Home
+                        </a>
+                        <a href="{% url 'explore' %}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium {% if request.resolver_match.url_name == 'explore' %}text-indigo-600 border-b-2 border-indigo-600{% endif %}">
+                            <i class="fas fa-compass mr-1"></i>Explore
+                        </a>
+                        <a href="{% url 'chat' %}" class="text-gray-700 hover:text-indigo-600 px-3 py-2 text-sm font-medium {% if request.resolver_match.url_name == 'chat' %}text-indigo-600 border-b-2 border-indigo-600{% endif %}">
+                            <i class="fas fa-comment mr-1"></i>Messages
+                            <span class="ml-1 bg-red-500 text-white text-xs rounded-full px-2 py-1" x-show="unreadMessages > 0" x-text="unreadMessages" style="display: none;"></span>
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Right side navigation -->
+                <div class="flex items-center space-x-4">
+                    <!-- Search -->
+                    <form action="{% url 'search' %}" method="GET" class="hidden md:block">
+                        <div class="relative">
+                            <input type="text" name="q" placeholder="Search people..." 
+                                   class="w-64 pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent text-sm">
+                            <i class="fas fa-search absolute left-3 top-3 text-gray-400 text-sm"></i>
+                        </div>
+                    </form>
+                    
+                    <!-- Notifications -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="relative text-gray-600 hover:text-indigo-600 focus:outline-none">
+                            <i class="fas fa-bell text-xl"></                            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center" 
+                                  x-show="notificationCount > 0" 
+                                  x-text="notificationCount"
+                                  hx-get="{% url 'api-notification-count' %}"
+                                  hx-trigger="every 30s"
+                                  hx-swap="outerHTML">
+                                {{ notifications_unread_count }}
+                            </span>
+                        </button>
+                        
+                        <!-- Notifications dropdown -->
+                        <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50" style="display: none;">
+                            <div class="p-3 border-b border-gray-100 flex justify-between items-center">
+                                <h3 class="font-semibold text-gray-700">Notifications</h3>
+                                <a href="{% url 'notifications' %}" class="text-xs text-indigo-600 hover:text-indigo-800">View all</a>
+                            </div>
+                            <div class="max-h-96 overflow-y-auto">
+                                {% for notification in notifications|slice:":5" %}
+                                <a href="{{ notification.url }}" class="block p-3 hover:bg-gray-50 border-b border-gray-100 {% if not notification.is_read %}bg-indigo-50{% endif %}">
+                                    <div class="flex items-start space-x-3">
+                                        <img src="{{ notification.actor.profile.profile_photo.url }}" class="w-8 h-8 rounded-full">
+                                        <div class="flex-1">
+                                            <p class="text-sm text-gray-800">{{ notification.text }}</p>
+                                            <p class="text-xs text-gray-500 mt-1">{{ notification.created_at|timesince }} ago</p>
+                                        </div>
+                                    </div>
+                                </a>
+                                {% empty %}
+                                <p class="text-sm text-gray-500 text-center py-4">No notifications</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- User menu -->
+                    <div class="relative" x-data="{ open: false }">
+                        <button @click="open = !open" class="flex items-center space-x-2 focus:outline-none">
+                            <img src="{{ user.profile.profile_photo.url }}" alt="{{ user.username }}" class="w-8 h-8 rounded-full object-cover border-2 border-indigo-600">
+                            <span class="hidden md:block text-sm font-medium text-gray-700">{{ user.username }}</span>
+                            <i class="fas fa-chevron-down text-xs text-gray-500"></i>
+                        </button>
+                        
+                        <!-- Dropdown menu -->
+                        <div x-show="open" @click.away="open = false" class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50" style="display: none;">
+                            <a href="{% url 'profile' user.username %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user mr-2"></i>Your Profile
+                            </a>
+                            <a href="{% url 'profile-edit' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-cog mr-2"></i>Settings
+                            </a>
+                            <a href="{% url 'saved-posts' %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-bookmark mr-2"></i>Saved Posts
+                            </a>
+                            <div class="border-t border-gray-100"></div>
+                            <form method="POST" action="{% url 'logout' %}">
+                                {% csrf_token %}
+                                <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
+                                    <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main content -->
+    <main class="pt-16">
+        <!-- Messages -->
+        {% if messages %}
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-4">
+            {% for message in messages %}
+            <div class="rounded-md p-4 mb-4 {% if message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %}" 
+                 x-data="{ show: true }" 
+                 x-show="show"
+                 x-init="setTimeout(() => show = false, 5000)">
+                <div class="flex">
+                    <div class="flex-shrink-0">
+                        {% if message.tags == 'success' %}
+                        <i class="fas fa-check-circle text-green-400"></i>
+                        {% elif message.tags == 'error' %}
+                        <i class="fas fa-exclamation-circle text-red-400"></i>
+                        {% else %}
+                        <i class="fas fa-info-circle text-blue-400"></i>
+                        {% endif %}
+                    </div>
+                    <div class="ml-3">
+                        <p class="text-sm font-medium">{{ message }}</p>
+                    </div>
+                    <div class="ml-auto pl-3">
+                        <button @click="show = false" class="inline-flex text-gray-400 hover:text-gray-500">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-gray-200 mt-12">
+        <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">About</h3>
+                    <ul class="mt-4 space-y-2">
+                        <li><a href="#" class="text-sm text-gray-500 hover:text-indigo-600">About Us</a></li>
+                        <li><a href="#" class="text-sm text-gray-500 hover:text-indigo-600">Contact</a></li>
+                        <li><a href="#" class="text-sm text-gray-500 hover:text-indigo-600">Terms of Service</a></li>
+                        <li><a href="#" class="text-sm text-gray-500 hover:text-indigo-600">Privacy Policy</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Support</h3>
+                    <ul class="mt-4 space-y-2">
+                        <li><a href="#" class="text-sm text-gray-500 hover:text-indigo-600">Help Center</a></li>
+                        <li><a href="#" class="text-sm text-gray-500 hover:text-indigo-600">Safety Center</a></li>
+                        <li><a href="#" class="text-sm text-gray-500 hover:text-indigo-600">Community Guidelines</a></li>
+                        <li><a href="#" class="text-sm text-gray-500 hover:text-indigo-600">Report</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Connect</h3>
+                    <ul class="mt-4 space-y-2">
+                        <li><a href="#" class="text-sm text-gray-500 hover:text-indigo-600"><i class="fab fa-facebook mr-2"></i>Facebook</a></li>
+                        <li><a href="#" class="text-sm text-gray-500 hover:text-indigo-600"><i class="fab fa-twitter mr-2"></i>Twitter</a></li>
+                        <li><a href="#" class="text-sm text-gray-500 hover:text-indigo-600"><i class="fab fa-instagram mr-2"></i>Instagram</a></li>
+                        <li><a href="#" class="text-sm text-gray-500 hover:text-indigo-600"><i class="fab fa-github mr-2"></i>GitHub</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-600 uppercase tracking-wide">Download App</h3>
+                    <div class="mt-4 space-y-2">
+                        <a href="#" class="flex items-center px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800">
+                            <i class="fab fa-apple text-2xl mr-2"></i>
+                            <div>
+                                <div class="text-xs">Download on the</div>
+                                <div class="text-sm font-semibold">App Store</div>
+                            </div>
+                        </a>
+                        <a href="#" class="flex items-center px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 mt-2">
+                            <i class="fab fa-google-play text-2xl mr-2"></i>
+                            <div>
+                                <div class="text-xs">Get it on</div>
+                                <div class="text-sm font-semibold">Google Play</div>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-8 border-t border-gray-200 pt-4 text-center">
+                <p class="text-sm text-gray-500">&copy; {% now "Y" %} Campus Social Network. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="{% static 'core/js/main.js' %}"></script>
+    <script>
+        // Global variables
+        const currentUserId = {{ user.id }};
+        const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const wsUrl = `${wsProtocol}//${window.location.host}/ws/notifications/`;
+    </script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

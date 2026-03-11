@@ -1,0 +1,537 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}{{ profile_user.get_full_name|default:profile_user.username }} - Campus Social Network{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Profile Header -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden mb-6">
+        <!-- Cover Photo -->
+        <div class="h-64 bg-gradient-to-r from-indigo-500 to-purple-600 relative">
+            {% if profile_user.profile.cover_photo %}
+            <img src="{{ profile_user.profile.cover_photo.url }}" alt="Cover" class="w-full h-full object-cover">
+            {% endif %}
+            
+            {% if is_own_profile %}
+            <button class="absolute bottom-4 right-4 bg-white text-gray-700 px-4 py-2 rounded-lg shadow-md hover:bg-gray-100 transition" 
+                    onclick="document.getElementById('cover-upload').click()">
+                <i class="fas fa-camera mr-2"></i>Edit Cover
+            </button>
+            <input type="file" id="cover-upload" class="hidden" accept="image/*" 
+                   hx-post="{% url 'api-update-cover' %}"
+                   hx-trigger="change"
+                   hx-target="#cover-message"
+                   hx-swap="innerHTML">
+            {% endif %}
+        </div>
+        
+        <!-- Profile Info -->
+        <div class="px-6 pb-6">
+            <div class="flex flex-col md:flex-row md:items-end -mt-16">
+                <!-- Profile Photo -->
+                <div class="relative">
+                    <img src="{{ profile_user.profile.profile_photo.url }}" 
+                         alt="{{ profile_user.username }}" 
+                         class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover">
+                    {% if profile_user.profile.is_online %}
+                    <span class="absolute bottom-2 right-2 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
+                    {% endif %}
+                    
+                    {% if is_own_profile %}
+                    <button class="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full shadow-lg hover:bg-indigo-700 transition"
+                            onclick="document.getElementById('photo-upload').click()">
+                        <i class="fas fa-camera text-sm"></i>
+                    </button>
+                    <input type="file" id="photo-upload" class="hidden" accept="image/*"
+                           hx-post="{% url 'api-update-photo' %}"
+                           hx-trigger="change"
+                           hx-target="#photo-message"
+                           hx-swap="innerHTML">
+                    {% endif %}
+                </div>
+                
+                <!-- User Details -->
+                <div class="mt-4 md:mt-0 md:ml-6 flex-1">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <h1 class="text-2xl font-bold text-gray-900">
+                                {{ profile_user.get_full_name|default:profile_user.username }}
+                                {% if profile_user.profile.verified %}
+                                <i class="fas fa-check-circle text-blue-500 ml-1" title="Verified Account"></i>
+                                {% endif %}
+                            </h1>
+                            <p class="text-gray-500">@{{ profile_user.username }}</p>
+                            {% if profile_user.profile.location %}
+                            <p class="text-sm text-gray-600 mt-1">
+                                <i class="fas fa-map-marker-alt mr-1"></i>{{ profile_user.profile.location }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="mt-4 md:mt-0 flex space-x-2">
+                            {% if is_own_profile %}
+                            <a href="{% url 'profile-edit' %}" 
+                               class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
+                                <i class="fas fa-edit mr-2"></i>Edit Profile
+                            </a>
+                            {% elif not is_blocked %}
+                                {% if is_following %}
+                                <button class="follow-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
+                                        data-username="{{ profile_user.username }}"
+                                        data-action="unfollow">
+                                    <i class="fas fa-user-check mr-2"></i>Following
+                                </button>
+                                {% else %}
+                                <button class="follow-btn bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition"
+                                        data-username="{{ profile_user.username }}"
+                                        data-action="follow">
+                                    <i class="fas fa-user-plus mr-2"></i>Follow
+                                </button>
+                                {% endif %}
+                                
+                                <a href="{% url 'chat-with' profile_user.username %}" 
+                                   class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition">
+                                    <i class="fas fa-comment mr-2"></i>Message
+                                </a>
+                                
+                                <div class="relative" x-data="{ open: false }">
+                                    <button @click="open = !open" class="bg-gray-200 text-gray-700 p-2 rounded-lg hover:bg-gray-300 transition">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                    
+                                    <div x-show="open" @click.away="open = false" 
+                                         class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50" 
+                                         style="display: none;">
+                                        <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                @click="open = false; showReportModal = true">
+                                            <i class="fas fa-flag mr-2"></i>Report User
+                                        </button>
+                                        <button class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                                hx-post="{% url 'block-user' profile_user.username %}"
+                                                hx-confirm="Are you sure you want to block this user?"
+                                                hx-target="#message-container"
+                                                hx-swap="innerHTML">
+                                            <i class="fas fa-ban mr-2"></i>Block User
+                                        </button>
+                                    </div>
+                                </div>
+                            {% else %}
+                                <button class="bg-gray-300 text-gray-500 px-4 py-2 rounded-lg cursor-not-allowed" disabled>
+                                    <i class="fas fa-ban mr-2"></i>Blocked
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Bio and Stats -->
+            <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="md:col-span-2">
+                    {% if profile_user.profile.bio %}
+                    <p class="text-gray-700">{{ profile_user.profile.bio }}</p>
+                    {% endif %}
+                    
+                    {% if profile_user.profile.website %}
+                    <p class="mt-2">
+                        <i class="fas fa-link text-gray-500 mr-2"></i>
+                        <a href="{{ profile_user.profile.website }}" target="_blank" class="text-indigo-600 hover:underline">
+                            {{ profile_user.profile.website }}
+                        </a>
+                    </p>
+                    {% endif %}
+                    
+                    <!-- Social Links -->
+                    <div class="mt-3 flex space-x-3">
+                        {% if profile_user.profile.facebook %}
+                        <a href="{{ profile_user.profile.facebook }}" target="_blank" class="text-gray-500 hover:text-blue-600">
+                            <i class="fab fa-facebook text-xl"></i>
+                        </a>
+                        {% endif %}
+                        {% if profile_user.profile.twitter %}
+                        <a href="{{ profile_user.profile.twitter }}" target="_blank" class="text-gray-500 hover:text-blue-400">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                        {% endif %}
+                        {% if profile_user.profile.instagram %}
+                        <a href="{{ profile_user.profile.instagram }}" target="_blank" class="text-gray-500 hover:text-pink-600">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                        {% endif %}
+                        {% if profile_user.profile.linkedin %}
+                        <a href="{{ profile_user.profile.linkedin }}" target="_blank" class="text-gray-500 hover:text-blue-700">
+                            <i class="fab fa-linkedin text-xl"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Stats -->
+                <div class="flex justify-around md:justify-end md:space-x-4">
+                    <div class="text-center">
+                        <span class="block font-bold text-xl text-gray-900">{{ profile_user.profile.posts_count }}</span>
+                        <span class="text-sm text-gray-500">Posts</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="block font-bold text-xl text-gray-900">{{ profile_user.profile.followers_count }}</span>
+                        <span class="text-sm text-gray-500">Followers</span>
+                    </div>
+                    <div class="text-center">
+                        <span class="block font-bold text-xl text-gray-900">{{ profile_user.profile.following_count }}</span>
+                        <span class="text-sm text-gray-500">Following</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Sidebar -->
+        <div class="lg:col-span-1">
+            <!-- About Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="font-semibold text-gray-800 mb-4">About</h3>
+                <div class="space-y-3 text-sm text-gray-600">
+                    {% if profile_user.profile.birth_date %}
+                    <p><i class="fas fa-birthday-cake w-5 text-gray-400 mr-2"></i>Born {{ profile_user.profile.birth_date|date:"F j, Y" }}</p>
+                    {% endif %}
+                    <p><i class="far fa-calendar-alt w-5 text-gray-400 mr-2"></i>Joined {{ profile_user.date_joined|date:"F Y" }}</p>
+                    <p><i class="far fa-clock w-5 text-gray-400 mr-2"></i>Last active {{ profile_user.profile.last_seen|naturaltime }}</p>
+                </div>
+            </div>
+            
+            <!-- Followers Card -->
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="font-semibold text-gray-800 mb-4 flex items-center justify-between">
+                    <span>Followers</span>
+                    <a href="#" class="text-xs text-indigo-600 hover:text-indigo-800">See All</a>
+                </h3>
+                <div class="grid grid-cols-3 gap-3">
+                    {% for follow in followers %}
+                    <a href="{% url 'profile' follow.follower.username %}" class="text-center group">
+                        <img src="{{ follow.follower.profile.profile_photo.url }}" 
+                             class="w-16 h-16 rounded-full mx-auto border-2 border-transparent group-hover:border-indigo-600 transition">
+                        <p class="text-xs mt-1 text-gray-600 truncate">{{ follow.follower.username }}</p>
+                    </a>
+                    {% empty %}
+                    <p class="text-sm text-gray-500 col-span-3">No followers yet</p>
+                    {% endfor %}
+                </div>
+            </div>
+            
+            <!-- Following Card -->
+            <div class="bg-white rounded-lg shadow-md p-6">
+                <h3 class="font-semibold text-gray-800 mb-4 flex items-center justify-between">
+                    <span>Following</span>
+                    <a href="#" class="text-xs text-indigo-600 hover:text-indigo-800">See All</a>
+                </h3>
+                <div class="grid grid-cols-3 gap-3">
+                    {% for follow in following %}
+                    <a href="{% url 'profile' follow.following.username %}" class="text-center group">
+                        <img src="{{ follow.following.profile.profile_photo.url }}" 
+                             class="w-16 h-16 rounded-full mx-auto border-2 border-transparent group-hover:border-indigo-600 transition">
+                        <p class="text-xs mt-1 text-gray-600 truncate">{{ follow.following.username }}</p>
+                    </a>
+                    {% empty %}
+                    <p class="text-sm text-gray-500 col-span-3">Not following anyone yet</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Column - Posts -->
+        <div class="lg:col-span-2">
+            <!-- Create Post (only for own profile) -->
+            {% if is_own_profile %}
+            <div class="bg-white rounded-lg shadow-md p-4 mb-6">
+                <form method="POST" action="{% url 'post-create' %}" enctype="multipart/form-data" class="space-y-4">
+                    {% csrf_token %}
+                    <div class="flex items-start space-x-3">
+                        <img src="{{ user.profile.profile_photo.url }}" class="w-10 h-10 rounded-full">
+                        <div class="flex-1">
+                            <textarea name="content" rows="2" 
+                                      class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
+                                      placeholder="What's on your mind?"></textarea>
+                            
+                            <div class="mt-3 flex items-center justify-between" x-data="{ showMedia: false }">
+                                <div class="flex space-x-2">
+                                    <button type="button" @click="showMedia = !showMedia" class="text-gray-500 hover:text-indigo-600">
+                                        <i class="fas fa-image text-xl"></i>
+                                    </button>
+                                    <button type="button" class="text-gray-500 hover:text-indigo-600">
+                                        <i class="fas fa-smile text-xl"></i>
+                                    </button>
+                                    <select name="privacy" class="text-sm border border-gray-300 rounded-lg px-2 py-1">
+                                        <option value="public">🌍 Public</option>
+                                        <option value="followers">👥 Followers</option>
+                                        <option value="private">🔒 Private</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-indigo-700">
+                                    Post
+                                </button>
+                            </div>
+                            
+                            <div x-show="showMedia" class="mt-3 p-3 border border-gray-200 rounded-lg" style="display: none;">
+                                <input type="file" name="image" accept="image/*" class="text-sm">
+                                <p class="text-xs text-gray-500 mt-1">Upload an image (max 10MB)</p>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            {% endif %}
+            
+            <!-- Posts -->
+            <div id="posts-container" class="space-y-4">
+                {% for post in posts %}
+                <div class="bg-white rounded-lg shadow-md p-4 post-card" data-post-id="{{ post.id }}">
+                    <div class="flex items-start space-x-3">
+                        <a href="{% url 'profile' post.user.username %}">
+                            <img src="{{ post.user.profile.profile_photo.url }}" class="w-10 h-10 rounded-full">
+                        </a>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <a href="{% url 'profile' post.user.username %}" class="font-semibold text-gray-800 hover:text-indigo-600">
+                                        {{ post.user.get_full_name|default:post.user.username }}
+                                    </a>
+                                    <span class="text-xs text-gray-500 ml-2">{{ post.created_at|naturaltime }}</span>
+                                    {% if post.privacy != 'public' %}
+                                    <span class="ml-2 text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600">
+                                        {% if post.privacy == 'followers' %}👥{% else %}🔒{% endif %}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                
+                                {% if is_own_profile %}
+                                <div class="relative" x-data="{ open: false }">
+                                    <button @click="open = !open" class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-ellipsis-h"></i>
+                                    </button>
+                                    <div x-show="open" @click.away="open = false" 
+                                         class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50" 
+                                         style="display: none;">
+                                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            <i class="fas fa-edit mr-2"></i>Edit
+                                        </a>
+                                        <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                            <i class="fas fa-chart-bar mr-2"></i>Analytics
+                                        </a>
+                                        <a href="#" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                                           hx-delete="{% url 'post-delete' post.id %}"
+                                           hx-confirm="Are you sure you want to delete this post?">
+                                            <i class="fas fa-trash mr-2"></i>Delete
+                                        </a>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                            
+                            <p class="mt-2 text-gray-700 whitespace-pre-wrap">{{ post.content }}</p>
+                            
+                            {% if post.image %}
+                            <div class="mt-3 rounded-lg overflow-hidden">
+                                <img src="{{ post.image.url }}" class="w-full max-h-96 object-cover">
+                            </div>
+                            {% endif %}
+                            
+                            <!-- Engagement Stats -->
+                            <div class="mt-4 flex items-center text-sm text-gray-500">
+                                <span>{{ post.likes_count }} likes</span>
+                                <span class="mx-2">•</span>
+                                <span>{{ post.comments_count }} comments</span>
+                            </div>
+                            
+                            <!-- Action Buttons -->
+                            <div class="mt-3 flex items-center space-x-4 border-t border-gray-100 pt-3">
+                                <button class="like-btn flex items-center space-x-2 text-gray-500 hover:text-red-600 transition"
+                                        data-post-id="{{ post.id }}">
+                                    <i class="fas fa-heart {% if post.is_liked %}text-red-600{% endif %}"></i>
+                                    <span class="likes-count text-sm">{{ post.likes_count }}</span>
+                                </button>
+                                
+                                <button class="comment-toggle flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition"
+                                        data-post-id="{{ post.id }}">
+                                    <i class="fas fa-comment"></i>
+                                    <span class="text-sm">{{ post.comments_count }}</span>
+                                </button>
+                                
+                                <button class="share-btn flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition">
+                                    <i class="fas fa-share"></i>
+                                    <span class="text-sm">Share</span>
+                                </button>
+                                
+                                <button class="save-btn flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition ml-auto"
+                                        data-post-id="{{ post.id }}">
+                                    <i class="fas fa-bookmark"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Comments Section (hidden by default) -->
+                            <div class="comments-section mt-4 hidden" id="comments-{{ post.id }}">
+                                {% for comment in post.comments.all %}
+                                <div class="flex items-start space-x-2 mb-2">
+                                    <img src="{{ comment.user.profile.profile_photo.url }}" class="w-6 h-6 rounded-full">
+                                    <div class="flex-1">
+                                        <div class="bg-gray-100 rounded-lg p-2">
+                                            <a href="{% url 'profile' comment.user.username %}" class="font-semibold text-sm text-gray-800">
+                                                {{ comment.user.username }}
+                                            </a>
+                                            <p class="text-sm text-gray-700">{{ comment.content }}</p>
+                                        </div>
+                                        <p class="text-xs text-gray-500 mt-1">{{ comment.created_at|naturaltime }}</p>
+                                    </div>
+                                </div>
+                                {% endfor %}
+                                
+                                <!-- Add Comment -->
+                                <form class="mt-3 flex items-start space-x-2 comment-form" 
+                                      hx-post="{% url 'post-comment' post.id %}"
+                                      hx-target="#comments-{{ post.id }}"
+                                      hx-swap="beforeend">
+                                    {% csrf_token %}
+                                    <img src="{{ user.profile.profile_photo.url }}" class="w-6 h-6 rounded-full">
+                                    <div class="flex-1">
+                                        <input type="text" name="content" placeholder="Write a comment..." 
+                                               class="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="bg-white rounded-lg shadow-md p-12 text-center">
+                    <i class="fas fa-camera text-5xl text-gray-300 mb-4"></i>
+                    <h3 class="text-xl font-semibold text-gray-700 mb-2">No Posts Yet</h3>
+                    <p class="text-gray-500">
+                        {% if is_own_profile %}
+                        Share your first post with your campus friends!
+                        {% else %}
+                        This user hasn't posted anything yet.
+                        {% endif %}
+                    </p>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <!-- Pagination -->
+            {% if posts.has_next %}
+            <div class="text-center mt-6">
+                <button hx-get="?posts_page={{ posts.next_page_number }}"
+                        hx-target="#posts-container"
+                        hx-swap="beforeend"
+                        class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">
+                    Load More
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Report User Modal -->
+<div id="report-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden" x-data="{ show: false }" x-show="show">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="bg-white rounded-lg max-w-md w-full p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Report User</h3>
+            <form hx-post="{% url 'report-user' profile_user.username %}" hx-target="#message-container">
+                {% csrf_token %}
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Reason for reporting</label>
+                    <select name="reason" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600">
+                        <option value="spam">Spam</option>
+                        <option value="harassment">Harassment</option>
+                        <option value="fake">Fake Account</option>
+                        <option value="inappropriate">Inappropriate Content</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Additional details (optional)</label>
+                    <textarea name="description" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600"></textarea>
+                </div>
+                <div class="flex justify-end space-x-2">
+                    <button type="button" @click="show = false" class="px-4 py-2 text-gray-600 hover:text-gray-800">Cancel</button>
+                    <button type="submit" class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Submit Report</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Follow/Unfollow functionality
+    document.querySelectorAll('.follow-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const username = this.dataset.username;
+            const action = this.dataset.action;
+            
+            fetch(`/follow/${username}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'followed') {
+                    this.innerHTML = '<i class="fas fa-user-check mr-2"></i>Following';
+                    this.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                    this.classList.add('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+                    this.dataset.action = 'unfollow';
+                } else {
+                    this.innerHTML = '<i class="fas fa-user-plus mr-2"></i>Follow';
+                    this.classList.remove('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+                    this.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
+                    this.dataset.action = 'follow';
+                }
+                
+                // Update follower count
+                document.querySelector('.follower-count').textContent = data.followers_count;
+            });
+        });
+    });
+    
+    // Like functionality
+    document.querySelectorAll('.like-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            const icon = this.querySelector('i');
+            const countSpan = this.querySelector('.likes-count');
+            
+            fetch(`/post/${postId}/like/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'liked') {
+                    icon.classList.add('text-red-600');
+                } else {
+                    icon.classList.remove('text-red-600');
+                }
+                countSpan.textContent = data.likes_count;
+            });
+        });
+    });
+    
+    // Toggle comments
+    document.querySelectorAll('.comment-toggle').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const postId = this.dataset.postId;
+            const commentsSection = document.getElementById(`comments-${postId}`);
+            commentsSection.classList.toggle('hidden');
+        });
+    });
+</script>
+{% endblock %}

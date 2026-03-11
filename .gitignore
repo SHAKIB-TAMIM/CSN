@@ -1,0 +1,105 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+static/
+*.pot
+*.pyc
+
+# Environment
+.env
+.env.local
+.env.production
+.env.staging
+
+# Database
+*.sql
+*.sqlite3
+*.sqlite3-journal
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+*.sublime-*
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+*.cover
+.coverage.lcov
+
+# Backups
+backups/
+*.bak
+*.backup
+
+# Docker
+*.pid
+docker-compose.override.yml
+
+# Celery
+celerybeat-schedule
+celerybeat.pid
+
+# Logs
+logs/
+*.log
+
+# Uploads
+uploads/
+media/
+media_files/
+
+# Virtual Environment
+venv/
+env/
+ENV/
+myenv/
+
+# Node modules (if using npm)
+node_modules/
+package-lock.json
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+
+# Secrets
+*.pem
+*.key
+*.crt
+
+# Cache files
+.cache/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# OS files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
