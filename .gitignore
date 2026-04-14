@@ -35,4 +35,6 @@ env/
 *.swp
 *.swo
 *~
-.DS_Store
+.DS_Storemyenv/
+*.pyc
+__pycache__/

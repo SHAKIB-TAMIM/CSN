@@ -6,11 +6,9 @@ from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.conf.urls.static import static
 from django.urls import path
-import debug_toolbar
 from core.views import CustomConfirmEmailView
 
 urlpatterns = [
-    path('__debug__/', include(debug_toolbar.urls)), 
     path('admin/', admin.site.urls),
     path('accounts/confirm-email/<str:key>/', CustomConfirmEmailView.as_view(), name='account_confirm_email'),
     path('', include('core.urls')),

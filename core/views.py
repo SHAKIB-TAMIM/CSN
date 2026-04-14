@@ -4,7 +4,7 @@ Modernized views using class-based views, mixins, and services.
 
 from datetime import timedelta
 from urllib import request
-
+import os
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
@@ -31,16 +31,17 @@ from django.utils import timezone
 from django.db import transaction
 from django.core.cache import cache
 import json
+import datetime
 from django.contrib.admin.models import LogEntry, ADDITION
 
 from .models import (
-    User, Profile, Post, Comment, Like, Follow, 
+    User, Profile, Post, Comment, Like, Follow,
     Notification, Message, Conversation, SavedPost,
     Share, Story, Block, Report
 )
 from .forms import (
-    UniversityRegistrationForm, EmailVerificationForm, CompleteProfileForm,         
-    UserUpdateForm, ProfileUpdateForm, PostForm, CommentForm,                 
+    UniversityRegistrationForm, EmailVerificationForm, CompleteProfileForm,
+    UserUpdateForm, ProfileUpdateForm, PostForm, CommentForm,
     MessageForm, StoryForm, ContactForm
 )
 
@@ -64,9 +65,20 @@ def welcome(request):
     if request.user.is_authenticated:
         return redirect('profile', username=request.user.username)
     else:
-        
+
         return redirect('index')
-    
+
+
+
+def is_blocked(user1, user2):
+    """Check if user1 has blocked user2 or vice versa"""
+    return Block.objects.filter(
+        Q(blocker=user1, blocked=user2) |
+        Q(blocker=user2, blocked=user1)
+    ).exists()
+
+
+
 
 class WelcomeView(TemplateView):
     """Welcome page with dynamic statistics"""
@@ -74,12 +86,12 @@ class WelcomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Get statistics for welcome page
         context['statistics'] = SiteStatistic.objects.filter(
             name__in=['active_users', 'daily_posts', 'total_campuses', 'active_community']
         ).order_by('order')
-        
+
         return context
 
 
@@ -89,24 +101,24 @@ class AboutView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Get all statistics
         context['statistics'] = SiteStatistic.objects.filter(is_active=True).order_by('order')
-        
+
         # Get team members
         context['team_members'] = TeamMember.objects.filter(is_active=True)
-        
+
         # Calculate additional stats
         from django.contrib.auth.models import User
         from core.models import Post
-        
+
         context['total_users'] = User.objects.filter(is_active=True).count()
         context['total_posts'] = Post.objects.count()
-        
+
         # Posts in last 7 days
         week_ago = timezone.now() - timedelta(days=7)
         context['recent_posts'] = Post.objects.filter(created_at__gte=week_ago).count()
-        
+
         return context
 
 
@@ -116,7 +128,7 @@ class ContactView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Get FAQs grouped by category
         faqs = FAQ.objects.filter(is_active=True)
         context['faq_categories'] = {}
@@ -124,7 +136,7 @@ class ContactView(LoginRequiredMixin, TemplateView):
             if faq.category not in context['faq_categories']:
                 context['faq_categories'][faq.category] = []
             context['faq_categories'][faq.category].append(faq)
-        
+
         return context
 
     def post(self, request, *args, **kwargs):
@@ -133,17 +145,17 @@ class ContactView(LoginRequiredMixin, TemplateView):
         email = request.user.email  # Use logged-in user's email, not from form
         subject = request.POST.get('subject')
         message = request.POST.get('message')
-        
+
         # Validate required fields
         if not all([subject, message]):
             messages.error(request, "Please fill in all required fields.")
             return redirect('contact')
-        
+
         # Validate that user has an email
         if not email:
             messages.error(request, "Your account doesn't have an email address. Please update your profile first.")
             return redirect('profile-edit')
-        
+
         # Save to database
         contact_message = ContactMessage.objects.create(
             name=name,
@@ -154,16 +166,16 @@ class ContactView(LoginRequiredMixin, TemplateView):
             ip_address=self.get_client_ip(request),
             user_agent=request.META.get('HTTP_USER_AGENT', '')
         )
-        
+
         try:
             # Send email to admin
             self.send_admin_notification(contact_message)
-            
+
             # Send auto-reply to user
             self.send_user_autoreply(contact_message)
-            
+
             messages.success(
-                request, 
+                request,
                 f"Thank you {name}! Your message has been sent. We'll get back to you within 24 hours."
             )
         except Exception as e:
@@ -173,9 +185,9 @@ class ContactView(LoginRequiredMixin, TemplateView):
                 request,
                 "Your message has been received but there was an issue with email notification. Our team will still respond to your query."
             )
-        
+
         return redirect('contact')
-    
+
     def get_client_ip(self, request):
         x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
@@ -183,18 +195,18 @@ class ContactView(LoginRequiredMixin, TemplateView):
         else:
             ip = request.META.get('REMOTE_ADDR')
         return ip
-    
+
     def send_admin_notification(self, contact_message):
         """Send email notification to admin"""
         subject = f"New Contact Form Message: {contact_message.subject}"
-        
+
         # HTML email content
         html_content = render_to_string('emails/admin_notification.html', {
             'message': contact_message,
             'site_url': settings.SITE_URL,
         })
         text_content = strip_tags(html_content)
-        
+
         # Send email
         email = EmailMultiAlternatives(
             subject,
@@ -205,18 +217,18 @@ class ContactView(LoginRequiredMixin, TemplateView):
         )
         email.attach_alternative(html_content, "text/html")
         email.send()
-    
+
     def send_user_autoreply(self, contact_message):
         """Send auto-reply to user"""
         subject = f"Thank you for contacting Campus Network"
-        
+
         # HTML email content
         html_content = render_to_string('emails/user_autoreply.html', {
             'message': contact_message,
             'site_url': settings.SITE_URL,
         })
         text_content = strip_tags(html_content)
-        
+
         # Send email
         email = EmailMultiAlternatives(
             subject,
@@ -244,12 +256,12 @@ class HomeView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Clear messages for anonymous users on login page
         if not self.request.user.is_authenticated:
             storage = messages.get_messages(self.request)
             storage.used = True
-            
+
         if self.request.user.is_authenticated:
             context['feed'] = FeedService.get_feed_queryset(self.request.user)
         return context
@@ -257,53 +269,53 @@ class HomeView(TemplateView):
     def post(self, request, *args, **kwargs):
         username = request.POST.get('username')
         password = request.POST.get('password')
-        
+
         user = authenticate(request, username=username, password=password)
-        
+
         if user is not None:
             print(f"✅ Authentication successful for {user.username}")
-            
+
             # 🔴 IMPORTANT: Log the user in FIRST
             login(request, user)
             print(f"✅ Login successful, user: {request.user.username}")
             print(f"Authenticated: {request.user.is_authenticated}")
-            
+
             # Check if profile exists
             try:
                 profile = user.profile
             except:
                 from core.models import Profile
                 profile = Profile.objects.create(user=user)
-            
+
             # Check email verification
             from allauth.account.models import EmailAddress
             email_address = EmailAddress.objects.filter(user=user, verified=True).first()
-            
+
             if not email_address:
                 # Send new verification email
                 from allauth.account.utils import send_email_confirmation
                 send_email_confirmation(request, user)
-                
+
                 messages.info(request, "Please verify your email first. We've sent a verification link to your inbox.")
                 return redirect('/accounts/confirm-email/')
-            
+
             # Check if profile is complete
             profile_complete = bool(profile.bio and profile.department and profile.batch and profile.student_id)
-            
+
             if not profile_complete:
                 request.session['profile_completion_user_id'] = user.id
                 messages.warning(request, "Please complete your profile information.")
                 return redirect('complete-profile')
-            
+
             # Update online status
             user.profile.is_online = True
             user.profile.last_seen = timezone.now()
             user.profile.save(update_fields=['is_online', 'last_seen'])
-            
+
             # Clear any old messages
             storage = messages.get_messages(request)
             storage.used = True
-            
+
             messages.success(request, f"Welcome back, {user.username}!")
             next_url = request.GET.get('next', 'feed')
             return redirect(next_url)
@@ -314,40 +326,40 @@ class HomeView(TemplateView):
 
 class CustomConfirmEmailView(ConfirmEmailView):
     """Custom email confirmation view that redirects to complete-profile after verification"""
-    
+
     def get(self, *args, **kwargs):
         try:
             self.object = self.get_object()
-            
+
             # Check if already verified
             if self.object.email_address.verified:
                 messages.info(self.request, "Your email has already been verified. Please login.")
                 return redirect('index')
-            
+
             # Confirm the email
             self.object.confirm(self.request)
-            
+
             # Get the user
             user = self.object.email_address.user
-            
+
             # Auto-login the user
             from django.contrib.auth import login
             login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
-            
+
             # Update online status
             user.profile.is_online = True
             user.profile.last_seen = timezone.now()
             user.profile.save(update_fields=['is_online', 'last_seen'])
-            
+
             messages.success(self.request, f"Email verified successfully! Welcome {user.username}!")
-            
+
             # Check if profile is complete
             if not user.profile.bio or not user.profile.department or not user.profile.batch:
                 messages.info(self.request, "Please complete your profile information to continue.")
                 return redirect('complete-profile')
-            
+
             return redirect('feed')
-            
+
         except Exception as e:
             messages.error(self.request, f"Email verification failed: {str(e)}")
             return redirect('index')
@@ -364,13 +376,13 @@ class RegisterView(FormView):
         user = form.save(commit=False)
         user.is_active = False  # Deactivate until email verification
         user.save()
-        
+
         # Generate and save OTP
         otp = generate_otp()
         user.profile.email_verification_otp = otp
         user.profile.email_verification_sent_at = timezone.now()
         user.profile.save()
-        
+
         # Send OTP email
         try:
             send_otp_email(user, otp)
@@ -383,51 +395,51 @@ class RegisterView(FormView):
                 self.request,
                 "Account created but OTP email could not be sent. Please request a new OTP."
             )
-        
+
         # Store user ID in session for verification
         self.request.session['verification_user_id'] = user.id
-        
+
         return super().form_valid(form)
 
 
 class CustomConfirmEmailView(ConfirmEmailView):
     """Custom email confirmation view that redirects to feed after verification"""
-    
+
     def get(self, *args, **kwargs):
         try:
             self.object = self.get_object()
             if self.object.email_address.verified:
                 messages.success(self.request, "Your email has already been verified. Please login.")
                 return redirect('index')
-            
+
             # Confirm the email
             self.object.confirm(self.request)
-            
+
             # Get the user
             user = self.object.email_address.user
-            
+
             # Auto-login the user
             from django.contrib.auth import login
             login(self.request, user, backend='django.contrib.auth.backends.ModelBackend')
-            
+
             # Update online status
             user.profile.is_online = True
             user.profile.last_seen = timezone.now()
             user.profile.save(update_fields=['is_online', 'last_seen'])
-            
+
             messages.success(self.request, f"Email verified successfully! Welcome {user.username}!")
-            
+
             # Check if profile is complete
             if not user.profile.bio or not user.profile.department:
                 messages.info(self.request, "Please complete your profile information.")
                 return redirect('profile-edit')
-            
+
             return redirect('feed')
-            
+
         except Exception as e:
             messages.error(self.request, "Email verification failed. Please try again.")
             return redirect('index')
-        
+
 
 class VerifyEmailView(TemplateView):
     """Step 2: Verify email with OTP"""
@@ -440,30 +452,30 @@ class VerifyEmailView(TemplateView):
 
     def post(self, request, *args, **kwargs):
         form = EmailVerificationForm(request.POST)
-        
+
         if form.is_valid():
             otp = form.cleaned_data['otp']
             user_id = request.session.get('verification_user_id')
-            
+
             if not user_id:
                 messages.error(request, "Session expired. Please register again.")
                 return redirect('register')
-            
+
             try:
                 user = User.objects.get(id=user_id)
                 profile = user.profile
-                
+
                 # Check if OTP matches and is valid
                 if profile.email_verification_otp == otp and is_otp_valid(profile.email_verification_sent_at):
                     # Mark email as verified
                     profile.email_verified = True
                     profile.email_verification_otp = None
                     profile.save()
-                    
+
                     # Activate user
                     user.is_active = True
                     user.save()
-                    
+
                     messages.success(request, "Email verified successfully! Now complete your profile.")
                     request.session['profile_completion_user_id'] = user.id
                     return redirect('complete-profile')
@@ -472,7 +484,7 @@ class VerifyEmailView(TemplateView):
             except User.DoesNotExist:
                 messages.error(request, "User not found. Please register again.")
                 return redirect('register')
-        
+
         return self.render_to_response(self.get_context_data(form=form))
 
 def verify_email_redirect(request):
@@ -485,31 +497,31 @@ def email_verification_sent(request):
 
 class ResendOTPView(View):
     """Resend OTP to user"""
-    
+
     def post(self, request):
         user_id = request.session.get('verification_user_id')
-        
+
         if not user_id:
             messages.error(request, "Session expired. Please register again.")
             return redirect('register')
-        
+
         try:
             user = User.objects.get(id=user_id)
-            
+
             # Generate new OTP
             otp = generate_otp()
             user.profile.email_verification_otp = otp
             user.profile.email_verification_sent_at = timezone.now()
             user.profile.save()
-            
+
             # Send new OTP
             send_otp_email(user, otp)
-            
+
             messages.success(request, "New OTP has been sent to your email.")
         except User.DoesNotExist:
             messages.error(request, "User not found.")
             return redirect('register')
-        
+
         return redirect('verify-email')
 
 
@@ -526,14 +538,14 @@ class CompleteProfileView(LoginRequiredMixin, FormView):
         print(f"User: {request.user}")
         print(f"Authenticated: {request.user.is_authenticated}")
         print(f"Session: {request.session.items()}")
-        
+
         # First check if user is authenticated
         if not request.user.is_authenticated:
             print("❌ User not authenticated - redirecting to login")
             return self.handle_no_permission()
-        
+
         print("✅ User is authenticated")
-        
+
         try:
             profile = request.user.profile
             print(f"Profile exists: Yes")
@@ -542,47 +554,47 @@ class CompleteProfileView(LoginRequiredMixin, FormView):
             print(f"Department: {profile.department}")
             print(f"Batch: {profile.batch}")
             print(f"Student ID: {profile.student_id}")
-            
+
             # Check if profile is already complete
             if profile.profile_completed:
                 print("✅ Profile already complete - redirecting to feed")
                 return redirect('feed')
-            
+
             # Check if they have all required fields
             if profile.bio and profile.department and profile.batch and profile.student_id:
                 print("✅ All fields present but flag false - fixing and redirecting")
                 profile.profile_completed = True
                 profile.save(update_fields=['profile_completed'])
                 return redirect('feed')
-            
+
             print("❌ Profile incomplete - showing form")
-            
+
         except Exception as e:
             print(f"❌ Error accessing profile: {e}")
-        
+
         return super().dispatch(request, *args, **kwargs)
-    
+
     def get_context_data(self, **kwargs):
         """Add departments to the template context"""
         context = super().get_context_data(**kwargs)
-        
+
         # Import Department model
         from .models import Department
-        
+
         # Get all active departments ordered by name
         context['departments'] = Department.objects.filter(is_active=True).order_by('name')
-        
+
         # Debug print to check if departments are found
         print(f"✅ Found {context['departments'].count()} departments")
         for dept in context['departments']:
             print(f"   - {dept.name} ({dept.code})")
-        
+
         return context
 
     def form_valid(self, form):
         """Process the valid form"""
         user = self.request.user
-        
+
         # Update profile with form data
         profile = user.profile
         profile.bio = form.cleaned_data['bio']
@@ -592,14 +604,14 @@ class CompleteProfileView(LoginRequiredMixin, FormView):
         profile.location = form.cleaned_data.get('location', '')
         profile.profile_completed = True
         profile.save()
-        
+
         # Ensure user is active
         if not user.is_active:
             user.is_active = True
             user.save()
-        
+
         messages.success(self.request, 'Profile completed successfully! Welcome to Campus Network!')
-        
+
         return super().form_valid(form)
 
 class LogoutView(View):
@@ -610,45 +622,111 @@ class LogoutView(View):
             request.user.profile.is_online = False
             request.user.profile.last_seen = timezone.now()
             request.user.profile.save(update_fields=['is_online', 'last_seen'])
-            
+
             logout(request)
             messages.success(request, 'You have been logged out successfully.')
-        
+
         return redirect('index')
 
 
 class FeedView(LoginRequiredMixin, TemplateView):
-    """Main feed showing posts from followed users"""
     template_name = 'core/feed.html'
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+
         context['comment_form'] = CommentForm()
         context['post_form'] = PostForm()
-        
-        # Get user's own active story (if any)
+
         from .models import Story
         from django.utils import timezone
-        
-        user_story = Story.objects.filter(
+
+        # Current user's active story
+        context['user_story'] = Story.objects.filter(
             user=self.request.user,
             expires_at__gt=timezone.now()
         ).first()
-        context['user_story'] = user_story
-        
-        # Get stories from followed users
+
+        # Stories
         context['stories'] = FeedService.get_stories(self.request.user)
-        
-        # Get all stories (including user's own) for display in the template
-        following = self.request.user.following.values_list('following', flat=True)
-        all_stories = Story.objects.filter(
-            user_id__in=list(following) + [self.request.user.id],
+
+        following_ids = self.request.user.following.values_list(
+            'following_id',
+            flat=True
+        )
+
+        context['all_stories'] = Story.objects.filter(
+            user_id__in=list(following_ids) + [self.request.user.id],
             expires_at__gt=timezone.now()
-        ).select_related('user__profile').order_by('-created_at')
-        context['all_stories'] = all_stories
-        
-        context['suggested_users'] = UserService.get_suggested_users(self.request.user)[:5]
+        ).select_related(
+            'user',
+            'user__profile'
+        ).order_by('-created_at')
+
+        context['suggested_users'] = UserService.get_suggested_users(
+            self.request.user
+        )[:5]
+
+        context['saved_post_ids'] = set(
+            SavedPost.objects.filter(
+                user=self.request.user
+            ).values_list('post_id', flat=True)
+        )
+
+        # Initial feed posts for first page render
+        context['initial_posts'] = FeedService.get_feed_queryset(
+            self.request.user
+        ).select_related(
+            'user',
+            'user__profile'
+        ).prefetch_related(
+            'comments',
+            'likes'
+        )[:10]
+
         return context
+
+
+class DiscoverUsersView(LoginRequiredMixin, ListView):
+    """Discover new users to follow"""
+    template_name = 'core/discover_users.html'
+    context_object_name = 'users'
+    paginate_by = 20
+
+    def get_queryset(self):
+        # Get users that the current user is not following and not blocked
+        following_ids = Follow.objects.filter(
+            follower=self.request.user
+        ).values_list('following_id', flat=True)
+
+        # Get blocked user IDs (both directions)
+        blocked_by_me = Block.objects.filter(
+            blocker=self.request.user
+        ).values_list('blocked_id', flat=True)
+
+        blocked_me = Block.objects.filter(
+            blocked=self.request.user
+        ).values_list('blocker_id', flat=True)
+
+        excluded_ids = set(list(following_ids) + list(blocked_by_me) + list(blocked_me) + [self.request.user.id])
+
+        # Get users who are not excluded
+        users = User.objects.filter(
+            is_active=True,
+            is_staff=False,
+            is_superuser=False
+        ).exclude(
+            id__in=excluded_ids
+        ).select_related('profile').order_by('-profile__followers_count')
+
+        return users
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['title'] = 'Discover People'
+        context['description'] = 'Find and connect with new people'
+        return context
+
 
 
 class ProfileView(LoginRequiredMixin, DetailView):
@@ -664,50 +742,66 @@ class ProfileView(LoginRequiredMixin, DetailView):
         user = self.get_object()
         current_user = self.request.user
 
+        # Get user story
         user_story = Story.objects.filter(
             user=user,
             expires_at__gt=timezone.now()
         ).first()
         context['user_story'] = user_story
-        
+
         # Check if viewing own profile
         context['is_own_profile'] = (user == current_user)
-        
-        # Get follow status
-        context['is_following'] = Follow.objects.filter(
-            follower=current_user, following=user
-        ).exists()
-        
-        # Check if blocked
-        context['is_blocked'] = Block.objects.filter(
+
+        # Check if blocked (either direction)
+        is_blocked = Block.objects.filter(
             Q(blocker=current_user, blocked=user) |
             Q(blocker=user, blocked=current_user)
         ).exists()
-        
+        context['is_blocked'] = is_blocked
+
+        # Check if current user has blocked the profile user
+        context['has_blocked'] = Block.objects.filter(
+            blocker=current_user, blocked=user
+        ).exists()
+
+        # Get follow status (only if not blocked and not own profile)
+        context['is_following'] = False
+        if not is_blocked and not context['is_own_profile']:
+            context['is_following'] = Follow.objects.filter(
+                follower=current_user, following=user
+            ).exists()
+
+        # Add forms for own profile
         if context['is_own_profile']:
             context['user_form'] = UserUpdateForm(instance=user)
             context['profile_form'] = ProfileUpdateForm(instance=user.profile)
             context['post_form'] = PostForm()
-        
+
         # Get user's posts with pagination
         posts = user.posts.select_related('user__profile').prefetch_related(
             'comments__user__profile',
             'likes',
             'comments__comment_likes'
         ).all()
-        
+
         context['posts'] = paginate_queryset(
             self.request, posts, per_page=5,
             param_name='posts_page'
         )
-        
+
         # Get followers and following
         context['followers'] = user.followers.select_related('follower__profile')[:10]
         context['following'] = user.following.select_related('following__profile')[:10]
-        
+
         context['comment_form'] = CommentForm()
-        
+
+        # Add saved post IDs for the current user
+        context['saved_post_ids'] = SavedPost.objects.filter(
+            user=self.request.user
+        ).values_list('post_id', flat=True)
+
         return context
+
 
 
 class ProfileUpdateView(LoginRequiredMixin, UpdateView):
@@ -721,33 +815,33 @@ class ProfileUpdateView(LoginRequiredMixin, UpdateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Always add profile_form if not present
         if 'profile_form' not in context:
             context['profile_form'] = ProfileUpdateForm(instance=self.request.user.profile)
         context['departments'] = Department.objects.filter(is_active=True).order_by('name')
-        
+
         return context
 
     def post(self, request, *args, **kwargs):
         self.object = self.get_object()
         user_form = UserUpdateForm(request.POST, instance=request.user)
         profile_form = ProfileUpdateForm(
-            request.POST, 
-            request.FILES, 
+            request.POST,
+            request.FILES,
             instance=request.user.profile
         )
-        
+
         if user_form.is_valid() and profile_form.is_valid():
             with transaction.atomic():
                 user_form.save()
                 profile_form.save()
-            
+
             messages.success(request, 'Your profile has been updated!')
             return redirect('profile', username=request.user.username)
-        
+
         messages.error(request, 'Please correct the errors below.')
-        
+
         # Create context with both forms and departments
         context = self.get_context_data(
             form=user_form,
@@ -767,7 +861,7 @@ class PostCreateView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user
-        
+
         # Handle file uploads
         if 'image' in self.request.FILES:
             form.instance.image = self.request.FILES['image']
@@ -775,20 +869,20 @@ class PostCreateView(LoginRequiredMixin, CreateView):
             form.instance.video = self.request.FILES['video']
         elif 'document' in self.request.FILES:
             form.instance.document = self.request.FILES['document']
-        
+
         # Save the post
         response = super().form_valid(form)
-        
+
         # Update user's post count
         self.request.user.profile.posts_count = self.request.user.posts.count()
         self.request.user.profile.save(update_fields=['posts_count'])
-        
+
         messages.success(self.request, 'Post created successfully!')
-        
+
         # Check if it's an HTMX request (for infinite scroll/feed)
         if self.request.headers.get('HX-Request'):
             return render(self.request, 'core/includes/post.html', {'post': self.object})
-        
+
         return response
 
     def form_invalid(self, form):
@@ -827,15 +921,15 @@ class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     """Delete a post (only by author or admin)"""
     model = Post
     template_name = 'core/post_confirm_delete.html'
-    
+
     def test_func(self):
         post = self.get_object()
         return self.request.user == post.user or self.request.user.is_staff
-    
+
     def get_success_url(self):
         messages.success(self.request, 'Post deleted successfully!')
         return reverse('profile', args=[self.request.user.username])
-    
+
     def delete(self, request, *args, **kwargs):
         post = self.get_object()
         response = super().delete(request, *args, **kwargs)
@@ -849,16 +943,16 @@ class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     model = Post
     template_name = 'core/post_form.html'
     fields = ['content', 'image', 'video', 'privacy']
-    
+
     def test_func(self):
         post = self.get_object()
         return self.request.user == post.user or self.request.user.is_staff
-    
+
     def form_valid(self, form):
         form.instance.is_edited = True
         messages.success(self.request, 'Post updated successfully!')
         return super().form_valid(form)
-    
+
     def get_success_url(self):
         return reverse('profile', args=[self.request.user.username])
 
@@ -876,7 +970,25 @@ class SavedPostsView(LoginRequiredMixin, ListView):
         ).select_related(
             'post__user__profile'
         ).order_by('-created_at')
-    
+
+@login_required
+@require_POST
+def save_post(request, pk):
+    """Save a post"""
+    try:
+        post = get_object_or_404(Post, id=pk)
+        saved_post, created = SavedPost.objects.get_or_create(
+            user=request.user,
+            post=post
+        )
+        if created:
+            return JsonResponse({'success': True, 'saved': True})
+        else:
+            saved_post.delete()
+            return JsonResponse({'success': True, 'saved': False})
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)})
+
 
 @require_POST
 @login_required
@@ -892,29 +1004,29 @@ def unsave_post(request, pk):
         return JsonResponse({'success': False, 'error': str(e)})
 
 
-        
+
 @method_decorator(require_POST, name='dispatch')
 class FollowToggleView(LoginRequiredMixin, View):
     """Toggle follow/unfollow"""
-    
+
     def post(self, request, username):
         user_to_follow = get_object_or_404(User, username=username)
-        
+
         if request.user == user_to_follow:
             return JsonResponse({'error': 'You cannot follow yourself'}, status=400)
-        
+
         # Check if blocked
         if Block.objects.filter(
             Q(blocker=request.user, blocked=user_to_follow) |
             Q(blocker=user_to_follow, blocked=request.user)
         ).exists():
             return JsonResponse({'error': 'Cannot follow this user'}, status=400)
-        
+
         follow, created = Follow.objects.get_or_create(
             follower=request.user,
             following=user_to_follow
         )
-        
+
         if created:
             # Create notification
             NotificationService.create_follow_notification(
@@ -925,34 +1037,34 @@ class FollowToggleView(LoginRequiredMixin, View):
         else:
             follow.delete()
             status = 'unfollowed'
-        
+
         # Update counts
         request.user.profile.update_counts()
         user_to_follow.profile.update_counts()
-        
+
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
                 'status': status,
                 'followers_count': user_to_follow.profile.followers_count
             })
-        
+
         return redirect('profile', username=username)
 
 
 class ReportUserView(LoginRequiredMixin, View):
     """Report a user – sends notification to all admins"""
-    
+
     def post(self, request, username):
         from django.contrib.auth import get_user_model
         from .models import Notification, Report
         from django.db.models import Q
         User = get_user_model()
-        
+
         try:
             reported_user = User.objects.get(username=username)
         except User.DoesNotExist:
             return HttpResponse('<div class="p-3 bg-red-100 text-red-800 rounded-lg">User not found.</div>')
-        
+
         if request.user == reported_user:
             return HttpResponse('<div class="p-3 bg-red-100 text-red-800 rounded-lg">You cannot report yourself.</div>')
 
@@ -970,7 +1082,7 @@ class ReportUserView(LoginRequiredMixin, View):
 
         # Get admin users
         admin_users = User.objects.filter(Q(is_superuser=True) | Q(is_staff=True))
-        
+
         # Send notifications
         for admin in admin_users:
             Notification.objects.create(
@@ -988,7 +1100,7 @@ class ReportUserView(LoginRequiredMixin, View):
                 Report submitted successfully. Admin has been notified.
             </div>
         ''')
-    
+
 
 def report_post(request):
     if request.method == 'POST' and request.user.is_authenticated:
@@ -997,11 +1109,11 @@ def report_post(request):
         post_id = data.get('post_id')
         reason = data.get('reason')
         description = data.get('description', '')
-        
+
         # Create notification for admin
         from .models import Notification
         from django.contrib.auth.models import User
-        
+
         admins = User.objects.filter(is_staff=True)
         for admin in admins:
             Notification.objects.create(
@@ -1011,126 +1123,86 @@ def report_post(request):
                 text=f'Post #{post_id} reported for: {reason}',
                 url=f'/admin/core/post/{post_id}/change/'
             )
-        
+
         return JsonResponse({'success': True})
     return JsonResponse({'success': False}, status=400)
 
 
 class DeleteAccountView(LoginRequiredMixin, View):
-    """View for deleting user account and all associated data"""
-    
     def post(self, request):
         password = request.POST.get('password')
         user = request.user
-        
-        # Verify password
-        if not authenticate(username=user.username, password=password):
+
+        # Verify password using check_password directly
+        from django.contrib.auth.hashers import check_password
+
+        if not check_password(password, user.password):
             messages.error(request, "Invalid password. Account not deleted.")
             return redirect('profile-edit')
-        
-        # Store username for message
+
         username = user.username
-        user_id = user.id
-        
+
         try:
-            # Log the deletion attempt
-            print(f"Starting deletion process for user: {username} (ID: {user_id})")
-            
-            # Delete all user's notifications (as recipient or actor)
-            Notification.objects.filter(recipient=user).delete()
-            Notification.objects.filter(actor=user).delete()
-            
-            # Delete all user's messages and conversations
-            # Get all conversations involving this user
-            conversations = Conversation.objects.filter(participants=user)
-            for conv in conversations:
-                # Delete messages in this conversation
-                Message.objects.filter(conversation=conv).delete()
-            # Delete the conversations
-            conversations.delete()
-            
-            # Delete all user's messages (as sender or recipient)
-            Message.objects.filter(sender=user).delete()
-            Message.objects.filter(recipient=user).delete()
-            
-            # Delete all user's posts, likes, comments
-            Post.objects.filter(user=user).delete()
-            Like.objects.filter(user=user).delete()
-            Comment.objects.filter(user=user).delete()
-            
-            # Delete all user's stories
-            Story.objects.filter(user=user).delete()
-            
-            # Delete all user's follows (as follower or following)
-            Follow.objects.filter(follower=user).delete()
-            Follow.objects.filter(following=user).delete()
-            
-            # Delete all user's saved posts
-            SavedPost.objects.filter(user=user).delete()
-            
-            # Delete all user's blocks
-            Block.objects.filter(blocker=user).delete()
-            Block.objects.filter(blocked=user).delete()
-            
-            # Delete all user's reports
-            Report.objects.filter(reporter=user).delete()
-            Report.objects.filter(reported_user=user).delete()
-            
-            # Delete all user's announcement-related data
-            
-            # Delete announcements created by user
-            Announcement.objects.filter(author=user).delete()
-            
-            # Delete user's announcement comments
-            AnnouncementComment.objects.filter(user=user).delete()
-            
-            # Delete user's announcement likes
-            AnnouncementLike.objects.filter(user=user).delete()
-            
-            # Delete user's announcement views
-            AnnouncementView.objects.filter(user=user).delete()
-            
-            # Delete user's announcement permissions
-            AnnouncementAuthorPermission.objects.filter(user=user).delete()
-            
-            # Delete user's profile
-            if hasattr(user, 'profile'):
-                user.profile.delete()
-            
-            # Finally, delete the user
-            user.delete()
-            
-            # Logout the user
-            logout(request)
-            
-            messages.success(request, f"Account '{username}' and all associated data has been permanently deleted.")
-            print(f"Successfully deleted user: {username} and all associated data")
-            
+            with transaction.atomic():
+                # Delete all related data
+                Notification.objects.filter(recipient=user).delete()
+                Notification.objects.filter(actor=user).delete()
+                Message.objects.filter(sender=user).delete()
+                Message.objects.filter(recipient=user).delete()
+                Conversation.objects.filter(participants=user).delete()
+                Post.objects.filter(user=user).delete()
+                Like.objects.filter(user=user).delete()
+                Comment.objects.filter(user=user).delete()
+                Story.objects.filter(user=user).delete()
+                Follow.objects.filter(follower=user).delete()
+                Follow.objects.filter(following=user).delete()
+                SavedPost.objects.filter(user=user).delete()
+                Block.objects.filter(blocker=user).delete()
+                Block.objects.filter(blocked=user).delete()
+                Report.objects.filter(reporter=user).delete()
+                Report.objects.filter(reported_user=user).delete()
+                Announcement.objects.filter(author=user).delete()
+                AnnouncementComment.objects.filter(user=user).delete()
+                AnnouncementLike.objects.filter(user=user).delete()
+                AnnouncementView.objects.filter(user=user).delete()
+                AnnouncementAuthorPermission.objects.filter(user=user).delete()
+
+                if hasattr(user, 'profile'):
+                    user.profile.delete()
+
+                # Logout and delete user
+                logout(request)
+                user.delete()
+
+            messages.success(request, f"Account '{username}' has been permanently deleted.")
+            return redirect('index')
+
         except Exception as e:
-            print(f"Error deleting account: {str(e)}")
-            messages.error(request, f"Error deleting account: {str(e)}")
+            print(f"DELETE ERROR: {e}")
+            messages.error(request, f"Delete failed: {str(e)}")
             return redirect('profile-edit')
-        
-        return redirect('index')
+
+
+
 
 
 class DeleteAccountConfirmView(LoginRequiredMixin, TemplateView):
     """Confirmation page before deleting account"""
     template_name = 'core/delete_account_confirm.html'
-    
-               
+
+
 @method_decorator(require_POST, name='dispatch')
 class LikeToggleView(LoginRequiredMixin, View):
     """Toggle like/unlike on post"""
-    
+
     def post(self, request, post_id):
         post = get_object_or_404(Post, id=post_id)
-        
+
         like, created = Like.objects.get_or_create(
             user=request.user,
             post=post
         )
-        
+
         if created:
             # Don't manually update count here - let the signal handle it
             # Create notification (if not own post)
@@ -1145,16 +1217,16 @@ class LikeToggleView(LoginRequiredMixin, View):
             like.delete()
             # Don't manually update count here - let the signal handle it
             status = 'unliked'
-        
+
         # Get updated post with correct count
         post.refresh_from_db()
-        
+
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
                 'status': status,
                 'likes_count': post.likes_count
             })
-        
+
         return redirect('post-detail', post_id=post.id)
 
 class CommentCreateView(LoginRequiredMixin, CreateView):
@@ -1167,12 +1239,12 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
         post = get_object_or_404(Post, id=self.kwargs.get('post_id'))
         form.instance.user = self.request.user
         form.instance.post = post
-        
+
         # Save the comment FIRST
         self.object = form.save()
-        
+
         messages.success(self.request, 'Comment added successfully!')
-        
+
         # Create notification AFTER comment is saved
         if post.user != self.request.user:
             NotificationService.create_comment_notification(
@@ -1181,11 +1253,11 @@ class CommentCreateView(LoginRequiredMixin, CreateView):
                 post=post,
                 comment=self.object  # Now this exists
             )
-        
+
         # Check if it's an HTMX request
         if self.request.headers.get('HX-Request'):
             return render(self.request, 'core/includes/comment.html', {'comment': self.object})
-        
+
         return redirect('post-detail', pk=post.id)
 
     def form_invalid(self, form):
@@ -1198,16 +1270,16 @@ class CommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
     template_name = 'core/comment_form.html'
     fields = ['content']
     pk_url_kwarg = 'pk'
-    
+
     def test_func(self):
         comment = self.get_object()
         return self.request.user == comment.user or self.request.user.is_staff
-    
+
     def form_valid(self, form):
         form.instance.is_edited = True
         messages.success(self.request, 'Comment updated successfully!')
         return super().form_valid(form)
-    
+
     def get_success_url(self):
         return reverse('post-detail', args=[self.object.post.id])
 
@@ -1216,29 +1288,38 @@ class CommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     model = Comment
     template_name = 'core/comment_confirm_delete.html'
     pk_url_kwarg = 'pk'
-    
+
     def test_func(self):
         comment = self.get_object()
         return self.request.user == comment.user or self.request.user.is_staff
-    
+
     def get_success_url(self):
         messages.success(self.request, 'Comment deleted successfully!')
         return reverse('post-detail', args=[self.object.post.id])
-    
+
 
 class SearchView(LoginRequiredMixin, ListView):
-    """Search for users and posts"""
+    """Search for users and posts - excludes blocked users"""
     template_name = 'core/search.html'
     context_object_name = 'results'
     paginate_by = 20
 
     def get_queryset(self):
         query = self.request.GET.get('q', '').strip()
-        
+
         if not query:
             return User.objects.none()
-        
-        # Search users (case-insensitive)
+
+        # Get users that the current user has blocked
+        blocked_by_me = Block.objects.filter(blocker=self.request.user).values_list('blocked_id', flat=True)
+
+        # Get users that have blocked the current user
+        blocked_me = Block.objects.filter(blocked=self.request.user).values_list('blocker_id', flat=True)
+
+        # Exclude blocked users from both sides
+        excluded_users = set(list(blocked_by_me) + list(blocked_me))
+
+        # Search users (case-insensitive), excluding blocked users
         users = User.objects.filter(
             Q(username__icontains=query) |
             Q(email__icontains=query) |
@@ -1246,11 +1327,15 @@ class SearchView(LoginRequiredMixin, ListView):
             Q(last_name__icontains=query) |
             Q(profile__bio__icontains=query)
         ).exclude(
+            id__in=excluded_users
+        ).exclude(
             is_staff=True
         ).exclude(
             is_superuser=True
+        ).exclude(
+            id=self.request.user.id  # Exclude self
         ).select_related('profile').distinct()
-        
+
         return users
 
     def get_context_data(self, **kwargs):
@@ -1258,15 +1343,25 @@ class SearchView(LoginRequiredMixin, ListView):
         query = self.request.GET.get('q', '')
         context['query'] = query
         context['users_count'] = self.get_queryset().count()
-        
-        # Also search posts (if you want)
+
+        # Also search posts (exclude blocked users' posts)
         if query:
             from core.models import Post
+
+            # Get blocked user IDs
+            blocked_by_me = Block.objects.filter(blocker=self.request.user).values_list('blocked_id', flat=True)
+            blocked_me = Block.objects.filter(blocked=self.request.user).values_list('blocker_id', flat=True)
+            excluded_users = set(list(blocked_by_me) + list(blocked_me))
+
             context['posts'] = Post.objects.filter(
                 Q(content__icontains=query)
+            ).exclude(
+                user_id__in=excluded_users
             ).select_related('user__profile')[:10]
-        
+
         return context
+
+
 
 
 class NotificationsView(LoginRequiredMixin, ListView):
@@ -1285,21 +1380,21 @@ class NotificationsView(LoginRequiredMixin, ListView):
 
     def post(self, request, *args, **kwargs):
         action = request.POST.get('action')
-        
+
         if action == 'mark_all_read':
             Notification.objects.filter(
-                recipient=request.user, 
+                recipient=request.user,
                 is_read=False
             ).update(is_read=True)
             messages.success(request, 'All notifications marked as read.')
-            
+
         elif action == 'mark_read':
             notification_id = request.POST.get('notification_id')
             Notification.objects.filter(
-                id=notification_id, 
+                id=notification_id,
                 recipient=request.user
             ).update(is_read=True)
-            
+
         return redirect('notifications')
 
 
@@ -1309,26 +1404,26 @@ class ChatView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+
         # Get all conversations for user - based on messages
         from django.db.models import Q, Max
-        
+
         # Get unique users that the current user has chatted with
         sent_messages_users = Message.objects.filter(
             sender=self.request.user
         ).values_list('recipient', flat=True).distinct()
-        
+
         received_messages_users = Message.objects.filter(
             recipient=self.request.user
         ).values_list('sender', flat=True).distinct()
-        
+
         # Combine and get unique user IDs
         chat_partner_ids = set(list(sent_messages_users) + list(received_messages_users))
-        
+
         # Get the user objects for chat partners
         from django.contrib.auth.models import User
         chat_partners = User.objects.filter(id__in=chat_partner_ids)
-        
+
         # Build conversation list with last message
         conversations = []
         for partner in chat_partners:
@@ -1336,28 +1431,28 @@ class ChatView(LoginRequiredMixin, TemplateView):
                 Q(sender=self.request.user, recipient=partner) |
                 Q(sender=partner, recipient=self.request.user)
             ).order_by('-created_at').first()
-            
+
             unread_count = Message.objects.filter(
                 sender=partner,
                 recipient=self.request.user,
                 is_read=False
             ).count()
-            
+
             conversations.append({
                 'user': partner,
                 'last_message': last_message,
                 'unread_count': unread_count,
             })
-        
+
         # Sort by last message time
         conversations.sort(key=lambda x: x['last_message'].created_at if x['last_message'] else timezone.datetime.min, reverse=True)
-        
+
         context['conversations'] = conversations
-        
+
         # If specific conversation is requested
         if 'username' in self.kwargs:
             other_user = get_object_or_404(User, username=self.kwargs['username'])
-            
+
             # Get messages between the two users
             messages_qs = Message.objects.filter(
                 Q(sender=self.request.user, recipient=other_user) |
@@ -1365,25 +1460,25 @@ class ChatView(LoginRequiredMixin, TemplateView):
             ).select_related(
                 'sender__profile'
             ).order_by('created_at')
-            
+
             # Mark messages as read
             messages_qs.filter(
                 sender=other_user,
                 recipient=self.request.user,
                 is_read=False
             ).update(is_read=True, read_at=timezone.now())
-            
+
             context['active_conversation'] = {
                 'user': other_user,
                 'messages': messages_qs[:50]
             }
             context['other_user'] = other_user
             context['messages'] = messages_qs[:50]
-            
+
             # Create messages_json for the template
             import json
             from django.core.serializers.json import DjangoJSONEncoder
-            
+
             messages_list = []
             for msg in messages_qs[:50]:
                 messages_list.append({
@@ -1394,12 +1489,154 @@ class ChatView(LoginRequiredMixin, TemplateView):
                     'created_at': msg.created_at.isoformat(),
                     'is_read': msg.is_read,
                 })
-            
+
             context['messages_json'] = json.dumps(messages_list, cls=DjangoJSONEncoder)
-        
+
         context['message_form'] = MessageForm()
-        
+
         return context
+
+
+
+@login_required
+def get_following_for_share(request):
+    """Get list of users the current user follows for sharing"""
+    following_users = User.objects.filter(
+        followers__follower=request.user
+    ).select_related('profile').annotate(
+        unread_count=Count('received_messages', filter=Q(received_messages__is_read=False, received_messages__recipient=request.user))
+    ).order_by('-profile__followers_count')
+
+    users_data = []
+    for user in following_users:
+        users_data.append({
+            'id': user.id,
+            'username': user.username,
+            'full_name': user.get_full_name(),
+            'profile_photo': user.profile.profile_photo.url if user.profile.profile_photo else '/static/default.jpg',
+        })
+
+    return JsonResponse({'users': users_data})
+
+@login_required
+@require_POST
+def send_message(request, username):
+    other_user = get_object_or_404(User, username=username)
+    try:
+        data = json.loads(request.body)
+        message_type = data.get('type', 'text')
+
+        message = Message(
+            sender=request.user,
+            recipient=other_user,
+            content=data.get('message', '')
+        )
+
+        # Handle shared post
+        if message_type == 'shared_post':
+            post_id = data.get('post_id')
+            post = get_object_or_404(Post, id=post_id)
+            message.shared_post = post
+            message.shared_post_preview = f"[Shared Post] {post.content[:200]}" if post.content else "[Shared Post]"
+            message.content = f"📌 Shared a post: {post.content[:100]}..." if post.content else "📌 Shared a post"
+        elif message_type == 'image':
+            message.file_url = data.get('file_url')
+            message.file_name = data.get('file_name')
+            message.file_type = 'image'
+            message.is_image = True
+            message.is_file = True
+        elif message_type == 'file':
+            message.file_url = data.get('file_url')
+            message.file_name = data.get('file_name')
+            message.file_type = 'file'
+            message.is_file = True
+
+        message.save()
+
+        response_data = {
+            'success': True,
+            'message_id': message.id,
+            'created_at': message.created_at.isoformat(),
+            'content': message.content
+        }
+
+        # If shared post, include post data
+        if message_type == 'shared_post' and message.shared_post:
+            response_data['shared_post'] = {
+                'id': message.shared_post.id,
+                'content': message.shared_post.content,
+                'image': message.shared_post.image.url if message.shared_post.image else None,
+                'video': message.shared_post.video.url if message.shared_post.video else None,
+                'user': {
+                    'username': message.shared_post.user.username,
+                    'profile_photo': message.shared_post.user.profile.profile_photo.url if message.shared_post.user.profile.profile_photo else '/static/default.jpg',
+                },
+                'created_at': message.shared_post.created_at.isoformat()
+            }
+
+        return JsonResponse(response_data)
+
+    except Exception as e:
+        return JsonResponse({'success': False, 'error': str(e)}, status=500)
+
+
+@login_required
+def chat_messages(request, username):
+    other_user = get_object_or_404(User, username=username)
+
+    last_msg_id = request.GET.get('since', 0)
+    last_msg_id = int(last_msg_id) if last_msg_id else 0
+
+    messages = Message.objects.filter(
+        Q(sender=request.user, recipient=other_user) |
+        Q(sender=other_user, recipient=request.user)
+    ).filter(id__gt=last_msg_id).order_by('created_at')
+
+    messages_data = []
+
+    for msg in messages:
+        msg_data = {
+            'id': msg.id,
+            'sender': msg.sender.username,
+            'created_at': msg.created_at.isoformat(),
+            'content': msg.content,
+        }
+
+        # Handle image
+        if msg.is_image:
+            msg_data['type'] = 'image'
+            msg_data['file_url'] = msg.file_url
+            msg_data['file_name'] = msg.file_name
+
+        # Handle normal file
+        elif msg.is_file:
+            msg_data['type'] = 'file'
+            msg_data['file_url'] = msg.file_url
+            msg_data['file_name'] = msg.file_name
+
+        # Handle text
+        else:
+            msg_data['type'] = 'text'
+
+        messages_data.append(msg_data)
+
+    return JsonResponse({'messages': messages_data})
+
+
+
+@login_required
+@require_POST
+def typing_indicator(request, username):
+    """Handle typing indicator - stores in session"""
+    data = json.loads(request.body)
+    other_user = get_object_or_404(User, username=username)
+
+    # Store typing status in session (unique per user pair)
+    request.session[f'typing_{other_user.id}'] = data.get('typing', False)
+    request.session.modified = True
+
+    return JsonResponse({'success': True})
+
 
 
 class ExploreView(LoginRequiredMixin, ListView):
@@ -1411,14 +1648,14 @@ class ExploreView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         # Get trending posts (most liked in last 7 days)
         week_ago = timezone.now() - timezone.timedelta(days=7)
-        
+
         return Post.objects.filter(
             created_at__gte=week_ago,
             privacy='public'
         ).select_related(
             'user__profile'
         ).prefetch_related(
-            'likes', 
+            'likes',
             'comments__user__profile'
         ).annotate(
             like_count=Count('likes')
@@ -1426,7 +1663,8 @@ class ExploreView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        
+        from .models import Department
+        context['departments'] = Department.objects.filter(is_active=True).order_by('name')
         # Get suggested users
         context['suggested_users'] = UserService.get_suggested_users(
             self.request.user, limit=10
@@ -1450,61 +1688,94 @@ class StoryCreateView(LoginRequiredMixin, CreateView):
 
 
 class BlockUserView(LoginRequiredMixin, View):
-    """Block a user"""
-    
+    """Block a user - also removes follow relationship"""
+
     def post(self, request, username):
         user_to_block = get_object_or_404(User, username=username)
-        
+
         if request.user == user_to_block:
             messages.error(request, 'You cannot block yourself.')
+            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+                return JsonResponse({'error': 'You cannot block yourself'}, status=400)
             return redirect('profile', username=username)
-        
-        # Create block
-        block, created = Block.objects.get_or_create(
+
+        # Check if already blocked
+        block_exists = Block.objects.filter(
             blocker=request.user,
             blocked=user_to_block
-        )
-        
-        if created:
-            # Remove follow relationship if exists
+        ).exists()
+
+        if not block_exists:
+            # Create block
+            Block.objects.create(
+                blocker=request.user,
+                blocked=user_to_block
+            )
+
+            # Remove follow relationship in both directions
             Follow.objects.filter(
                 Q(follower=request.user, following=user_to_block) |
                 Q(follower=user_to_block, following=request.user)
             ).delete()
-            
+
             messages.success(request, f'You have blocked {username}.')
         else:
             messages.info(request, f'You have already blocked {username}.')
-        
+
+        # Clear cache
+        from django.core.cache import cache
+        cache.delete(f'follow_status_{request.user.id}_{user_to_block.id}')
+        cache.delete(f'follow_status_{user_to_block.id}_{request.user.id}')
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'status': 'blocked',
+                'username': username
+            })
+
         return redirect('profile', username=username)
+
+
 
 
 class UnblockUserView(LoginRequiredMixin, View):
     """Unblock a user"""
-    
+
     def post(self, request, username):
         user_to_unblock = get_object_or_404(User, username=username)
-        
+
         Block.objects.filter(
             blocker=request.user,
             blocked=user_to_unblock
         ).delete()
-        
-        messages.success(request, f'You have unblocked {username}.')
+        # Clear any cached follow status
+        from django.core.cache import cache
+        cache.delete(f'follow_status_{request.user.id}_{user_to_unblock.id}')
+        cache.delete(f'follow_status_{user_to_unblock.id}_{request.user.id}')
+
+        messages.success(request, f'You have unblocked {username}.You can now follow each other again.')
+                # Check if it's an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'success': True,
+                'status': 'unblocked',
+                'username': username
+            })
         return redirect('profile', username=username)
 
 
 # API Views (for AJAX requests)
 class APIFeedView(LoginRequiredMixin, View):
     """API endpoint for infinite scroll"""
-    
+
     def get(self, request):
         page = int(request.GET.get('page', 1))
         feed = FeedService.get_feed_queryset(request.user)
-        
+
         paginator = Paginator(feed, 10)
         posts_page = paginator.get_page(page)
-        
+
         data = []
         for post in posts_page:
             data.append({
@@ -1520,7 +1791,7 @@ class APIFeedView(LoginRequiredMixin, View):
                 'comments_count': post.comments_count,
                 'is_liked': post.likes.filter(user=request.user).exists(),
             })
-        
+
         return JsonResponse({
             'posts': data,
             'has_next': posts_page.has_next(),
@@ -1530,12 +1801,12 @@ class APIFeedView(LoginRequiredMixin, View):
 
 class APINotificationCountView(LoginRequiredMixin, View):
     """Get unread notification count"""
-    
+
     def get(self, request):
         count = Notification.objects.filter(
             recipient=request.user, is_read=False
         ).count()
-        
+
         return JsonResponse({'count': count})
 
 
@@ -1550,7 +1821,7 @@ class AnnouncementDetailView(LoginRequiredMixin, DetailView):
 
     def get_object(self, queryset=None):
         obj = super().get_object(queryset)
-        
+
         # Track view
         if self.request.user.is_authenticated:
             from .models import AnnouncementView
@@ -1562,9 +1833,9 @@ class AnnouncementDetailView(LoginRequiredMixin, DetailView):
             if created:
                 obj.views_count += 1
                 obj.save(update_fields=['views_count'])
-        
+
         return obj
-    
+
     def get_client_ip(self):
         x_forwarded_for = self.request.META.get('HTTP_X_FORWARDED_FOR')
         if x_forwarded_for:
@@ -1576,31 +1847,31 @@ class AnnouncementDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         # Call the base implementation first to get the context
         context = super().get_context_data(**kwargs)
-        
+
         # Add any additional context variables here
         context['now'] = timezone.now()
-        
+
         # Debug info (you can remove this later)
         print(f"Current user: {self.request.user.username}")
         print(f"Comments: {self.object.comments.count()}")
         for comment in self.object.comments.all():
             print(f"Comment {comment.id} by {comment.user.username}")
-        
+
         return context
 
 
 class AnnouncementLikeToggleView(LoginRequiredMixin, View):
     """Toggle like on announcement"""
-    
+
     def post(self, request, pk):
         from .models import Announcement, AnnouncementLike
         announcement = get_object_or_404(Announcement, pk=pk)
-        
+
         like, created = AnnouncementLike.objects.get_or_create(
             user=request.user,
             announcement=announcement
         )
-        
+
         if created:
             announcement.likes_count += 1
             announcement.save(update_fields=['likes_count'])
@@ -1610,7 +1881,7 @@ class AnnouncementLikeToggleView(LoginRequiredMixin, View):
             announcement.likes_count -= 1
             announcement.save(update_fields=['likes_count'])
             status = 'unliked'
-        
+
         return JsonResponse({
             'status': status,
             'likes_count': announcement.likes_count
@@ -1622,24 +1893,24 @@ class AnnouncementCommentView(LoginRequiredMixin, CreateView):
     model = AnnouncementComment
     fields = ['content']
     template_name = 'core/announcement_comment_form.html'
-    
+
     def form_valid(self, form):
         from .models import Announcement
         announcement = get_object_or_404(Announcement, pk=self.kwargs['pk'])
         form.instance.user = self.request.user
         form.instance.announcement = announcement
-        
+
         response = super().form_valid(form)
-        
+
         # Update comment count
         announcement.comments_count = announcement.comments.count()
         announcement.save(update_fields=['comments_count'])
-        
+
         if self.request.headers.get('HX-Request'):
             return render(self.request, 'core/includes/comment.html', {'comment': self.object})
-        
+
         return redirect('announcement-detail', slug=announcement.slug)
-    
+
     def get_success_url(self):
         return reverse('announcement-detail', args=[self.object.announcement.slug])
 
@@ -1650,46 +1921,46 @@ class AnnouncementCommentUpdateView(LoginRequiredMixin, UserPassesTestMixin, Upd
     template_name = 'core/comment_form.html'
     fields = ['content']
     pk_url_kwarg = 'pk'
-    
+
     def test_func(self):
         comment = self.get_object()
         return self.request.user == comment.user or self.request.user.is_staff
-    
+
     def form_valid(self, form):
         form.instance.is_edited = True
         messages.success(self.request, 'Comment updated successfully!')
         return super().form_valid(form)
-    
+
     def get_success_url(self):
         return reverse('announcement-detail', args=[self.object.announcement.slug])
-    
+
 
 class AnnouncementCommentDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
     """Delete a comment (only by author or admin)"""
     model = AnnouncementComment
     template_name = 'core/comment_confirm_delete.html'
     pk_url_kwarg = 'pk'
-    
+
     def test_func(self):
         comment = self.get_object()
         return self.request.user == comment.user or self.request.user.is_staff
-    
+
     def get_success_url(self):
         messages.success(self.request, 'Comment deleted successfully!')
         return reverse('announcement-detail', args=[self.object.announcement.slug])
-    
+
     def delete(self, request, *args, **kwargs):
         comment = self.get_object()
         announcement = comment.announcement
         response = super().delete(request, *args, **kwargs)
-        
+
         # Update comment count
         announcement.comments_count = announcement.comments.count()
         announcement.save(update_fields=['comments_count'])
-        
+
         if request.headers.get('HX-Request'):
             return HttpResponse(status=200, headers={'HX-Trigger': 'commentDeleted'})
-        
+
         return response
 
 
@@ -1706,17 +1977,17 @@ class AnnouncementUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView
         'is_pinned', 'is_important'
     ]
     pk_url_kwarg = 'pk'
-    
+
     def test_func(self):
         announcement = self.get_object()
-        return (self.request.user.is_staff or 
+        return (self.request.user.is_staff or
                 announcement.author == self.request.user or
                 AnnouncementService.can_create_announcement(self.request.user))
-    
+
     def form_valid(self, form):
         messages.success(self.request, 'Announcement updated successfully!')
         return super().form_valid(form)
-    
+
     def get_success_url(self):
         return reverse('announcement-detail', args=[self.object.slug])
 
@@ -1727,11 +1998,11 @@ class AnnouncementDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView
     template_name = 'core/announcement_confirm_delete.html'
     pk_url_kwarg = 'pk'
     success_url = reverse_lazy('explore')
-    
+
     def test_func(self):
         announcement = self.get_object()
         return self.request.user.is_staff or announcement.author == self.request.user
-    
+
     def delete(self, request, *args, **kwargs):
         messages.success(self.request, 'Announcement deleted successfully!')
         return super().delete(request, *args, **kwargs)
@@ -1749,10 +2020,10 @@ class AnnouncementCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView
         'location', 'is_virtual', 'meeting_link',
         'is_pinned', 'is_important'
     ]
-    
+
     def test_func(self):
         return AnnouncementService.can_create_announcement(self.request.user)
-    
+
     def form_valid(self, form):
         form.instance.author = self.request.user
         if form.instance.audience == 'department' and not form.instance.target_department:
@@ -1760,7 +2031,7 @@ class AnnouncementCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView
         response = super().form_valid(form)
         messages.success(self.request, 'Announcement created successfully!')
         return response
-    
+
     def get_success_url(self):
         return reverse('announcement-detail', args=[self.object.slug])
 
@@ -1769,7 +2040,7 @@ class AnnouncementCreateView(LoginRequiredMixin, UserPassesTestMixin, CreateView
 class AdminAnnouncementPermissionsView(TemplateView):
     """Admin panel for managing announcement permissions"""
     template_name = 'core/admin/permissions.html'
-    
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         from .models import AnnouncementAuthorPermission, Department
@@ -1777,29 +2048,29 @@ class AdminAnnouncementPermissionsView(TemplateView):
         context['departments'] = Department.objects.filter(is_active=True)
         context['permissions'] = AnnouncementAuthorPermission.objects.select_related('user', 'granted_by').all()
         return context
-    
+
     def post(self, request):
         from .models import AnnouncementAuthorPermission, Department
         user_id = request.POST.get('user_id')
         user = get_object_or_404(User, id=user_id)
-        
+
         permission, created = AnnouncementAuthorPermission.objects.get_or_create(user=user)
-        
+
         permission.can_create_general = request.POST.get('can_create_general') == 'on'
         permission.can_create_departmental = request.POST.get('can_create_departmental') == 'on'
         permission.can_create_events = request.POST.get('can_create_events') == 'on'
         permission.can_create_notices = request.POST.get('can_create_notices') == 'on'
         permission.can_create_news = request.POST.get('can_create_news') == 'on'
         permission.granted_by = request.user
-        
+
         # Handle departments
         permission.departments.clear()
         dept_ids = request.POST.getlist('departments')
         if dept_ids:
             permission.departments.add(*dept_ids)
-        
+
         permission.save()
-        
+
         messages.success(request, f'Permissions updated for {user.username}')
         return redirect('admin-announcement-permissions')
 

@@ -47,25 +47,25 @@
     #story-modal {
         transition: opacity 0.3s ease;
     }
-    
+
     .story-progress-bar {
         height: 2px;
         background: rgba(255,255,255,0.3);
         position: relative;
         overflow: hidden;
     }
-    
+
     .story-progress-fill {
         height: 100%;
         background: white;
         animation: progress 5s linear forwards;
     }
-    
+
     @keyframes progress {
         from { width: 0%; }
         to { width: 100%; }
     }
-    
+
     /* Post Menu */
     .post-menu {
         position: relative;
@@ -136,16 +136,16 @@
             opacity: 0.5;
         }
     }
-    
+
     .upload-pulse {
         animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
     }
-    
+
     /* Document Icons */
     .doc-icon {
         transition: all 0.3s ease;
     }
-    
+
     .doc-icon:hover {
         transform: scale(1.1);
     }
@@ -160,53 +160,53 @@
         {% if is_own_profile %}
         <div class="h-64 bg-gradient-to-r from-indigo-500 to-purple-600 relative" id="cover-container">
             {% if profile_user.profile.cover_photo %}
-            <img src="{{ profile_user.profile.cover_photo.url }}" alt="Cover" class="w-full h-full object-cover" id="cover-photo-img">
+            <img src="{{ profile_user.profile.cover_photo.url }}" alt="Cover" class="w-full h-full object-cover cursor-pointer" id="cover-photo-img" onclick="openImageModal('{{ profile_user.profile.cover_photo.url }}')">
             {% endif %}
-            
-            <button class="absolute bottom-4 right-4 bg-white text-gray-700 px-4 py-2 rounded-lg shadow-md hover:bg-gray-100 transition" 
+            <button class="absolute bottom-4 right-4 bg-white text-gray-700 px-4 py-2 rounded-lg shadow-md hover:bg-gray-100 transition"
                     onclick="document.getElementById('cover-upload').click()">
                 <i class="fas fa-camera mr-2"></i>Edit Cover
             </button>
-            
+
             <!-- Cover Upload Form -->
             <form id="cover-upload-form" hx-encoding="multipart/form-data" hx-post="{% url 'api-update-cover' %}" hx-target="#cover-message" hx-swap="innerHTML">
                 {% csrf_token %}
-                <input type="file" id="cover-upload" name="file" class="hidden" accept="image/*" 
+                <input type="file" id="cover-upload" name="file" class="hidden" accept="image/*"
                        onchange="document.getElementById('cover-upload-form').querySelector('input[name=file]').files = this.files; handleCoverUpload(this);">
             </form>
-            
+
             <!-- Message Container -->
             <div id="cover-message" class="absolute bottom-20 right-4"></div>
         </div>
         {% else %}
         <div class="h-64 bg-gradient-to-r from-indigo-500 to-purple-600 relative" id="cover-container">
             {% if profile_user.profile.cover_photo %}
-            <img src="{{ profile_user.profile.cover_photo.url }}" alt="Cover" class="w-full h-full object-cover" id="cover-photo-img">
+            <img src="{{ profile_user.profile.cover_photo.url }}" alt="Cover"
+            class="w-full h-full object-cover cursor-pointer" id="cover-photo-img"
+            onclick="openImageModal('{{ profile_user.profile.cover_photo.url }}')">
             {% endif %}
         </div>
         {% endif %}
-        
+
         <!-- Profile Info -->
         <div class="px-6 pb-6">
             <div class="flex flex-col md:flex-row md:items-end -mt-16">
                 <!-- Profile Photo with Story Indicator -->
                 <div class="relative">
                     <!-- Profile Photo -->
-                    <img src="{{ profile_user.profile.profile_photo.url }}" 
-                         alt="{{ profile_user.username }}" 
-                         class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover {% if user_story %}story-active{% endif %}" 
-                         id="profile-photo-img">
-                    
+                   <img src="{{ profile_user.profile.profile_photo.url }}" alt="{{ profile_user.username }}"
+                   class="w-32 h-32 rounded-full border-4 border-white shadow-lg object-cover cursor-pointer {% if user_story %}story-active{% endif %}" id="profile-photo-img"
+                   onclick="openImageModal('{{ profile_user.profile.profile_photo.url }}')">
+
                     <!-- Story Indicator Ring (like Facebook) -->
                     {% if user_story %}
                     <div class="absolute inset-0 rounded-full border-4 border-indigo-600 border-opacity-50 story-ring"></div>
                     {% endif %}
-                    
+
                     <!-- Online Status Indicator -->
                     {% if profile_user.profile.is_online %}
                     <span class="absolute bottom-2 right-2 w-4 h-4 bg-green-500 border-2 border-white rounded-full"></span>
                     {% endif %}
-                    
+
                     <!-- Story Action Button (for user's own profile) -->
                     {% if is_own_profile %}
                         {% if user_story %}
@@ -230,7 +230,7 @@
                         </button>
                         {% endif %}
                     {% endif %}
-                    
+
                     <!-- Photo Upload Button (for user's own profile) -->
                     {% if is_own_profile %}
                     <button class="absolute bottom-0 right-0 bg-indigo-600 text-white p-2 rounded-full shadow-lg hover:bg-indigo-700 transition"
@@ -239,15 +239,15 @@
                     </button>
                     <form id="photo-upload-form" hx-encoding="multipart/form-data" hx-post="{% url 'api-update-photo' %}" hx-target="#photo-message" hx-swap="innerHTML">
                         {% csrf_token %}
-                        <input type="file" id="photo-upload" name="file" class="hidden" accept="image/*" 
+                        <input type="file" id="photo-upload" name="file" class="hidden" accept="image/*"
                                onchange="document.getElementById('photo-upload-form').querySelector('input[name=file]').files = this.files; handlePhotoUpload(this);">
                     </form>
-                    
+
                     <!-- Message Container -->
                     <div id="photo-message" class="mt-2"></div>
                     {% endif %}
                 </div>
-                
+
                 <!-- User Details -->
                 <div class="mt-4 md:mt-0 md:ml-6 flex-1">
                     <div class="flex flex-col md:flex-row md:items-center md:justify-between">
@@ -265,15 +265,28 @@
                             </p>
                             {% endif %}
                         </div>
-                        
-                        <!-- Action Buttons -->
+
+                                                <!-- Action Buttons -->
                         <div class="mt-4 md:mt-0 flex space-x-2">
                             {% if is_own_profile %}
-                            <a href="{% url 'profile-edit' %}" 
+                            <a href="{% url 'profile-edit' %}"
                                class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition">
                                 <i class="fas fa-edit mr-2"></i>Edit Profile
                             </a>
-                            {% elif not is_blocked %}
+                            {% elif is_blocked %}
+                                {% if has_blocked %}
+                                <form method="post" action="{% url 'unblock-user' profile_user.username %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
+                                        <i class="fas fa-ban mr-2"></i>Unblock User
+                                    </button>
+                                </form>
+                                {% else %}
+                                <div class="bg-red-100 text-red-700 px-4 py-2 rounded-lg">
+                                    <i class="fas fa-ban mr-2"></i>You have been blocked
+                                </div>
+                                {% endif %}
+                            {% else %}
                                 {% if is_following %}
                                 <button class="follow-btn bg-gray-200 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-300 transition"
                                         data-username="{{ profile_user.username }}"
@@ -287,27 +300,25 @@
                                     <i class="fas fa-user-plus mr-2"></i>Follow
                                 </button>
                                 {% endif %}
-                                
-                                <a href="{% url 'chat-with' profile_user.username %}" 
+
+                                <a href="{% url 'chat-with' profile_user.username %}"
                                    class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition">
                                     <i class="fas fa-comment mr-2"></i>Message
                                 </a>
-                                
+
                                 <div class="relative" x-data="{ open: false }">
                                     <button @click="open = !open" class="bg-gray-200 text-gray-700 p-2 rounded-lg hover:bg-gray-300 transition">
                                         <i class="fas fa-ellipsis-h"></i>
                                     </button>
-                                    
-                                    <div x-show="open" @click.away="open = false" 
-                                         class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50" 
+
+                                    <div x-show="open" @click.away="open = false"
+                                         class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50"
                                          style="display: none;">
-                                        <!-- Report User -->
                                         <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                                  @click="open = false; $dispatch('open-report-modal-window')">
                                             <i class="fas fa-flag mr-2"></i>Report User
                                         </button>
-                                        
-                                        <!-- Block User -->
+
                                         <form method="post" action="{% url 'block-user' profile_user.username %}">
                                             {% csrf_token %}
                                             <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
@@ -316,27 +327,19 @@
                                         </form>
                                     </div>
                                 </div>
-                            {% else %}
-                                <!-- User is blocked - show unblock button -->
-                                <form method="post" action="{% url 'unblock-user' profile_user.username %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition">
-                                        <i class="fas fa-ban mr-2"></i>Unblock User
-                                    </button>
-                                </form>
                             {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
-            
+
             <!-- Bio and Stats -->
             <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div class="md:col-span-2">
                     {% if profile_user.profile.bio %}
                     <p class="text-gray-700">{{ profile_user.profile.bio }}</p>
                     {% endif %}
-                    
+
                     {% if profile_user.profile.website %}
                     <p class="mt-2">
                         <i class="fas fa-link text-gray-500 mr-2"></i>
@@ -345,7 +348,7 @@
                         </a>
                     </p>
                     {% endif %}
-                    
+
                     <!-- Social Links -->
                     <div class="mt-3 flex space-x-3">
                         {% if profile_user.profile.facebook %}
@@ -375,7 +378,7 @@
                         {% endif %}
                     </div>
                 </div>
-                
+
                 <!-- Stats -->
                 <div class="flex justify-around md:justify-end md:space-x-4">
                     <div class="text-center">
@@ -409,17 +412,17 @@
                     {% endif %}
                     <p><i class="far fa-calendar-alt w-5 text-gray-400 mr-2"></i>Joined {{ profile_user.date_joined|date:"F Y" }}</p>
                     <p><i class="far fa-clock w-5 text-gray-400 mr-2"></i>Last active {{ profile_user.profile.last_seen|naturaltime }}</p>
-                    
+
                     {% if profile_user.profile.department %}
                     <p><i class="fas fa-building w-5 text-gray-400 mr-2"></i>{{ profile_user.profile.department.name }}</p>
                     {% endif %}
-                    
+
                     {% if profile_user.profile.batch %}
                     <p><i class="fas fa-calendar w-5 text-gray-400 mr-2"></i>Batch of {{ profile_user.profile.batch }}</p>
                     {% endif %}
                 </div>
             </div>
-            
+
             <!-- Followers Card -->
             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
                 <h3 class="font-semibold text-gray-800 mb-4 flex items-center justify-between">
@@ -429,7 +432,7 @@
                 <div class="grid grid-cols-3 gap-3">
                     {% for follow in followers %}
                     <a href="{% url 'profile' follow.follower.username %}" class="text-center group">
-                        <img src="{{ follow.follower.profile.profile_photo.url }}" 
+                        <img src="{{ follow.follower.profile.profile_photo.url }}"
                              class="w-16 h-16 rounded-full mx-auto border-2 border-transparent group-hover:border-indigo-600 transition">
                         <p class="text-xs mt-1 text-gray-600 truncate">{{ follow.follower.username }}</p>
                     </a>
@@ -438,7 +441,7 @@
                     {% endfor %}
                 </div>
             </div>
-            
+
             <!-- Following Card -->
             <div class="bg-white rounded-lg shadow-md p-6">
                 <h3 class="font-semibold text-gray-800 mb-4 flex items-center justify-between">
@@ -448,7 +451,7 @@
                 <div class="grid grid-cols-3 gap-3">
                     {% for follow in following %}
                     <a href="{% url 'profile' follow.following.username %}" class="text-center group">
-                        <img src="{{ follow.following.profile.profile_photo.url }}" 
+                        <img src="{{ follow.following.profile.profile_photo.url }}"
                              class="w-16 h-16 rounded-full mx-auto border-2 border-transparent group-hover:border-indigo-600 transition">
                         <p class="text-xs mt-1 text-gray-600 truncate">{{ follow.following.username }}</p>
                     </a>
@@ -458,7 +461,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Right Column - Posts -->
         <div class="lg:col-span-2">
             <!-- Create Post (only for own profile) -->
@@ -469,35 +472,35 @@
                     <div class="flex items-start space-x-3">
                         <img src="{{ user.profile.profile_photo.url }}" class="w-10 h-10 rounded-full">
                         <div class="flex-1">
-                            <textarea name="content" rows="2" 
+                            <textarea name="content" rows="2"
                                     class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-indigo-600 focus:border-transparent"
                                     placeholder="What's on your mind?"></textarea>
-                            
+
                             <!-- File Upload Section -->
-                            <div class="mt-3" x-data="{ 
+                            <div class="mt-3" x-data="{
                                 showFileUpload: false,
                                 fileType: '',
                                 selectedFile: null,
                                 filePreview: null,
-                                
+
                                 handleFileSelect(event) {
                                     const file = event.target.files[0];
                                     if (!file) return;
-                                    
+
                                     // Validate file size based on type
                                     const maxSizes = {
                                         'image': 10 * 1024 * 1024, // 10MB
                                         'video': 50 * 1024 * 1024, // 50MB
                                         'document': 20 * 1024 * 1024 // 20MB
                                     };
-                                    
+
                                     if (file.size > maxSizes[this.fileType]) {
                                         alert(`File too large. Maximum size for ${this.fileType}s is ${maxSizes[this.fileType] / (1024 * 1024)}MB`);
                                         return;
                                     }
-                                    
+
                                     this.selectedFile = file;
-                                    
+
                                     // Create preview for images/videos
                                     if (this.fileType === 'image' || this.fileType === 'video') {
                                         const reader = new FileReader();
@@ -509,25 +512,25 @@
                                         this.filePreview = null;
                                     }
                                 },
-                                
+
                                 handleFileDrop(event) {
                                     event.preventDefault();
                                     const file = event.dataTransfer.files[0];
                                     if (!file) return;
-                                    
+
                                     // Set the file to the input
                                     const fileInput = document.getElementById(`file-input-${this.fileType}`);
                                     if (fileInput) {
                                         const dataTransfer = new DataTransfer();
                                         dataTransfer.items.add(file);
                                         fileInput.files = dataTransfer.files;
-                                        
+
                                         // Trigger change event
                                         const changeEvent = new Event('change', { bubbles: true });
                                         fileInput.dispatchEvent(changeEvent);
-                                        
+
                                         this.selectedFile = file;
-                                        
+
                                         // Create preview for images/videos
                                         if (this.fileType === 'image' || this.fileType === 'video') {
                                             const reader = new FileReader();
@@ -538,21 +541,21 @@
                                         }
                                     }
                                 },
-                                
+
                                 removeFile() {
                                     this.selectedFile = null;
                                     this.filePreview = null;
                                     const fileInput = document.getElementById(`file-input-${this.fileType}`);
                                     if (fileInput) fileInput.value = '';
                                 },
-                                
+
                                 triggerFileInput() {
                                     const fileInput = document.getElementById(`file-input-${this.fileType}`);
                                     if (fileInput) {
                                         fileInput.click();
                                     }
                                 },
-                                
+
                                 formatFileSize(bytes) {
                                     if (bytes === 0) return '0 Bytes';
                                     const k = 1024;
@@ -564,29 +567,29 @@
                                 <div class="flex items-center justify-between">
                                     <div class="flex space-x-2">
                                         <!-- Image Upload Button -->
-                                        <button type="button" 
-                                                @click="showFileUpload = !showFileUpload; fileType = 'image'; removeFile()" 
+                                        <button type="button"
+                                                @click="showFileUpload = !showFileUpload; fileType = 'image'; removeFile()"
                                                 class="text-gray-500 hover:text-indigo-600 transition-colors p-2 rounded-full hover:bg-indigo-50">
                                             <i class="fas fa-image text-xl"></i>
                                             <span class="sr-only">Upload Image</span>
                                         </button>
-                                        
+
                                         <!-- Video Upload Button -->
-                                        <button type="button" 
-                                                @click="showFileUpload = !showFileUpload; fileType = 'video'; removeFile()" 
+                                        <button type="button"
+                                                @click="showFileUpload = !showFileUpload; fileType = 'video'; removeFile()"
                                                 class="text-gray-500 hover:text-indigo-600 transition-colors p-2 rounded-full hover:bg-indigo-50">
                                             <i class="fas fa-video text-xl"></i>
                                             <span class="sr-only">Upload Video</span>
                                         </button>
-                                        
+
                                         <!-- Document Upload Button -->
-                                        <button type="button" 
-                                                @click="showFileUpload = !showFileUpload; fileType = 'document'; removeFile()" 
+                                        <button type="button"
+                                                @click="showFileUpload = !showFileUpload; fileType = 'document'; removeFile()"
                                                 class="text-gray-500 hover:text-indigo-600 transition-colors p-2 rounded-full hover:bg-indigo-50">
                                             <i class="fas fa-file text-xl"></i>
                                             <span class="sr-only">Upload Document</span>
                                         </button>
-                                        
+
                                         <!-- Privacy Selector -->
                                         <select name="privacy" class="text-sm border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600">
                                             <option value="public">🌍 Public</option>
@@ -594,82 +597,82 @@
                                             <option value="private">🔒 Private</option>
                                         </select>
                                     </div>
-                                    
+
                                     <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-full text-sm font-medium hover:bg-indigo-700 transition-colors">
                                         Post
                                     </button>
                                 </div>
-                                
+
                                 <!-- File Upload Area -->
-                                <div x-show="showFileUpload" 
+                                <div x-show="showFileUpload"
                                     x-transition:enter="transition ease-out duration-200"
                                     x-transition:enter-start="opacity-0 transform scale-95"
                                     x-transition:enter-end="opacity-100 transform scale-100"
                                     class="mt-4">
-                                    
+
                                     <!-- Hidden File Input (using id instead of x-ref) -->
                                     <template x-if="fileType === 'image'">
-                                        <input type="file" 
+                                        <input type="file"
                                             name="image"
                                             accept="image/*"
                                             class="hidden"
                                             id="file-input-image"
                                             @change="handleFileSelect">
                                     </template>
-                                    
+
                                     <template x-if="fileType === 'video'">
-                                        <input type="file" 
+                                        <input type="file"
                                             name="video"
                                             accept="video/*"
                                             class="hidden"
                                             id="file-input-video"
                                             @change="handleFileSelect">
                                     </template>
-                                    
+
                                     <template x-if="fileType === 'document'">
-                                        <input type="file" 
+                                        <input type="file"
                                             name="document"
                                             accept=".pdf,.doc,.docx,.txt,.ppt,.pptx,.xls,.xlsx,.csv,.zip,.rar"
                                             class="hidden"
                                             id="file-input-document"
                                             @change="handleFileSelect">
                                     </template>
-                                    
+
                                     <!-- Upload Area -->
                                     <template x-if="!selectedFile">
                                         <div class="border-2 border-dashed border-gray-300 rounded-lg p-6 hover:border-indigo-500 transition-colors cursor-pointer"
                                             @click="triggerFileInput()"
                                             @dragover.prevent
                                             @drop.prevent="handleFileDrop">
-                                            
+
                                             <div class="text-center">
                                                 <template x-if="fileType === 'image'">
                                                     <div>
                                                         <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-2"></i>
                                                         <p class="text-sm text-gray-600 mb-1">
-                                                            Drag & drop an image or 
+                                                            Drag & drop an image or
                                                             <span class="text-indigo-600 hover:text-indigo-800 font-medium">browse</span>
                                                         </p>
                                                         <p class="text-xs text-gray-500">Supports: JPG, PNG, GIF, WEBP (max 10MB)</p>
                                                     </div>
                                                 </template>
-                                                
+
                                                 <template x-if="fileType === 'video'">
                                                     <div>
                                                         <i class="fas fa-video text-4xl text-gray-400 mb-2"></i>
                                                         <p class="text-sm text-gray-600 mb-1">
-                                                            Drag & drop a video or 
+                                                            Drag & drop a video or
                                                             <span class="text-indigo-600 hover:text-indigo-800 font-medium">browse</span>
                                                         </p>
                                                         <p class="text-xs text-gray-500">Supports: MP4, MOV, AVI, WebM (max 50MB)</p>
                                                     </div>
                                                 </template>
-                                                
+
                                                 <template x-if="fileType === 'document'">
                                                     <div>
                                                         <i class="fas fa-file-alt text-4xl text-gray-400 mb-2"></i>
                                                         <p class="text-sm text-gray-600 mb-1">
-                                                            Drag & drop a document or 
+                                                            Drag & drop a document or
                                                             <span class="text-indigo-600 hover:text-indigo-800 font-medium">browse</span>
                                                         </p>
                                                         <p class="text-xs text-gray-500">Supports: PDF, DOC, DOCX, TXT, PPT, XLS, ZIP (max 20MB)</p>
@@ -678,24 +681,24 @@
                                             </div>
                                         </div>
                                     </template>
-                                    
+
                                     <!-- File Preview -->
                                     <template x-if="selectedFile">
                                         <div class="relative p-4 bg-gray-50 rounded-lg">
                                             <!-- Remove button -->
-                                            <button type="button" 
+                                            <button type="button"
                                                     @click="removeFile()"
                                                     class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full flex items-center justify-center hover:bg-red-600 transition-colors z-10">
                                                 <i class="fas fa-times text-xs"></i>
                                             </button>
-                                            
+
                                             <!-- Preview based on file type -->
                                             <template x-if="fileType === 'image' && filePreview">
                                                 <div class="relative">
                                                     <img :src="filePreview" class="max-h-48 rounded-lg mx-auto">
                                                 </div>
                                             </template>
-                                            
+
                                             <template x-if="fileType === 'video' && filePreview">
                                                 <div class="relative bg-black rounded-lg p-2">
                                                     <video class="max-h-48 rounded-lg mx-auto" controls>
@@ -703,7 +706,7 @@
                                                     </video>
                                                 </div>
                                             </template>
-                                            
+
                                             <template x-if="fileType === 'document'">
                                                 <div class="flex items-center p-4 bg-white rounded-lg">
                                                     <i :class="{
@@ -730,7 +733,7 @@
                 </form>
             </div>
             {% endif %}
-            
+
             <!-- Posts -->
             <div id="posts-container" class="space-y-4">
                 {% for post in posts %}
@@ -755,24 +758,24 @@
                                     <span class="text-xs text-gray-400 ml-1">(edited)</span>
                                     {% endif %}
                                 </div>
-                                
+
                                 <!-- Post Actions Menu -->
                                 <div class="relative" x-data="{ open: false }">
                                     <button @click="open = !open" class="text-gray-400 hover:text-gray-600">
                                         <i class="fas fa-ellipsis-h"></i>
                                     </button>
-                                    
-                                    <div x-show="open" @click.away="open = false" 
-                                        class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50" 
+
+                                    <div x-show="open" @click.away="open = false"
+                                        class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50"
                                         style="display: none;">
-                                        
+
                                         <!-- Edit option (only for author or admin) -->
                                         {% if user == post.user or user.is_staff %}
                                         <a href="{% url 'post-update' post.id %}" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                             <i class="fas fa-edit mr-2"></i> Edit Post
                                         </a>
                                         {% endif %}
-                                        
+
                                         <!-- Delete option (only for author or admin) -->
                                         {% if user == post.user or user.is_staff %}
                                         <form method="post" action="{% url 'post-delete' post.id %}"
@@ -783,7 +786,7 @@
                                             </button>
                                         </form>
                                         {% endif %}
-                                        
+
                                         <!-- Report option (for everyone) -->
                                         {% if user != post.user %}
                                         <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -794,7 +797,7 @@
                                     </div>
                                 </div>
                             </div>
-                            
+
                             <!-- Post Content -->
                             {% if post.content %}
                             <p class="mt-2 text-gray-700 whitespace-pre-wrap">{{ post.content }}</p>
@@ -802,14 +805,14 @@
 
                             <!-- Include the media display partial (ONLY ONCE) -->
                             {% include 'core/includes/post_media.html' with post=post %}
-                            
+
                             <!-- Engagement Stats -->
                             <div class="mt-4 flex items-center text-sm text-gray-500">
                                 <span>{{ post.likes_count }} likes</span>
                                 <span class="mx-2">•</span>
                                 <span>{{ post.comments_count }} comments</span>
                             </div>
-                            
+
                             <!-- Action Buttons -->
                             <div class="mt-3 flex items-center space-x-4 border-t border-gray-100 pt-3">
                                 <button class="like-btn flex items-center space-x-2 text-gray-500 hover:text-red-600 transition"
@@ -817,25 +820,27 @@
                                     <i class="fas fa-heart {% if post.is_liked %}text-red-600{% endif %}"></i>
                                     <span class="likes-count text-sm">{{ post.likes_count }}</span>
                                 </button>
-                                
+
                                 <button class="comment-toggle flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition"
                                         data-post-id="{{ post.id }}">
                                     <i class="fas fa-comment"></i>
                                     <span class="text-sm">{{ post.comments_count }}</span>
                                 </button>
-                                
+
                                 <button class="share-btn flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition"
                                         onclick="sharePost('{{ post.id }}')">
                                     <i class="fas fa-share"></i>
                                     <span class="text-sm">Share</span>
                                 </button>
-                                
+
                                 <button class="save-btn flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition ml-auto"
-                                        data-post-id="{{ post.id }}">
-                                    <i class="fas fa-bookmark"></i>
+                                        data-post-id="{{ post.id }}"
+                                        data-saved="{% if post.id in saved_post_ids %}true{% else %}false{% endif %}">
+                                    <i class="fas fa-bookmark {% if post.id in saved_post_ids %}text-indigo-600{% endif %}"></i>
+                                    <span class="text-sm">{% if post.id in saved_post_ids %}Saved{% else %}Save{% endif %}</span>
                                 </button>
                             </div>
-                            
+
                             <!-- Comments Section (hidden by default) -->
                             <div class="comments-section mt-4 hidden" id="comments-{{ post.id }}">
                                 {% for comment in post.comments.all %}
@@ -857,17 +862,17 @@
                                 {% empty %}
                                 <p class="text-sm text-gray-500 text-center py-2">No comments yet</p>
                                 {% endfor %}
-                                
+
                                 <!-- Add Comment -->
                                 {% if user.is_authenticated %}
-                                <form class="mt-3 flex items-start space-x-2 comment-form" 
+                                <form class="mt-3 flex items-start space-x-2 comment-form"
                                     hx-post="{% url 'post-comment' post.id %}"
                                     hx-target="#comments-{{ post.id }}"
                                     hx-swap="beforeend">
                                     {% csrf_token %}
                                     <img src="{{ user.profile.profile_photo.url }}" class="w-6 h-6 rounded-full">
                                     <div class="flex-1">
-                                        <input type="text" name="content" placeholder="Write a comment..." 
+                                        <input type="text" name="content" placeholder="Write a comment..."
                                             class="w-full border border-gray-300 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-600">
                                     </div>
                                 </form>
@@ -890,7 +895,7 @@
                 </div>
                 {% endfor %}
             </div>
-            
+
             <!-- Pagination -->
             {% if posts.has_next %}
             <div class="text-center mt-6">
@@ -907,34 +912,34 @@
 </div>
 
 <!-- Report User Modal -->
-<div x-data="{ show: false, reason: '', description: '' }" 
-     x-show="show" 
+<div x-data="{ show: false, reason: '', description: '' }"
+     x-show="show"
      x-cloak
      @open-report-modal-window.window="show = true"
      @close-report-modal.window="show = false"
      @keydown.escape.window="show = false"
-     class="fixed inset-0 z-50 overflow-y-auto" 
+     class="fixed inset-0 z-50 overflow-y-auto"
      style="display: none;">
-    
+
     <!-- Backdrop -->
-    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity" 
+    <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
          @click="show = false"></div>
-    
+
     <!-- Modal panel -->
     <div class="flex items-center justify-center min-h-screen p-4">
         <div class="relative bg-white rounded-lg max-w-md w-full p-6 shadow-xl"
              @click.stop>
-            
+
             <div class="flex justify-between items-center mb-4">
                 <h3 class="text-lg font-semibold text-gray-900">Report User</h3>
                 <button @click="show = false" class="text-gray-400 hover:text-gray-600">
                     <i class="fas fa-times"></i>
                 </button>
             </div>
-            
+
             <form method="post" action="{% url 'report-user' profile_user.username %}">
                 {% csrf_token %}
-                
+
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Reason for reporting</label>
                     <select name="reason" required
@@ -947,21 +952,21 @@
                         <option value="other">Other</option>
                     </select>
                 </div>
-                
+
                 <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 mb-2">Additional details (optional)</label>
-                    <textarea name="description" rows="3" 
+                    <textarea name="description" rows="3"
                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"
                               placeholder="Please provide any additional information..."></textarea>
                 </div>
-                
+
                 <div class="flex justify-end space-x-2">
-                    <button type="button" 
+                    <button type="button"
                             @click="show = false"
                             class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
                         Cancel
                     </button>
-                    <button type="submit" 
+                    <button type="submit"
                             class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
                         <i class="fas fa-flag mr-2"></i>Submit Report
                     </button>
@@ -978,17 +983,17 @@
         <button onclick="closeStoryModal()" class="absolute -top-12 right-0 text-white hover:text-gray-300 transition z-10">
             <i class="fas fa-times text-2xl"></i>
         </button>
-        
+
         <!-- Story content -->
         <div id="story-content" class="bg-black rounded-lg overflow-hidden relative">
             <!-- Progress bar -->
             <div class="absolute top-0 left-0 right-0 h-1 bg-gray-600 bg-opacity-50 z-10">
                 <div id="story-progress" class="h-full bg-indigo-600 transition-all duration-[5000ms] linear" style="width: 0%"></div>
             </div>
-            
+
             <!-- Story image -->
             <img id="story-image" src="" class="w-full h-auto" alt="Story">
-            
+
             <!-- Story overlay -->
             <div class="absolute inset-0 flex flex-col justify-between p-4">
                 <!-- Top bar with user info -->
@@ -996,7 +1001,7 @@
                     <img id="story-user-avatar" src="" class="w-8 h-8 rounded-full border-2 border-white">
                     <span id="story-username" class="text-white font-medium"></span>
                 </div>
-                
+
                 <!-- Story caption -->
                 <div class="text-center">
                     <p id="story-caption" class="text-white text-lg"></p>
@@ -1033,7 +1038,7 @@ function openImageModal(imageUrl) {
     const modal = document.getElementById('imageModal');
     const modalImg = document.getElementById('modalImage');
     if (!modal || !modalImg) return;
-    
+
     modalImg.src = imageUrl;
     modal.classList.remove('hidden');
     modal.classList.add('flex');
@@ -1078,36 +1083,36 @@ document.addEventListener('keydown', function(e) {
 <script>
     // ==================== STORY FUNCTIONALITY ====================
     let storyTimer = null;
-    
+
     function viewStory(storyId, username, avatar, caption, imageUrl) {
         // Show modal
         const modal = document.getElementById('story-modal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-        
+
         // Update story content
         document.getElementById('story-image').src = imageUrl;
         document.getElementById('story-user-avatar').src = avatar;
         document.getElementById('story-username').textContent = username;
         document.getElementById('story-caption').textContent = caption || '';
-        
+
         // Reset and start progress bar
         const progress = document.getElementById('story-progress');
         progress.style.width = '0%';
-        
+
         // Force reflow
         progress.offsetHeight;
-        
+
         // Start progress animation
         progress.style.width = '100%';
-        
+
         // Auto-close after 5 seconds
         if (storyTimer) clearTimeout(storyTimer);
         storyTimer = setTimeout(() => {
             closeStoryModal();
         }, 5000);
     }
-    
+
     function closeStoryModal() {
         document.getElementById('story-modal').classList.add('hidden');
         document.getElementById('story-modal').classList.remove('flex');
@@ -1119,7 +1124,7 @@ document.addEventListener('keydown', function(e) {
         btn.addEventListener('click', function() {
             const username = this.dataset.username;
             const action = this.dataset.action;
-            
+
             fetch(`/follow/${username}/`, {
                 method: 'POST',
                 headers: {
@@ -1140,7 +1145,7 @@ document.addEventListener('keydown', function(e) {
                     this.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
                     this.dataset.action = 'follow';
                 }
-                
+
                 // Update follower count
                 const followerCountEl = document.querySelector('.follower-count');
                 if (followerCountEl) {
@@ -1150,14 +1155,14 @@ document.addEventListener('keydown', function(e) {
             .catch(error => console.error('Follow error:', error));
         });
     });
-    
+
     // ==================== LIKE FUNCTIONALITY ====================
     document.querySelectorAll('.like-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             const postId = this.dataset.postId;
             const icon = this.querySelector('i');
             const countSpan = this.querySelector('.likes-count');
-            
+
             fetch(`/post/${postId}/like/`, {
                 method: 'POST',
                 headers: {
@@ -1177,7 +1182,7 @@ document.addEventListener('keydown', function(e) {
             .catch(error => console.error('Like error:', error));
         });
     });
-    
+
     // ==================== COMMENT FUNCTIONALITY ====================
     document.querySelectorAll('.comment-toggle').forEach(btn => {
         btn.addEventListener('click', function() {
@@ -1208,33 +1213,33 @@ document.addEventListener('keydown', function(e) {
     }
 
     // ==================== PHOTO UPLOAD FUNCTIONALITY ====================
-    
+
     // Profile photo upload handler
     function handlePhotoUpload(input) {
         const file = input.files[0];
         if (!file) return;
-        
+
         const photoMessage = document.getElementById('photo-message');
         const profileImg = document.getElementById('profile-photo-img');
-        
+
         // Validate file type
         if (!file.type.startsWith('image/')) {
             showMessage(photoMessage, 'Please select an image file', 'error');
             return;
         }
-        
+
         // Validate file size (5MB max)
         if (file.size > 5 * 1024 * 1024) {
             showMessage(photoMessage, 'Image size must be less than 5MB', 'error');
             return;
         }
-        
+
         // Show loading
         showMessage(photoMessage, 'Uploading...', 'loading');
-        
+
         const formData = new FormData();
         formData.append('file', file);
-        
+
         fetch("{% url 'api-update-photo' %}", {
             method: 'POST',
             headers: {
@@ -1263,33 +1268,33 @@ document.addEventListener('keydown', function(e) {
             input.value = '';
         });
     }
-    
+
     // Cover photo upload handler
     function handleCoverUpload(input) {
         const file = input.files[0];
         if (!file) return;
-        
+
         const coverMessage = document.getElementById('cover-message');
         const coverContainer = document.getElementById('cover-container');
-        
+
         // Validate file type
         if (!file.type.startsWith('image/')) {
             showMessage(coverMessage, 'Please select an image file', 'error');
             return;
         }
-        
+
         // Validate file size (10MB max for cover)
         if (file.size > 10 * 1024 * 1024) {
             showMessage(coverMessage, 'Image size must be less than 10MB', 'error');
             return;
         }
-        
+
         // Show loading
         showMessage(coverMessage, 'Uploading...', 'loading');
-        
+
         const formData = new FormData();
         formData.append('file', file);
-        
+
         fetch("{% url 'api-update-cover' %}", {
             method: 'POST',
             headers: {
@@ -1327,19 +1332,19 @@ document.addEventListener('keydown', function(e) {
             input.value = '';
         });
     }
-    
+
     // Helper function to show messages
     function showMessage(element, message, type) {
         if (!element) return;
-        
+
         let colorClass = '';
         if (type === 'success') colorClass = 'text-green-600';
         else if (type === 'error') colorClass = 'text-red-600';
         else if (type === 'loading') colorClass = 'text-indigo-600';
         else colorClass = 'text-gray-600';
-        
+
         element.innerHTML = `<span class="${colorClass} text-sm">${message}</span>`;
-        
+
         if (type === 'success' || type === 'error') {
             setTimeout(() => {
                 element.innerHTML = '';

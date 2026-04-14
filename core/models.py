@@ -8,7 +8,7 @@ from django.db.models import Q, Count
 from django.utils import timezone
 from django.core.validators import FileExtensionValidator, MinLengthValidator, MaxLengthValidator
 from django.urls import reverse
-from django.utils.text import slugify  
+from django.utils.text import slugify
 import uuid
 import os
 
@@ -47,53 +47,53 @@ class Profile(models.Model):
     location = models.CharField(max_length=100, blank=True)
     birth_date = models.DateField(null=True, blank=True)
     website = models.URLField(max_length=200, blank=True)
-    
+
     # University fields - REQUIRED for new users
     department = models.ForeignKey(
-        'Department', 
-        on_delete=models.SET_NULL, 
-        null=True, 
+        'Department',
+        on_delete=models.SET_NULL,
+        null=True,
         blank=True,  # Will be required after email verification
         related_name='students'
     )
     batch = models.CharField(
-        max_length=20, 
+        max_length=20,
         blank=True,  # Will be required after email verification
         help_text="e.g., 2024, 2023, etc."
     )
     student_id = models.CharField(
-        max_length=50, 
+        max_length=50,
         blank=True,  # Will be required after email verification
         unique=True,
         null=True
     )
     university = models.CharField(
-        max_length=200, 
-        blank=True, 
+        max_length=200,
+        blank=True,
         default="Campus University"
     )
-    
+
     # Email verification fields
     email_verified = models.BooleanField(default=False)
     email_verification_otp = models.CharField(max_length=6, blank=True, null=True)
     email_verification_sent_at = models.DateTimeField(null=True, blank=True)
     profile_completed = models.BooleanField(default=False)  # Track if profile is fully completed
-    
+
     # Social links
     facebook = models.URLField(max_length=200, blank=True)
     twitter = models.URLField(max_length=200, blank=True)
     instagram = models.URLField(max_length=200, blank=True)
     linkedin = models.URLField(max_length=200, blank=True)
-    
+
     # Statistics
     followers_count = models.PositiveIntegerField(default=0)
     following_count = models.PositiveIntegerField(default=0)
     posts_count = models.PositiveIntegerField(default=0)
-    
+
     # Status
     is_online = models.BooleanField(default=False)
     last_seen = models.DateTimeField(default=timezone.now)
-    
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -181,7 +181,7 @@ class Post(models.Model):
         null=True,
         validators=[FileExtensionValidator(['pdf', 'doc', 'docx', 'txt', 'ppt', 'pptx', 'xls', 'xlsx', 'csv', 'zip', 'rar'])]
     )
-    
+
     # Privacy settings
     PRIVACY_CHOICES = [
         ('public', 'Public'),
@@ -193,23 +193,23 @@ class Post(models.Model):
         choices=PRIVACY_CHOICES,
         default='public'
     )
-    
+
     # Statistics
     likes_count = models.PositiveIntegerField(default=0)
     comments_count = models.PositiveIntegerField(default=0)
     shares_count = models.PositiveIntegerField(default=0)
-    
+
     # Flags
     is_edited = models.BooleanField(default=False)
     is_pinned = models.BooleanField(default=False)
     is_archived = models.BooleanField(default=False)
-    
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
-        ordering = ['-created_at', '-is_pinned']
+        ordering = ['-is_pinned', '-created_at']
         indexes = [
             models.Index(fields=['-created_at']),
             models.Index(fields=['user', '-created_at']),
@@ -227,7 +227,7 @@ class Post(models.Model):
         self.likes_count = self.likes.count()
         self.comments_count = self.comments.count()
         self.save(update_fields=['likes_count', 'comments_count'])
-    
+
     def delete(self, *args, **kwargs):
         """Delete associated files when post is deleted"""
         if self.image and os.path.isfile(self.image.path):
@@ -351,13 +351,13 @@ class Notification(models.Model):
     notification_type = models.CharField(max_length=20, choices=NOTIFICATION_TYPES)
     post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, blank=True)
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, null=True, blank=True)
-    
+
     text = models.CharField(max_length=255)
     url = models.CharField(max_length=255)
-    
+
     is_read = models.BooleanField(default=False)
     is_emailed = models.BooleanField(default=False)
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -384,17 +384,25 @@ class Message(models.Model):
         related_name='received_messages'
     )
     content = models.TextField(validators=[MaxLengthValidator(5000)])
-    
+
     # Media attachments
     image = models.ImageField(upload_to='chat_images/', blank=True, null=True)
     file = models.FileField(upload_to='chat_files/', blank=True, null=True)
-    
+    shared_post = models.ForeignKey('Post', on_delete=models.SET_NULL, null=True, blank=True, related_name='shared_messages')
+    shared_post_preview = models.TextField(blank=True, null=True)
+        # Store file URLs
+    file_url = models.URLField(max_length=500, blank=True, null=True)
+    file_name = models.CharField(max_length=255, blank=True, null=True)
+    file_type = models.CharField(max_length=20, blank=True, null=True)
+    is_file = models.BooleanField(default=False)
+    is_image = models.BooleanField(default=False)
+
     # Status
     is_read = models.BooleanField(default=False)
     is_delivered = models.BooleanField(default=False)
     is_edited = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
-    
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -441,7 +449,7 @@ class Conversation(models.Model):
         conversations = cls.objects.filter(participants=user1).filter(participants=user2)
         if conversations.exists():
             return conversations.first()
-        
+
         conversation = cls.objects.create()
         conversation.participants.add(user1, user2)
         return conversation
@@ -453,9 +461,9 @@ class Story(models.Model):
     image = models.ImageField(upload_to='stories/')
     text = models.CharField(max_length=100, blank=True)
     background_color = models.CharField(max_length=7, default='#000000')
-    
+
     viewed_by = models.ManyToManyField(User, related_name='viewed_stories', blank=True)
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     expires_at = models.DateTimeField()
 
@@ -509,7 +517,7 @@ class Report(models.Model):
         ('user', 'User'),
         ('message', 'Message'),
     ]
-    
+
     REASON_CHOICES = [
         ('spam', 'Spam'),
         ('harassment', 'Harassment'),
@@ -535,11 +543,11 @@ class Report(models.Model):
     )
     post = models.ForeignKey(Post, on_delete=models.CASCADE, null=True, blank=True)
     comment = models.ForeignKey(Comment, on_delete=models.CASCADE, null=True, blank=True)
-    
+
     report_type = models.CharField(max_length=10, choices=REPORT_TYPES)
     reason = models.CharField(max_length=20, choices=REASON_CHOICES)
     description = models.TextField(max_length=1000, blank=True)
-    
+
     is_reviewed = models.BooleanField(default=False)
     reviewed_by = models.ForeignKey(
         User,
@@ -549,7 +557,7 @@ class Report(models.Model):
     )
     reviewed_at = models.DateTimeField(null=True, blank=True)
     action_taken = models.TextField(blank=True)
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -597,7 +605,7 @@ class Department(models.Model):
 
 class Announcement(models.Model):
     """University announcements (notices, events, news)"""
-    
+
     ANNOUNCEMENT_TYPES = [
         ('notice', '📢 Notice'),
         ('event', '🎉 Event'),
@@ -608,7 +616,7 @@ class Announcement(models.Model):
         ('holiday', '🎪 Holiday'),
         ('emergency', '🚨 Emergency'),
     ]
-    
+
     AUDIENCE_TYPES = [
         ('general', '🌍 General - Everyone'),
         ('students', '👥 All Students'),
@@ -622,47 +630,47 @@ class Announcement(models.Model):
     slug = models.SlugField(unique=True, max_length=255)
     announcement_type = models.CharField(max_length=20, choices=ANNOUNCEMENT_TYPES, default='notice')
     category = models.ForeignKey(AnnouncementCategory, on_delete=models.SET_NULL, null=True, blank=True, related_name='announcements')
-    
+
     # Content
     content = models.TextField()
     summary = models.TextField(max_length=500, blank=True, help_text="Brief summary for cards")
-    
+
     # Media
     featured_image = models.ImageField(upload_to='announcements/featured/', blank=True, null=True)
     attachment = models.FileField(upload_to='announcements/attachments/', blank=True, null=True)
     external_link = models.URLField(blank=True, null=True)
-    
+
     # Author/Permissions
     author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='announcements_created')
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, related_name='announcements')
-    
+
     # Targeting
     audience = models.CharField(max_length=20, choices=AUDIENCE_TYPES, default='general')
     target_department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, blank=True, related_name='targeted_announcements')
     target_batch = models.CharField(max_length=20, blank=True, help_text="e.g., 2024, 2023, etc.")
-    
+
     # Dates
     published_at = models.DateTimeField(default=timezone.now)
     event_start_date = models.DateTimeField(null=True, blank=True)
     event_end_date = models.DateTimeField(null=True, blank=True)
     deadline = models.DateTimeField(null=True, blank=True, help_text="For submissions, registrations, etc.")
-    
+
     # Location (for events)
     location = models.CharField(max_length=255, blank=True)
     is_virtual = models.BooleanField(default=False)
     meeting_link = models.URLField(blank=True, null=True)
-    
+
     # Status
     is_pinned = models.BooleanField(default=False)
     is_important = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_archived = models.BooleanField(default=False)
-    
+
     # Stats
     views_count = models.PositiveIntegerField(default=0)
     likes_count = models.PositiveIntegerField(default=0)
     comments_count = models.PositiveIntegerField(default=0)
-    
+
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -688,12 +696,12 @@ class Announcement(models.Model):
             base_slug = slugify(self.title)
             unique_slug = base_slug
             counter = 1
-            
+
             # Check if slug exists and make it unique
             while Announcement.objects.filter(slug=unique_slug).exists():
                 unique_slug = f"{base_slug}-{counter}"
                 counter += 1
-            
+
             self.slug = unique_slug
         super().save(*args, **kwargs)
 
@@ -738,7 +746,7 @@ class AnnouncementAuthorPermission(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='announcement_permission')
     can_create_general = models.BooleanField(default=False, help_text="Can create general announcements")
     can_create_departmental = models.BooleanField(default=False, help_text="Can create departmental announcements")
-    departments = models.ManyToManyField(Department, blank=True, related_name='authorized_users', 
+    departments = models.ManyToManyField(Department, blank=True, related_name='authorized_users',
                                          help_text="Which departments they can post for")
     can_create_events = models.BooleanField(default=False)
     can_create_notices = models.BooleanField(default=False)
@@ -779,7 +787,7 @@ def update_follow_counts(sender, instance, created, **kwargs):
                 instance.follower.profile.update_counts()
         except:
             pass
-        
+
         try:
             if instance.following and hasattr(instance.following, 'profile'):
                 instance.following.profile.update_counts()
@@ -798,7 +806,7 @@ def update_follow_counts_on_delete(sender, instance, **kwargs):
                 pass  # Profile doesn't exist, skip
     except:
         pass
-    
+
     try:
         # Safely update following's profile
         if instance.following and hasattr(instance.following, 'profile'):
@@ -843,7 +851,7 @@ def update_comment_counts_on_delete(sender, instance, **kwargs):
         comments_count=models.F('comments_count') - 1
     )
 
-    
+
 # ==================== DYNAMIC CONTENT MODELS ====================
 
 class SiteStatistic(models.Model):
@@ -872,13 +880,13 @@ class TeamMember(models.Model):
     batch = models.CharField(max_length=20, blank=True)
     photo = models.ImageField(upload_to='team/', blank=True, null=True)
     bio = models.TextField(blank=True, max_length=500)
-    
+
     # Social links
     facebook = models.URLField(blank=True)
     twitter = models.URLField(blank=True)
     linkedin = models.URLField(blank=True)
     github = models.URLField(blank=True)
-    
+
     order = models.PositiveIntegerField(default=0)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -926,13 +934,13 @@ class ContactMessage(models.Model):
     email = models.EmailField()
     subject = models.CharField(max_length=200)
     message = models.TextField()
-    
+
     # Status tracking
     is_read = models.BooleanField(default=False)
     is_replied = models.BooleanField(default=False)
     replied_at = models.DateTimeField(null=True, blank=True)
     replied_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='replied_messages')
-    
+
     # Metadata
     ip_address = models.GenericIPAddressField(blank=True, null=True)
     user_agent = models.TextField(blank=True)

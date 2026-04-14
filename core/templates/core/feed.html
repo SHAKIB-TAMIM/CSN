@@ -1,3 +1,4 @@
+
 {% extends 'core/base.html' %}
 {% load static %}
 {% load humanize %}
@@ -164,7 +165,7 @@
     #imageModal.flex {
         display: flex;
     }
-    
+
     /* ===== Document Icons ===== */
     .doc-icon {
         transition: all 0.3s ease;
@@ -172,6 +173,60 @@
     .doc-icon:hover {
         transform: scale(1.1);
     }
+
+    /* Share Modal Mobile Responsive */
+@media (max-width: 768px) {
+    #shareModal .bg-white {
+        width: 95%;
+        max-width: 95%;
+        margin: 0 auto;
+    }
+
+    #shareModal .flex.items-center.justify-between {
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    #shareModal .flex.items-center.space-x-3 {
+        flex: 1;
+        min-width: 0;
+    }
+
+    #shareModal img {
+        width: 40px;
+        height: 40px;
+    }
+
+    #shareModal .font-medium {
+        font-size: 0.85rem;
+    }
+
+    #shareModal .text-xs {
+        font-size: 0.7rem;
+    }
+
+    #shareModal button.px-3.py-1 {
+        padding: 4px 10px;
+        font-size: 0.75rem;
+    }
+}
+
+/* For very small screens */
+@media (max-width: 480px) {
+    #shareModal .flex.items-center.justify-between {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+
+    #shareModal .flex.items-center.space-x-3 {
+        width: 100%;
+    }
+
+    #shareModal button.px-3.py-1 {
+        align-self: flex-end;
+    }
+}
 </style>
 {% endblock %}
 
@@ -189,10 +244,10 @@
                 <div class="space-y-3">
                     <!-- Your story -->
                     {% if user_story %}
-                    <div class="flex items-center space-x-3 group hover:bg-gray-50 p-2 rounded-lg transition cursor-pointer" 
+                    <div class="flex items-center space-x-3 group hover:bg-gray-50 p-2 rounded-lg transition cursor-pointer"
                          onclick="viewStory('{{ user_story.id }}', '{{ user.username }}', '{{ user.profile.profile_photo.url }}', '{{ user_story.text|escapejs }}', '{{ user_story.image.url }}')">
                         <div class="relative">
-                            <img src="{{ user.profile.profile_photo.url }}" 
+                            <img src="{{ user.profile.profile_photo.url }}"
                                  class="w-14 h-14 rounded-full border-2 border-indigo-600 p-0.5 object-cover">
                             <span class="absolute -bottom-1 -right-1 bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md">
                                 <i class="fas fa-eye"></i>
@@ -206,7 +261,7 @@
                     {% else %}
                     <a href="{% url 'story-create' %}" class="flex items-center space-x-3 group hover:bg-gray-50 p-2 rounded-lg transition">
                         <div class="relative">
-                            <img src="{{ user.profile.profile_photo.url }}" 
+                            <img src="{{ user.profile.profile_photo.url }}"
                                  class="w-14 h-14 rounded-full border-2 border-indigo-600 p-0.5 object-cover">
                             <span class="absolute -bottom-1 -right-1 bg-indigo-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs shadow-md">
                                 <i class="fas fa-plus"></i>
@@ -218,14 +273,14 @@
                         </div>
                     </a>
                     {% endif %}
-                    
+
                     <!-- Stories from followed users -->
                     {% for story in all_stories %}
                         {% if story.user.username != user.username %}
-                        <div class="flex items-center space-x-3 group hover:bg-gray-50 p-2 rounded-lg transition cursor-pointer" 
+                        <div class="flex items-center space-x-3 group hover:bg-gray-50 p-2 rounded-lg transition cursor-pointer"
                              onclick="viewStory('{{ story.id }}', '{{ story.user.username }}', '{{ story.user.profile.profile_photo.url }}', '{{ story.text|escapejs }}', '{{ story.image.url }}')">
                             <div class="relative">
-                                <img src="{{ story.user.profile.profile_photo.url }}" 
+                                <img src="{{ story.user.profile.profile_photo.url }}"
                                      class="w-14 h-14 rounded-full border-2 border-indigo-600 p-0.5 object-cover">
                                 {% if story.user.profile.is_online %}
                                 <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
@@ -252,7 +307,7 @@
         <!-- Main Feed - Posts -->
         <div class="lg:col-span-2">
             <h1 class="text-2xl font-bold text-gray-900 mb-6">Your Feed</h1>
-            
+
             <!-- Posts Container -->
             <div id="posts-container">
                 <div class="flex justify-center py-8" id="loading">
@@ -262,39 +317,41 @@
         </div>
 
         <!-- Right Sidebar - Suggested Users -->
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-lg shadow-md p-4 sticky top-20">
-                <h3 class="font-semibold text-gray-800 mb-4 flex items-center justify-between">
-                    <span>Suggested for you</span>
-                    <a href="{% url 'explore' %}" class="text-xs text-indigo-600 hover:text-indigo-800">See All</a>
-                </h3>
-                
-                <div class="space-y-4">
-                    {% for suggested in suggested_users %}
-                        {% if not suggested.is_staff and not suggested.is_superuser %}
-                        <div class="flex items-center justify-between">
-                            <div class="flex items-center space-x-3">
-                                <img src="{{ suggested.profile.profile_photo.url }}" 
-                                     class="w-10 h-10 rounded-full object-cover"
-                                     alt="{{ suggested.username }}">
-                                <div>
-                                    <p class="text-sm font-medium text-gray-800">{{ suggested.username }}</p>
-                                    <p class="text-xs text-gray-500">{{ suggested.profile.followers_count }} followers</p>
-                                </div>
+<div class="lg:col-span-1">
+    <div class="bg-white rounded-lg shadow-md p-4 sticky top-20">
+        <h3 class="font-semibold text-gray-800 mb-4 flex items-center justify-between">
+            <span>Suggested for you</span>
+            <a href="{% url 'discover-users' %}" class="text-xs text-indigo-600 hover:text-indigo-800">See All</a>
+        </h3>
+
+        <div class="space-y-4">
+            {% for suggested in suggested_users %}
+                {% if not suggested.is_staff and not suggested.is_superuser %}
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-3">
+                        <a href="{% url 'profile' suggested.username %}" class="flex items-center space-x-3 group">
+                            <img src="{{ suggested.profile.profile_photo.url }}"
+                                 class="w-10 h-10 rounded-full object-cover group-hover:ring-2 group-hover:ring-indigo-600 transition"
+                                 alt="{{ suggested.username }}">
+                            <div>
+                                <p class="text-sm font-medium text-gray-800 group-hover:text-indigo-600 transition">{{ suggested.username }}</p>
+                                <p class="text-xs text-gray-500">{{ suggested.profile.followers_count }} followers</p>
                             </div>
-                            <button class="follow-btn text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-full hover:bg-indigo-700 transition"
-                                    data-username="{{ suggested.username }}"
-                                    data-action="follow">
-                                Follow
-                            </button>
-                        </div>
-                        {% endif %}
-                    {% empty %}
-                    <p class="text-sm text-gray-500 text-center py-4">No suggestions available</p>
-                    {% endfor %}
+                        </a>
+                    </div>
+                    <button class="follow-btn text-xs bg-indigo-600 text-white px-3 py-1.5 rounded-full hover:bg-indigo-700 transition"
+                            data-username="{{ suggested.username }}"
+                            data-action="follow">
+                        Follow
+                    </button>
                 </div>
-            </div>
+                {% endif %}
+            {% empty %}
+            <p class="text-sm text-gray-500 text-center py-4">No suggestions available</p>
+            {% endfor %}
         </div>
+    </div>
+</div>
     </div>
 </div>
 
@@ -304,7 +361,7 @@
         <button onclick="closeStoryModal()" class="absolute -top-12 right-0 text-white hover:text-gray-300 transition z-10">
             <i class="fas fa-times text-2xl"></i>
         </button>
-        
+
         <div id="story-content" class="bg-black rounded-lg overflow-hidden relative">
             <div class="story-progress-bar absolute top-0 left-0 right-0 z-10">
                 <div id="story-progress" class="story-progress-fill"></div>
@@ -320,7 +377,7 @@
                 </div>
             </div>
         </div>
-        
+
         <div class="flex justify-between mt-4">
             <button class="text-white hover:text-indigo-400 transition" onclick="previousStory()">
                 <i class="fas fa-chevron-left text-2xl"></i>
@@ -347,11 +404,11 @@
     <div class="bg-white rounded-lg max-w-md w-full p-6 modal-content">
         <h3 class="text-lg font-semibold text-gray-900 mb-4">Report Post</h3>
         <p class="text-sm text-gray-600 mb-4" id="report-post-info"></p>
-        
+
         <form id="report-form">
             {% csrf_token %}
             <input type="hidden" name="post_id" id="report-post-id">
-            
+
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Reason for reporting</label>
                 <select name="reason" id="report-reason" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600" required>
@@ -363,12 +420,12 @@
                     <option value="other">Other</option>
                 </select>
             </div>
-            
+
             <div class="mb-4">
                 <label class="block text-sm font-medium text-gray-700 mb-2">Additional details (optional)</label>
                 <textarea name="description" id="report-description" rows="3" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600"></textarea>
             </div>
-            
+
             <div class="flex justify-end space-x-3">
                 <button type="button" onclick="closeReportModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800 border border-gray-300 rounded-lg">
                     Cancel
@@ -380,50 +437,69 @@
         </form>
     </div>
 </div>
-
+<!-- Share Modal - Mobile Responsive -->
+<div id="shareModal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center z-50 p-4" onclick="closeShareModal()">
+    <div class="bg-white rounded-2xl w-full max-w-md max-h-[85vh] overflow-hidden shadow-2xl" onclick="event.stopPropagation()">
+        <div class="sticky top-0 bg-white z-10 flex justify-between items-center p-4 border-b border-gray-200">
+            <h3 class="text-lg font-semibold text-gray-900">Share to</h3>
+            <button onclick="closeShareModal()" class="text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+        <div class="p-3">
+            <div class="mb-3 sticky top-12 bg-white z-10">
+                <input type="text" id="shareSearchInput" placeholder="Search users..."
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600 text-sm">
+            </div>
+            <div id="shareUsersList" class="max-h-[55vh] overflow-y-auto space-y-2">
+                <div class="text-center py-4 text-gray-500">Loading...</div>
+            </div>
+        </div>
+    </div>
+</div>
 <script>
     // ===== Story Functionality =====
     let storyTimer = null;
-    
+
     function viewStory(storyId, username, avatar, caption, imageUrl) {
         const modal = document.getElementById('story-modal');
         modal.classList.remove('hidden');
         modal.classList.add('flex');
-        
+
         document.getElementById('story-image').src = imageUrl;
         document.getElementById('story-user-avatar').src = avatar;
         document.getElementById('story-username').textContent = username;
         document.getElementById('story-caption').textContent = caption || '';
-        
+
         const progress = document.getElementById('story-progress');
         progress.style.animation = 'none';
         progress.offsetHeight;
         progress.style.animation = 'progress 5s linear forwards';
-        
+
         if (storyTimer) clearTimeout(storyTimer);
         storyTimer = setTimeout(closeStoryModal, 5000);
     }
-    
+
     function closeStoryModal() {
         document.getElementById('story-modal').classList.add('hidden');
         document.getElementById('story-modal').classList.remove('flex');
         if (storyTimer) clearTimeout(storyTimer);
     }
-    
+
     function previousStory() {
         console.log('Previous story');
     }
-    
+
     function nextStory() {
         console.log('Next story');
     }
-    
+
     // ===== Image Modal Functionality =====
     function openImageModal(imageUrl) {
         const modal = document.getElementById('imageModal');
         const modalImg = document.getElementById('modalImage');
         if (!modal || !modalImg) return;
-        
+
         modalImg.src = imageUrl;
         modal.classList.remove('hidden');
         modal.classList.add('flex');
@@ -438,43 +514,43 @@
             document.body.style.overflow = 'auto';
         }
     }
-    
+
     // ===== Post Loading =====
     let page = 1;
     let loading = false;
     let hasNext = true;
-    
+
     document.addEventListener('DOMContentLoaded', function() {
         loadPosts(1);
     });
 
     window.addEventListener('scroll', () => {
         if (loading || !hasNext) return;
-        
+
         const scrollHeight = document.documentElement.scrollHeight;
         const scrollTop = document.documentElement.scrollTop;
         const clientHeight = document.documentElement.clientHeight;
-        
+
         if (scrollTop + clientHeight >= scrollHeight - 500) {
             loadMorePosts();
         }
     });
-    
+
     function loadPosts(pageNum) {
         loading = true;
-        
+
         fetch(`/api/feed/?page=${pageNum}`)
             .then(response => response.json())
             .then(data => {
                 const container = document.getElementById('posts-container');
                 document.getElementById('loading').style.display = 'none';
-                
+
                 if (data.posts.length > 0) {
                     appendPosts(data.posts);
                 } else {
                     container.innerHTML = '<p class="text-center text-gray-500 py-8">No posts to show</p>';
                 }
-                
+
                 hasNext = data.has_next;
                 loading = false;
             })
@@ -482,56 +558,57 @@
                 loading = false;
             });
     }
-    
+
     function loadMorePosts() {
         page++;
         loadPosts(page);
     }
-    
+
     function appendPosts(posts) {
         const container = document.getElementById('posts-container');
         posts.forEach(post => {
             container.insertAdjacentHTML('beforeend', createPostHtml(post));
         });
+        // Re-initialize save buttons after adding new posts
+        initSaveButtons();
     }
-    
+
     function createPostHtml(post) {
         const date = new Date(post.created_at);
         const timeAgo = formatTimeAgo(date);
         const content = post.content && post.content.trim() ? post.content : '';
-        
+
         const privacyBadge = {
             'public': '<span class="ml-2 text-xs px-2 py-1 rounded-full bg-blue-100 text-blue-600"><i class="fas fa-globe mr-1"></i>Public</span>',
             'followers': '<span class="ml-2 text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-600"><i class="fas fa-users mr-1"></i>Followers</span>',
             'private': '<span class="ml-2 text-xs px-2 py-1 rounded-full bg-red-100 text-red-600"><i class="fas fa-lock mr-1"></i>Private</span>'
         }[post.privacy] || '';
-        
+
         const editedHtml = post.is_edited ? '<span class="text-xs text-gray-400 ml-1">(edited)</span>' : '';
-        
+
         // Build image HTML if exists
-        const imageHtml = post.image ? 
+        const imageHtml = post.image ?
             `<div class="mt-3 rounded-lg overflow-hidden">
                 <img src="${post.image}" class="w-full max-h-96 object-cover cursor-pointer" onclick="openImageModal('${post.image}')">
             </div>` : '';
-        
+
         // Build video HTML if exists
-        const videoHtml = post.video ? 
+        const videoHtml = post.video ?
             `<div class="mt-3 rounded-lg overflow-hidden bg-black">
                 <video class="w-full max-h-96" controls preload="metadata">
                     <source src="${post.video}" type="video/mp4">
                     Your browser does not support the video tag.
                 </video>
             </div>` : '';
-        
+
         // Build document HTML if exists
         const documentHtml = post.document ? (() => {
             const docExt = post.document.split('.').pop().toLowerCase();
             const docName = post.document.split('/').pop();
-            
-            // Determine icon and color based on extension
+
             let iconClass = 'fas fa-file text-2xl text-indigo-600';
             let bgClass = 'bg-indigo-100';
-            
+
             if (docExt === 'pdf') {
                 iconClass = 'fas fa-file-pdf text-2xl text-red-600';
                 bgClass = 'bg-red-100';
@@ -551,10 +628,10 @@
                 iconClass = 'fas fa-file-archive text-2xl text-purple-600';
                 bgClass = 'bg-purple-100';
             }
-            
+
             return `
                 <div class="mt-3">
-                    <a href="${post.document}" target="_blank" 
+                    <a href="${post.document}" target="_blank"
                        class="flex items-center p-4 bg-gradient-to-r from-gray-50 to-white rounded-lg border border-gray-200 hover:border-indigo-300 hover:shadow-md transition-all group">
                         <div class="w-12 h-12 flex items-center justify-center rounded-lg ${bgClass}">
                             <i class="${iconClass} group-hover:scale-110 transition-transform"></i>
@@ -574,7 +651,7 @@
                 </div>
             `;
         })() : '';
-        
+
         return `
             <div class="bg-white rounded-lg shadow-md p-6 mb-4 post-card hover:shadow-lg transition" data-post-id="${post.id}">
                 <div class="flex items-start space-x-3">
@@ -589,22 +666,22 @@
                                 ${privacyBadge}
                                 ${editedHtml}
                             </div>
-                            
+
                             <div class="relative" x-data="{ open: false }">
                                 <button @click="open = !open" class="text-gray-400 hover:text-gray-600">
                                     <i class="fas fa-ellipsis-h"></i>
                                 </button>
-                                
-                                <div x-show="open" @click.away="open = false" 
+
+                                <div x-show="open" @click.away="open = false"
                                      class="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-200 z-50"
                                      style="display: none;">
-                                    
+
                                     {% if user == post.user or user.is_staff %}
                                     <a href="/post/${post.id}/edit/" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                                         <i class="fas fa-edit mr-2"></i> Edit Post
                                     </a>
                                     {% endif %}
-                                    
+
                                     {% if user == post.user or user.is_staff %}
                                     <form method="post" action="/post/${post.id}/delete/"
                                           onsubmit="return confirm('Are you sure you want to delete this post?');">
@@ -614,7 +691,7 @@
                                         </button>
                                     </form>
                                     {% endif %}
-                                    
+
                                     {% if user != post.user %}
                                     <button class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                                             onclick="openReportModal(${post.id}, '${post.user.username}')">
@@ -624,30 +701,38 @@
                                 </div>
                             </div>
                         </div>
-                        
+
                         ${content ? `<p class="mt-3 text-gray-800 whitespace-pre-wrap">${content}</p>` : ''}
-                        
+
                         ${imageHtml}
                         ${videoHtml}
                         ${documentHtml}
-                        
+
                         <div class="mt-4 flex items-center space-x-6 pt-3 border-t border-gray-100">
-                            <button class="like-btn flex items-center space-x-2 text-gray-500 hover:text-red-600 transition" 
+                            <button class="like-btn flex items-center space-x-2 text-gray-500 hover:text-red-600 transition"
                                     data-post-id="${post.id}"
                                     onclick="toggleLike(this)">
                                 <i class="fas fa-heart text-lg ${post.is_liked ? 'text-red-600' : ''}"></i>
                                 <span class="likes-count text-sm font-medium">${post.likes_count}</span>
                             </button>
-                            
+
                             <a href="/post/${post.id}/" class="flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition">
                                 <i class="fas fa-comment text-lg"></i>
                                 <span class="text-sm font-medium">${post.comments_count}</span>
                             </a>
-                            
+
                             <button class="flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition ml-auto"
                                     onclick="sharePost('${post.id}')">
                                 <i class="fas fa-share text-lg"></i>
                                 <span class="text-sm font-medium">Share</span>
+                            </button>
+
+                            <button class="save-btn flex items-center space-x-2 text-gray-500 hover:text-indigo-600 transition ml-auto"
+                                    data-post-id="${post.id}"
+                                    data-saved="${post.is_saved}"
+                                    onclick="event.preventDefault(); event.stopPropagation(); handleSaveButtonClick(this, ${post.id})">
+                                <i class="fas fa-bookmark ${post.is_saved === true ? 'text-indigo-600' : ''}"></i>
+                                <span class="text-sm">${post.is_saved === true ? 'Saved' : 'Save'}</span>
                             </button>
                         </div>
                     </div>
@@ -655,24 +740,24 @@
             </div>
         `;
     }
-    
+
     function formatTimeAgo(date) {
         const now = new Date();
         const diffInSeconds = Math.floor((now - date) / 1000);
-        
+
         if (diffInSeconds < 60) return 'Just now';
         if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)} minutes ago`;
         if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)} hours ago`;
         if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)} days ago`;
         return date.toLocaleDateString();
     }
-    
+
     // ===== Like Functionality =====
     function toggleLike(button) {
         const postId = button.dataset.postId;
         const icon = button.querySelector('i');
         const countSpan = button.querySelector('.likes-count');
-        
+
         fetch(`/post/${postId}/like/`, {
             method: 'POST',
             headers: {
@@ -691,30 +776,127 @@
         })
         .catch(error => console.error('Like error:', error));
     }
-    
-    // ===== Share Functionality =====
-    function sharePost(postId) {
-        if (navigator.share) {
-            navigator.share({
-                title: 'Check out this post',
-                url: window.location.origin + '/post/' + postId + '/'
-            }).catch(console.error);
-        } else {
-            const url = window.location.origin + '/post/' + postId + '/';
-            navigator.clipboard.writeText(url).then(() => {
-                alert('Link copied to clipboard!');
-            }).catch(() => {
-                prompt('Copy this link:', url);
+
+// Share Functionality with Modal
+let currentSharePostId = null;
+
+async function sharePost(postId) {
+    currentSharePostId = postId;
+
+    // Show modal
+    document.getElementById('shareModal').classList.remove('hidden');
+    document.getElementById('shareModal').classList.add('flex');
+    document.body.style.overflow = 'hidden';
+
+    // Load following users
+    await loadFollowingUsers();
+}
+
+async function loadFollowingUsers() {
+    const container = document.getElementById('shareUsersList');
+    container.innerHTML = '<div class="text-center py-4 text-gray-500">Loading...</div>';
+
+    try {
+        const response = await fetch('/api/following-for-share/');
+        const data = await response.json();
+
+        if (data.users && data.users.length > 0) {
+            container.innerHTML = '';
+            data.users.forEach(user => {
+                const userDiv = document.createElement('div');
+                userDiv.className = 'flex items-center justify-between p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition';
+                userDiv.onclick = () => sendSharedPost(user.id, user.username);
+                userDiv.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <img src="${user.profile_photo}" class="w-10 h-10 rounded-full object-cover">
+                        <div>
+                            <p class="font-medium text-gray-900">${user.full_name || user.username}</p>
+                            <p class="text-xs text-gray-500">@${user.username}</p>
+                        </div>
+                    </div>
+                    <button class="px-3 py-1 bg-indigo-600 text-white text-sm rounded-full hover:bg-indigo-700 transition">
+                        Share
+                    </button>
+                `;
+                container.appendChild(userDiv);
             });
+        } else {
+            container.innerHTML = '<div class="text-center py-4 text-gray-500">No users to share with. Follow more people!</div>';
         }
+    } catch (error) {
+        console.error('Error loading users:', error);
+        container.innerHTML = '<div class="text-center py-4 text-red-500">Error loading users</div>';
     }
-    
+}
+
+async function sendSharedPost(userId, username) {
+    const shareBtn = event.target.closest('button');
+    if (shareBtn) {
+        shareBtn.disabled = true;
+        shareBtn.textContent = 'Sending...';
+    }
+
+    try {
+        const response = await fetch(`/chat/send/${username}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                type: 'shared_post',
+                post_id: currentSharePostId
+            })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+            showToast(`Post shared to ${username}!`, 'success');
+            closeShareModal();
+        } else {
+            showToast('Failed to share post', 'error');
+        }
+    } catch (error) {
+        console.error('Share error:', error);
+        showToast('Failed to share post', 'error');
+    }
+}
+
+function closeShareModal() {
+    document.getElementById('shareModal').classList.add('hidden');
+    document.getElementById('shareModal').classList.remove('flex');
+    document.body.style.overflow = 'auto';
+    currentSharePostId = null;
+}
+
+// Search functionality for share modal
+document.getElementById('shareSearchInput')?.addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const userDivs = document.querySelectorAll('#shareUsersList > div');
+    userDivs.forEach(div => {
+        const text = div.textContent.toLowerCase();
+        if (text.includes(searchTerm)) {
+            div.style.display = 'flex';
+        } else {
+            div.style.display = 'none';
+        }
+    });
+});
+
+// Close modal on escape
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeShareModal();
+    }
+});
+
     // ===== Follow Functionality =====
     document.addEventListener('click', function(e) {
         if (e.target.closest('.follow-btn')) {
             const btn = e.target.closest('.follow-btn');
             const username = btn.dataset.username;
-            
+
             fetch(`/follow/${username}/`, {
                 method: 'POST',
                 headers: {
@@ -738,7 +920,7 @@
             });
         }
     });
-    
+
     // ===== Report Functionality =====
     function openReportModal(postId, authorName) {
         document.getElementById('report-post-id').value = postId;
@@ -746,25 +928,25 @@
         document.getElementById('report-modal').classList.remove('hidden');
         document.getElementById('report-modal').classList.add('flex');
     }
-    
+
     function closeReportModal() {
         document.getElementById('report-modal').classList.add('hidden');
         document.getElementById('report-modal').classList.remove('flex');
         document.getElementById('report-form').reset();
     }
-    
+
     document.getElementById('report-form').addEventListener('submit', function(e) {
         e.preventDefault();
-        
+
         const postId = document.getElementById('report-post-id').value;
         const reason = document.getElementById('report-reason').value;
         const description = document.getElementById('report-description').value;
-        
+
         if (!reason) {
             alert('Please select a reason for reporting');
             return;
         }
-        
+
         fetch('/report-post/', {
             method: 'POST',
             headers: {
@@ -791,13 +973,88 @@
             alert('Error submitting report. Please try again.');
         });
     });
-    
+
     // Close modal with Escape key
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape') {
             closeImageModal();
             closeReportModal();
         }
+    });
+
+    // ===== Save/Unsave Post Functionality =====
+    async function handleSaveButtonClick(btn, postId) {
+        const icon = btn.querySelector('i');
+        const textSpan = btn.querySelector('span');
+
+        // Disable button during request
+        btn.disabled = true;
+        btn.style.opacity = '0.6';
+
+        try {
+            const response = await fetch(`/post/${postId}/save/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                if (data.saved) {
+                    // Post was saved
+                    icon.classList.add('text-indigo-600');
+                    textSpan.textContent = 'Saved';
+                    btn.dataset.saved = 'true';
+                    showToast('Post saved!', 'success');
+                } else {
+                    // Post was unsaved
+                    icon.classList.remove('text-indigo-600');
+                    textSpan.textContent = 'Save';
+                    btn.dataset.saved = 'false';
+                    showToast('Post removed from saved', 'info');
+                }
+            } else {
+                showToast(data.error || 'Failed to save post', 'error');
+            }
+        } catch (error) {
+            console.error('Save error:', error);
+            showToast('Something went wrong', 'error');
+        } finally {
+            // Re-enable button
+            btn.disabled = false;
+            btn.style.opacity = '';
+        }
+    }
+
+    function initSaveButtons() {
+        // This function is kept for compatibility but we're using onclick directly
+        console.log('Save buttons ready');
+    }
+
+    function showToast(message, type) {
+        let toast = document.createElement('div');
+        toast.className = `fixed bottom-4 right-4 z-50 px-4 py-2 rounded-lg shadow-lg text-white ${
+            type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'
+        }`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => {
+            toast.style.opacity = '0';
+            setTimeout(() => toast.remove(), 300);
+        }, 2000);
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        initSaveButtons();
+    });
+
+    // Re-initialize for dynamically loaded content
+    document.body.addEventListener('htmx:afterSwap', function() {
+        initSaveButtons();
     });
 </script>
 {% endblock %}

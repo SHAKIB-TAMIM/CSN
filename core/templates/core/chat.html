@@ -5,610 +5,1009 @@
 {% block title %}Messages - Campus Social Network{% endblock %}
 
 {% block extra_css %}
-<link rel="stylesheet" href="{% static 'core/css/chat.css' %}">
 <style>
+    /* Chat Layout - Modern & Responsive */
+    * {
+        box-sizing: border-box;
+    }
+
+    .chat-wrapper {
+        height: calc(100vh - 80px);
+        background: white;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 12px 35px rgba(15, 23, 42, 0.08);
+        border: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: row;
+}
+
+    /* ========== SIDEBAR ========== */
+    .chat-sidebar {
+        width: 340px;
+        min-width: 340px;
+        background: #ffffff;
+        border-right: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .sidebar-header {
+        padding: 20px;
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .sidebar-header h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0;
+    }
+
+    .conversations-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 8px;
+    }
+
+    .conv-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 14px;
+        border-radius: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        margin-bottom: 6px;
+    }
+
+    .conv-item:hover {
+        background: #f8fafc;
+        transform: translateX(2px);
+    }
+
+    .conv-item.active {
+        background: #eef2ff;
+        border: 1px solid #c7d2fe;
+    }
+
+    .conv-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        object-fit: cover;
+        flex-shrink: 0;
+    }
+
+    .conv-info {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .conv-name {
+        font-weight: 600;
+        color: #0f172a;
+        margin-bottom: 4px;
+        font-size: 0.95rem;
+    }
+
+    .conv-last-msg {
+        font-size: 0.75rem;
+        color: #64748b;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .conv-time {
+        font-size: 0.65rem;
+        color: #94a3b8;
+        flex-shrink: 0;
+    }
+
+    .conv-badge {
+        background: #4f46e5;
+        color: white;
+        font-size: 0.7rem;
+        padding: 2px 6px;
+        border-radius: 20px;
+        min-width: 20px;
+        text-align: center;
+    }
+
+    /* ========== MAIN CHAT AREA ========== */
+    .chat-main {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: #ffffff;
+        overflow: hidden;
+    }
+
+    .chat-header {
+        padding: 16px 20px;
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .chat-header-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+
+    .chat-header-info {
+        flex: 1;
+    }
+
+    .chat-header-name {
+        font-weight: 700;
+        font-size: 1.1rem;
+        color: #0f172a;
+    }
+
+    .chat-header-status {
+        font-size: 0.7rem;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 2px;
+    }
+
+    .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        display: inline-block;
+    }
+
+    .status-online { background: #22c55e; }
+    .status-offline { background: #94a3b8; }
+
+    /* ========== MESSAGES AREA ========== */
+    .messages-container {
+        flex: 1;
+        overflow-y: auto;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        background: #f8fafc;
+        scroll-behavior: smooth;
+    }
+
+    .message {
+        display: flex;
+        max-width: 70%;
+    }
+
+    .message-sent {
+        align-self: flex-end;
+    }
+
+    .message-received {
+        align-self: flex-start;
+    }
+
+    .message-bubble {
+    padding: 12px 16px;
+    border-radius: 18px;
+    font-size: 0.92rem;
+    line-height: 1.5;
+    word-break: break-word;
+    max-width: 100%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+}
+
+    .message-sent .message-bubble {
+        background: linear-gradient(135deg, #4f46e5, #6366f1);
+        color: white;
+        border-bottom-right-radius: 6px;
+    }
+
+    .message-received .message-bubble {
+        background: white;
+        color: #0f172a;
+        border-bottom-left-radius: 6px;
+        border: 1px solid #e2e8f0;
+    }
+
+    .message-time {
+        font-size: 0.65rem;
+        margin-top: 4px;
+        color: #94a3b8;
+    }
+
+    .message-sent .message-time {
+        text-align: right;
+    }
+
+    .message-bubble img,
+    .message-image {
+        max-width: 220px;
+        max-height: 220px;
+        border-radius: 12px;
+        object-fit: cover;
+        cursor: pointer;
+        transition: transform 0.2s ease;
+    }
+
+    .message-bubble img:hover {
+        transform: scale(1.02);
+    }
+
+    /* ========== INPUT AREA ========== */
+    .chat-input-container {
+        padding: 14px 18px;
+        background: white;
+        border-top: 1px solid #e2e8f0;
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+    }
+
+    .attach-btn {
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 10px;
+        border-radius: 50%;
+        color: #64748b;
+        transition: all 0.2s;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .attach-btn:hover {
+        background: #f1f5f9;
+        color: #4f46e5;
+    }
+
+    .message-input {
+        flex: 1;
+        border: 1px solid #e2e8f0;
+        border-radius: 30px;
+        padding: 14px 18px;
+        resize: none;
+        font-family: inherit;
+        font-size: 0.92rem;
+        min-height: 48px;
+        max-height: 120px;
+        background: #f8fafc;
+        transition: all 0.2s ease;
+    }
+    .message-input:focus {
+        outline: none;
+        border-color: #4f46e5;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(79,70,229,0.1);
+    }
+
+    .send-btn {
+        background: linear-gradient(135deg, #4f46e5, #6366f1);
+        border: none;
+        cursor: pointer;
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: all 0.2s ease;
+        box-shadow: 0 4px 12px rgba(79,70,229,0.25);
+    }
+
+    .send-btn:hover {
+        transform: scale(1.05);
+    }
+
+    .send-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+
+    /* ========== EMPTY STATE ========== */
+    .empty-state {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        text-align: center;
+        padding: 40px;
+        color: #64748b;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #cbd5e1;
+        margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+        font-size: 1.2rem;
+        margin-bottom: 8px;
+        color: #334155;
+    }
+    .shared-post-card {
+    max-width: 280px;
+    background: #f8fafc;
+    transition: transform 0.2s;
+}
+.shared-post-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* Mobile responsive styles for shared posts */
+@media (max-width: 768px) {
+    .shared-post-card {
+        max-width: 220px;
+    }
+    .shared-post-card .text-sm {
+        font-size: 0.75rem;
+    }
+    .shared-post-card img {
+        max-height: 120px;
+    }
+}
+
+/* For very small screens */
+@media (max-width: 480px) {
+    .shared-post-card {
+        max-width: 180px;
+    }
+    .shared-post-card .text-sm {
+        font-size: 0.7rem;
+    }
+}
+
+    /* ========== MOBILE RESPONSIVE ========== */
+    @media (max-width: 768px) {
+        .chat-wrapper {
+        height: 100vh;
+        border-radius: 0;
+        box-shadow: none;
+        border: none;
+    }
+
+    .chat-sidebar {
+        position: fixed;
+        left: 0;
+        top: 60px;
+        width: 100%;
+        height: calc(100% - 60px);
+        z-index: 100;
+        background: white;
+        box-shadow: none;
+        border-right: none;
+    }
+        .chat-sidebar.open {
+            left: 0;
+        }
+        .chat-main {
+            width: 100%;
+            display: none;
+        }
+
+        .chat-main.active {
+            display: flex;
+        }
+        .message {
+            max-width: 85%;
+        }
+
+        .messages-container {
+            padding: 16px;
+        }
+
+        .chat-header, .chat-input-container {
+            padding: 12px 16px;
+        }
+
+        .mobile-back-btn {
+            display: flex;
+        }
+
+        .conv-avatar {
+            width: 48px;
+            height: 48px;
+        }
+    }
+
+    @media (min-width: 769px) {
+        .mobile-back-btn {
+            display: none;
+        }
+        .mobile-menu-btn {
+            display: none;
+        }
+    }
+
+    .mobile-back-btn {
+        background: none;
+        border: none;
+        font-size: 1.2rem;
+        cursor: pointer;
+        padding: 8px;
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        align-items: center;
+        justify-content: center;
+    }
+
     .typing-indicator {
         display: flex;
         align-items: center;
-        padding: 12px 16px;
-        background-color: #f3f4f6;
+        gap: 4px;
+        padding: 8px 12px;
+        background: white;
         border-radius: 20px;
         width: fit-content;
-        margin-bottom: 10px;
+        margin-top: 8px;
     }
-    
-    .typing-indicator span {
-        height: 8px;
-        width: 8px;
-        background-color: #9ca3af;
+
+    .typing-dot {
+        width: 6px;
+        height: 6px;
+        background: #94a3b8;
         border-radius: 50%;
-        display: inline-block;
-        margin: 0 2px;
-        animation: typing 1.4s infinite;
+        animation: typingBounce 1.4s infinite;
     }
-    
-    .typing-indicator span:nth-child(2) {
-        animation-delay: 0.2s;
-    }
-    
-    .typing-indicator span:nth-child(3) {
-        animation-delay: 0.4s;
-    }
-    
-    @keyframes typing {
+
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typingBounce {
         0%, 60%, 100% { transform: translateY(0); }
-        30% { transform: translateY(-10px); }
-    }
-    
-    .message-image {
-        max-width: 200px;
-        max-height: 200px;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: transform 0.2s;
-    }
-    
-    .message-image:hover {
-        transform: scale(1.05);
-    }
-    
-    .file-attachment {
-        display: flex;
-        align-items: center;
-        padding: 8px 12px;
-        background-color: rgba(255,255,255,0.1);
-        border-radius: 8px;
-        margin-top: 5px;
-    }
-    
-    .file-attachment i {
-        font-size: 20px;
-        margin-right: 8px;
+        30% { transform: translateY(-6px); }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 h-[calc(100vh-4rem)]">
-    <div class="bg-white rounded-lg shadow-md h-full flex">
-        <!-- Conversations List -->
-        <div class="w-1/3 border-r border-gray-200">
-            <div class="p-4 border-b border-gray-200">
-                <h2 class="font-bold text-xl text-gray-800">Messages</h2>
-                <div class="mt-2">
-                    <input type="text" placeholder="Search messages..." 
-                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-600">
-                </div>
+<meta name="other-username" content="{{ other_user.username|default:'' }}">
+<meta name="current-username" content="{{ user.username }}">
+
+<div class="max-w-7xl mx-auto px-4 py-4">
+    <div class="chat-wrapper">
+        <!-- Conversations Sidebar -->
+        <div id="chat-sidebar" class="chat-sidebar">
+            <div class="sidebar-header">
+                <h2>Messages</h2>
             </div>
-            
-            <div class="overflow-y-auto h-[calc(100vh-12rem)]">
-                {% for conversation in conversations %}
-                <a href="{% url 'chat-with' conversation.user.username %}" 
-                   class="block px-4 py-3 hover:bg-gray-50 {% if conversation.user.username == other_user.username %}bg-indigo-50{% endif %}">
-                    <div class="flex items-center space-x-3">
-                        <div class="relative">
-                            <img src="{{ conversation.user.profile.profile_photo.url }}" 
-                                 class="w-12 h-12 rounded-full">
-                            {% if conversation.user.profile.is_online %}
-                            <span class="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></span>
-                            {% endif %}
-                        </div>
-                        <div class="flex-1 min-w-0">
-                            <div class="flex items-center justify-between">
-                                <p class="font-semibold text-gray-800 truncate">{{ conversation.user.get_full_name|default:conversation.user.username }}</p>
-                                {% if conversation.last_message %}
-                                <p class="text-xs text-gray-500">{{ conversation.last_message.created_at|naturaltime }}</p>
-                                {% endif %}
-                            </div>
-                            <p class="text-sm text-gray-600 truncate">
-                                {% if conversation.last_message %}
-                                    {% if conversation.last_message.sender == user %}You: {% endif %}
-                                    {{ conversation.last_message.content|truncatechars:30 }}
-                                {% endif %}
-                            </p>
-                            {% if conversation.unread_count > 0 %}
-                            <span class="inline-block bg-indigo-600 text-white text-xs rounded-full px-2 py-1 mt-1">
-                                {{ conversation.unread_count }} new
-                            </span>
+            <div class="conversations-list">
+                {% for conv in conversations %}
+                <a href="{% url 'chat-with' conv.user.username %}" class="conv-item {% if conv.user.username == other_user.username %}active{% endif %}">
+                    <img src="{{ conv.user.profile.profile_photo.url }}" class="conv-avatar" onerror="this.src='/static/default.jpg'">
+                    <div class="conv-info">
+                        <div class="conv-name">{{ conv.user.get_full_name|default:conv.user.username }}</div>
+                        <div class="conv-last-msg">
+                            {% if conv.last_message %}
+                                {% if conv.last_message.sender == user %}You: {% endif %}
+                                {{ conv.last_message.content|truncatechars:35|default:"Media" }}
+                            {% else %}
+                                No messages yet
                             {% endif %}
                         </div>
                     </div>
+                    <div class="conv-time">
+                        {% if conv.last_message %}
+                            {{ conv.last_message.created_at|naturaltime }}
+                        {% endif %}
+                    </div>
+                    {% if conv.unread_count > 0 %}
+                    <span class="conv-badge">{{ conv.unread_count }}</span>
+                    {% endif %}
                 </a>
                 {% empty %}
-                <p class="text-center text-gray-500 py-8">No conversations yet</p>
+                <div class="empty-state">
+                    <i class="fas fa-comments"></i>
+                    <p>No conversations yet</p>
+                </div>
                 {% endfor %}
             </div>
         </div>
-        
-        <!-- Chat Area -->
-        <div class="flex-1 flex flex-col h-full">
+
+        <!-- Chat Main Area -->
+        <div class="chat-main">
             {% if other_user %}
             <!-- Chat Header -->
-            <div class="p-4 border-b border-gray-200 flex items-center justify-between">
-                <div class="flex items-center space-x-3">
-                    <div class="relative">
-                        <img src="{{ other_user.profile.profile_photo.url }}" class="w-10 h-10 rounded-full">
-                        {% if other_user.profile.is_online %}
-                        <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>
-                        {% endif %}
-                    </div>
-                    <div>
-                        <h3 class="font-semibold text-gray-800">{{ other_user.get_full_name|default:other_user.username }}</h3>
-                        <div class="flex items-center text-xs text-gray-500">
-                            <span id="connection-indicator" class="inline-block w-2 h-2 bg-yellow-500 rounded-full mr-1"></span>
-                            <span id="connection-text">Connecting...</span>
-                        </div>
+            <div class="chat-header">
+                <button id="mobile-back-btn" class="mobile-back-btn" onclick="closeSidebar()">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <img src="{{ other_user.profile.profile_photo.url }}" class="chat-header-avatar" onerror="this.src='/static/default.jpg'">
+                <div class="chat-header-info">
+                    <div class="chat-header-name">{{ other_user.get_full_name|default:other_user.username }}</div>
+                    <div class="chat-header-status">
+                        <span id="status-dot" class="status-dot status-online"></span>
+                        <span id="status-text">Online</span>
                     </div>
                 </div>
-                <div class="flex space-x-2">
-                    <button class="p-2 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100">
-                        <i class="fas fa-phone"></i>
-                    </button>
-                    <button class="p-2 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100">
-                        <i class="fas fa-video"></i>
-                    </button>
-                    <button class="p-2 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100">
-                        <i class="fas fa-info-circle"></i>
-                    </button>
-                </div>
+                <button id="mobile-menu-btn" class="mobile-menu-btn" onclick="openSidebar()" style="background:none;border:none;font-size:1.2rem;">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
-            
+
             <!-- Messages Container -->
-            <div class="flex-1 overflow-y-auto p-4 space-y-4" id="chat-messages">
+            <div id="messages-container" class="messages-container">
                 {% for message in messages %}
-                <div class="flex {% if message.sender == user %}justify-end{% endif %}">
-                    <div class="max-w-xs lg:max-w-md {% if message.sender == user %}order-1{% endif %}">
-                        <div class="rounded-lg p-3 {% if message.sender == user %}bg-indigo-600 text-white{% else %}bg-gray-100 text-gray-800{% endif %}">
-                            <p class="text-sm">{{ message.content }}</p>
-                            {% if message.image %}
-                            <img src="{{ message.image.url }}" class="mt-2 rounded-lg max-w-full message-image" onclick="openImageModal('{{ message.image.url }}')">
-                            {% endif %}
-                            {% if message.file %}
-                            <div class="file-attachment">
-                                <i class="fas fa-file"></i>
-                                <a href="{{ message.file.url }}" target="_blank" class="text-sm underline">Download file</a>
+                <div class="message {% if message.sender == user %}message-sent{% else %}message-received{% endif %}" data-msg-id="{{ message.id }}">
+                        <div>
+
+                            <!--<div class="message-bubble">-->
+                            <!--    {% if message.is_image %}-->
+                            <!--        <img src="{{ message.file_url }}"-->
+                            <!--             style="max-width:200px; max-height:200px; border-radius:8px; cursor:pointer;"-->
+                            <!--             onclick="openImageModal('{{ message.file_url }}')">-->
+                            <!--    {% elif message.is_file %}-->
+                            <!--        <a href="{{ message.file_url }}" target="_blank" class="text-indigo-600 hover:underline">-->
+                            <!--            📎 {{ message.file_name }}-->
+                            <!--        </a>-->
+                            <!--    {% else %}-->
+                            <!--        {{ message.content }}-->
+                            <!--    {% endif %}-->
+                            <!--</div>-->
+                            <!-- In the message display area, replace the message-bubble content -->
+                            <div class="message-bubble">
+                                {% if message.shared_post %}
+                                    <!-- Shared Post Card -->
+                                    <div class="shared-post-card bg-gray-50 rounded-lg p-3 mt-1 mb-1 border border-gray-200">
+                                        <div class="flex items-center space-x-2 mb-2">
+                                            <img src="{{ message.shared_post.user.profile.profile_photo.url }}" class="w-5 h-5 rounded-full">
+                                            <span class="text-xs font-medium text-gray-700">{{ message.shared_post.user.username }}</span>
+                                            <span class="text-xs text-gray-400">shared a post</span>
+                                        </div>
+                                        <div class="text-sm text-gray-800 mb-2">{{ message.shared_post.content|truncatechars:100 }}</div>
+                                        {% if message.shared_post.image %}
+                                        <img src="{{ message.shared_post.image.url }}" class="rounded-lg max-h-48 w-full object-cover cursor-pointer" onclick="openImageModal('{{ message.shared_post.image.url }}')">
+                                        {% endif %}
+                                        <a href="/post/{{ message.shared_post.id }}/" class="text-xs text-indigo-600 hover:underline mt-2 inline-block">View original post →</a>
+                                    </div>
+                                {% elif message.is_image %}
+                                    <img src="{{ message.file_url }}" class="message-image" onclick="openImageModal('{{ message.file_url }}')">
+                                {% elif message.is_file %}
+                                    <a href="{{ message.file_url }}" target="_blank" class="text-indigo-600 hover:underline">
+                                        <i class="fas fa-paperclip mr-1"></i> {{ message.file_name }}
+                                    </a>
+                                {% else %}
+                                    {{ message.content|linebreaksbr }}
+                                {% endif %}
                             </div>
-                            {% endif %}
+
+                            <div class="message-time">
+                                {{ message.created_at|date:"g:i A" }}
+                            </div>
+
                         </div>
-                        <p class="text-xs text-gray-500 mt-1 {% if message.sender == user %}text-right{% endif %}">
-                            {{ message.created_at|time }}
-                        </p>
-                    </div>
                 </div>
                 {% empty %}
-                <div class="text-center text-gray-500 py-8" id="no-messages">
-                    <p>No messages yet. Say hello!</p>
+                <div id="no-messages" class="empty-state">
+                    <i class="fas fa-comment-dots"></i>
+                    <h3>No messages yet</h3>
+                    <p>Say hello to {{ other_user.username }}!</p>
                 </div>
                 {% endfor %}
-                
-                <!-- Typing Indicator -->
-                <div id="typing-indicator-container" class="hidden">
-                    <div class="typing-indicator">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                        <span class="ml-2 text-sm text-gray-500">{{ other_user.username }} is typing...</span>
-                    </div>
+                <div id="typing-indicator" class="typing-indicator" style="display: none;">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <span style="font-size:0.7rem;margin-left:8px;">typing...</span>
                 </div>
             </div>
-            
-            <!-- Message Input -->
-            <div class="p-4 border-t border-gray-200">
-                <form id="message-form" class="flex items-end space-x-2">
-                    {% csrf_token %}
-                    
-                    <!-- Hidden file input -->
-                    <input type="file" id="file-input" accept="image/*, .pdf, .doc, .docx, .txt" class="hidden">
-                    
-                    <div class="flex-1">
-                        <textarea id="message-input" name="content" rows="1" 
-                                  class="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-600 resize-none"
-                                  placeholder="Type a message..."></textarea>
-                    </div>
-                    <div class="flex space-x-1">
-                        <button type="button" id="image-upload-btn" class="p-2 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100" title="Send image">
-                            <i class="fas fa-image"></i>
-                        </button>
-                        <button type="button" id="file-upload-btn" class="p-2 text-gray-500 hover:text-indigo-600 rounded-full hover:bg-gray-100" title="Send file">
-                            <i class="fas fa-paperclip"></i>
-                        </button>
-                        <button type="submit" id="send-button" class="p-2 bg-indigo-600 text-white rounded-full hover:bg-indigo-700">
-                            <i class="fas fa-paper-plane"></i>
-                        </button>
-                    </div>
-                </form>
+
+            <!-- Input Area -->
+            <div class="chat-input-container">
+                <input type="file" id="file-input" style="display: none;" accept="image/*,.pdf,.doc,.docx,.txt">
+                <button id="attach-btn" class="attach-btn" title="Attach file">
+                    <i class="fas fa-paperclip"></i>
+                </button>
+                <textarea id="message-input" class="message-input" rows="1" placeholder="Type a message..."></textarea>
+                <button id="send-btn" class="send-btn">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
             </div>
-            
             {% else %}
-            <!-- No chat selected -->
-            <div class="flex-1 flex items-center justify-center">
-                <div class="text-center">
-                    <i class="fas fa-comments text-6xl text-gray-300 mb-4"></i>
-                    <h3 class="text-xl font-semibold text-gray-700 mb-2">Your Messages</h3>
-                    <p class="text-gray-500">Select a conversation to start chatting</p>
-                </div>
+            <div class="empty-state">
+                <i class="fas fa-comments"></i>
+                <h3>Your Messages</h3>
+                <p>Select a conversation to start chatting</p>
             </div>
             {% endif %}
         </div>
     </div>
 </div>
 
-<!-- Image Modal -->
-<div id="image-modal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50" onclick="closeImageModal()">
-    <img id="modal-image" src="" class="max-w-full max-h-full object-contain">
+<!-- Image Preview Modal -->
+<div id="image-modal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);z-index:1000;align-items:center;justify-content:center;" onclick="closeImageModal()">
+    <img id="modal-image" src="" style="max-width:90%;max-height:90%;object-fit:contain;">
+    <button style="position:absolute;top:20px;right:20px;background:none;border:none;color:white;font-size:2rem;cursor:pointer;" onclick="closeImageModal()">&times;</button>
 </div>
-{% endblock %}
 
-{% block extra_js %}
-<script src="{% static 'core/js/chat.js' %}"></script>
 <script>
+// ========== CHAT JAVASCRIPT - FULLY FIXED VERSION ==========
 (function() {
+    const otherUsernameMeta = document.querySelector('meta[name="other-username"]');
+    if (!otherUsernameMeta || !otherUsernameMeta.content) return;
 
-    {% if other_user %}
+    const OTHER_USERNAME = otherUsernameMeta.content;
+    const CURRENT_USERNAME = document.querySelector('meta[name="current-username"]').content;
+    let lastMessageId = 0;
+    let pollingInterval = null;
+    let typingTimeout = null;
 
-
-    const otherUsername = "{{ other_user.username }}";
-    const currentUsername = "{{ user.username }}";
-    const currentUserId = {{ user.id }};
-
-    const wsProtocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${wsProtocol}//${window.location.host}/ws/chat/${otherUsername}/`;
-
-    let chatSocket = null;
-    let reconnectAttempts = 0;
-    const maxReconnectAttempts = 5;
-    let typingTimer = null;
-
-    const messagesContainer = document.getElementById("chat-messages");
-    const messageInput = document.getElementById("message-input");
-    const sendButton = document.getElementById("send-button");
-    const messageForm = document.getElementById("message-form");
-    const connectionIndicator = document.getElementById("connection-indicator");
-    const connectionText = document.getElementById("connection-text");
-    const noMessages = document.getElementById("no-messages");
-    const fileInput = document.getElementById("file-input");
-    const imageUploadBtn = document.getElementById("image-upload-btn");
-    const fileUploadBtn = document.getElementById("file-upload-btn");
-    const typingIndicatorContainer = document.getElementById("typing-indicator-container");
-
-    function updateConnectionStatus(status, color) {
-        if (!connectionIndicator || !connectionText) return;
-
-        connectionIndicator.classList.remove("bg-green-500", "bg-red-500", "bg-yellow-500");
-        connectionIndicator.classList.add(`bg-${color}-500`);
-
-        connectionText.textContent = status;
+    // Get last message ID from existing messages
+    const lastMessage = document.querySelector('#messages-container .message:last-child');
+    if (lastMessage && lastMessage.getAttribute('data-msg-id')) {
+        lastMessageId = parseInt(lastMessage.getAttribute('data-msg-id')) || 0;
     }
+
+    const messagesContainer = document.getElementById('messages-container');
+    const messageInput = document.getElementById('message-input');
+    const sendBtn = document.getElementById('send-btn');
+    const attachBtn = document.getElementById('attach-btn');
+    const fileInput = document.getElementById('file-input');
+    const noMessages = document.getElementById('no-messages');
+    const typingIndicator = document.getElementById('typing-indicator');
 
     function scrollToBottom() {
+        if (messagesContainer) {
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    }
+
+    function formatTime(isoString) {
+        if (!isoString) return '';
+        try {
+            const date = new Date(isoString);
+            return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        } catch(e) {
+            return '';
+        }
+    }
+
+    // Add text message to UI
+    function addMessageToUI(content, isSent, msgId, createdAt) {
         if (!messagesContainer) return;
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-    }
+        if (noMessages) noMessages.style.display = 'none';
+        if (msgId && document.querySelector(`[data-msg-id="${msgId}"]`)) return;
 
-    function formatTime(timestamp) {
-        if (!timestamp) return "Just now";
-        const date = new Date(timestamp);
-        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-    }
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${isSent ? 'message-sent' : 'message-received'}`;
+        if (msgId) messageDiv.setAttribute('data-msg-id', msgId);
 
+        const innerDiv = document.createElement('div');
+        const bubble = document.createElement('div');
+        bubble.className = 'message-bubble';
+        bubble.textContent = content;
+        const time = document.createElement('div');
+        time.className = 'message-time';
+        time.textContent = formatTime(createdAt);
 
-    function showTypingIndicator() {
-        if (typingIndicatorContainer) {
-            typingIndicatorContainer.classList.remove("hidden");
-            scrollToBottom();
-        }
-    }
-
-    function hideTypingIndicator() {
-        if (typingIndicatorContainer) {
-            typingIndicatorContainer.classList.add("hidden");
-        }
-    }
-
-    function addMessage(message, isCurrentUser, messageType = 'text') {
-        if (!messagesContainer) return;
-
-        if (noMessages) {
-            noMessages.style.display = "none";
-        }
-
-        const wrapper = document.createElement("div");
-        wrapper.className = `flex ${isCurrentUser ? "justify-end" : "justify-start"} mb-3`;
-
-        const bubble = document.createElement("div");
-        bubble.className = `max-w-xs lg:max-w-md rounded-lg p-3 ${
-            isCurrentUser
-                ? "bg-indigo-600 text-white"
-                : "bg-gray-100 text-gray-800"
-        }`;
-
-        if (!isCurrentUser) {
-            const sender = document.createElement("p");
-            sender.className = "text-xs font-semibold mb-1 text-gray-600";
-            sender.textContent = message.sender || otherUsername;
-            bubble.appendChild(sender);
-        }
-
-        // Add content based on message type
-        if (messageType === 'text') {
-            const content = document.createElement("p");
-            content.className = "text-sm";
-            content.textContent = message.content;
-            bubble.appendChild(content);
-        } else if (messageType === 'image') {
-            const img = document.createElement("img");
-            img.src = message.file_url;
-            img.className = "message-image mt-2 rounded-lg max-w-full cursor-pointer";
-            img.onclick = () => openImageModal(message.file_url);
-            bubble.appendChild(img);
-        } else if (messageType === 'file') {
-            const fileDiv = document.createElement("div");
-            fileDiv.className = "file-attachment";
-            fileDiv.innerHTML = `
-                <i class="fas fa-file"></i>
-                <a href="${message.file_url}" target="_blank" class="text-sm underline">Download file</a>
-            `;
-            bubble.appendChild(fileDiv);
-        }
-
-        const time = document.createElement("p");
-        time.className = `text-xs text-right mt-1 ${
-            isCurrentUser ? "text-indigo-200" : "text-gray-500"
-        }`;
-        time.textContent = formatTime(message.created_at);
-        bubble.appendChild(time);
-
-        wrapper.appendChild(bubble);
-        messagesContainer.appendChild(wrapper);
-
+        innerDiv.appendChild(bubble);
+        innerDiv.appendChild(time);
+        messageDiv.appendChild(innerDiv);
+        messagesContainer.appendChild(messageDiv);
         scrollToBottom();
     }
 
-    function connectWebSocket() {
-        chatSocket = new WebSocket(wsUrl);
+    // Add file/image message to UI
+    function addFileMessageToUI(fileName, fileUrl, isSent, fileType, msgId, createdAt) {
+    if (!messagesContainer) return;
+    if (noMessages) noMessages.style.display = 'none';
+    if (msgId && document.querySelector(`[data-msg-id="${msgId}"]`)) return;
 
-        chatSocket.onopen = function () {
-            console.log("✅ WebSocket connected");
-            updateConnectionStatus("Online", "green");
-            reconnectAttempts = 0;
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${isSent ? 'message-sent' : 'message-received'}`;
+    if (msgId) messageDiv.setAttribute('data-msg-id', msgId);
 
-            if (messageInput) messageInput.disabled = false;
-            if (sendButton) sendButton.disabled = false;
+    const innerDiv = document.createElement('div');
+    const bubble = document.createElement('div');
+    bubble.className = 'message-bubble';
+
+    if (fileType === 'image') {
+        const img = document.createElement('img');
+        img.src = fileUrl;
+        img.className = 'message-image';
+        img.style.maxWidth = '200px';
+        img.style.maxHeight = '200px';
+        img.style.borderRadius = '8px';
+        img.style.cursor = 'pointer';
+        img.onclick = () => openImageModal(fileUrl);
+        img.onerror = () => {
+            bubble.innerHTML = `<a href="${fileUrl}" target="_blank" class="text-indigo-600 hover:underline">📷 ${fileName}</a>`;
         };
+        bubble.appendChild(img);
+    } else {
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.target = '_blank';
+        link.className = 'text-indigo-600 hover:underline';
+        link.innerHTML = `<i class="fas fa-paperclip mr-1"></i> ${fileName}`;
+        bubble.appendChild(link);
+    }
 
-        chatSocket.onclose = function (event) {
-            console.log("❌ WebSocket disconnected", event.code);
+    innerDiv.appendChild(bubble);
 
-            updateConnectionStatus("Offline", "red");
+    const time = document.createElement('div');
+    time.className = 'message-time';
+    time.textContent = formatTime(createdAt);
+    innerDiv.appendChild(time);
 
-            if (messageInput) messageInput.disabled = true;
-            if (sendButton) sendButton.disabled = true;
+    messageDiv.appendChild(innerDiv);
+    messagesContainer.appendChild(messageDiv);
+    scrollToBottom();
+}
 
-            if (reconnectAttempts < maxReconnectAttempts) {
-                reconnectAttempts++;
-                updateConnectionStatus(
-                    `Reconnecting (${reconnectAttempts}/${maxReconnectAttempts})...`,
-                    "yellow"
-                );
+    function sendTyping(typing) {
+        fetch(`/chat/typing/${OTHER_USERNAME}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ typing: typing })
+        }).catch(console.error);
+    }
 
-                setTimeout(connectWebSocket, 3000 * reconnectAttempts);
+    function sendMessage() {
+        const content = messageInput?.value.trim();
+        if (!content) return;
+
+        const originalContent = content;
+        messageInput.value = '';
+        if (sendBtn) sendBtn.disabled = true;
+
+        fetch(`/chat/send/${OTHER_USERNAME}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ message: originalContent })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                addMessageToUI(originalContent, true, data.message_id, data.created_at);
+                if (data.message_id > lastMessageId) lastMessageId = data.message_id;
             } else {
-                updateConnectionStatus("Connection failed", "red");
+                if (messageInput) messageInput.value = originalContent;
+                alert('Failed to send');
             }
-        };
-
-        chatSocket.onerror = function (error) {
-            console.error("WebSocket error:", error);
-        };
-
-        chatSocket.onmessage = function (event) {
-            try {
-                const data = JSON.parse(event.data);
-
-                if (data.type === 'typing') {
-                    if (data.typing && data.user !== currentUsername) {
-                        showTypingIndicator();
-                    } else {
-                        hideTypingIndicator();
-                    }
-                } else if (data.type === 'file' || data.type === 'image') {
-                    const isCurrentUser = data.message.sender === currentUsername;
-                    if (!isCurrentUser) {
-                        addMessage(data.message, false, data.type);
-                    }
-                } else if (data.message) {
-                    const isCurrentUser = data.message.sender === currentUsername;
-                    if (!isCurrentUser) {
-                        addMessage(data.message, false, 'text');
-                    }
-                }
-            } catch (error) {
-                console.error("Message parse error:", error);
-            }
-        };
+        })
+        .catch(err => {
+            console.error('Send error:', err);
+            if (messageInput) messageInput.value = originalContent;
+            alert('Failed to send');
+        })
+        .finally(() => {
+            if (sendBtn) sendBtn.disabled = false;
+            if (messageInput) messageInput.focus();
+        });
     }
 
-    function handleTyping() {
-        if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN) return;
-
-        chatSocket.send(JSON.stringify({
-            'type': 'typing',
-            'typing': true,
-            'user': currentUsername
-        }));
-
-        clearTimeout(typingTimer);
-        typingTimer = setTimeout(() => {
-            if (chatSocket && chatSocket.readyState === WebSocket.OPEN) {
-                chatSocket.send(JSON.stringify({
-                    'type': 'typing',
-                    'typing': false,
-                    'user': currentUsername
-                }));
-            }
-        }, 1000);
-    }
-
-    function uploadFile(file, fileType) {
+    function uploadFile(file) {
         const formData = new FormData();
         formData.append('file', file);
 
+        const isImage = file.type.startsWith('image/');
+
         // Show loading indicator
-        const loadingMsg = document.createElement('div');
-        loadingMsg.className = 'text-sm text-gray-500 text-center py-2';
-        loadingMsg.textContent = 'Uploading...';
-        messagesContainer.appendChild(loadingMsg);
+        const loadingDiv = document.createElement('div');
+        loadingDiv.className = 'text-center text-gray-500 text-sm py-2';
+        loadingDiv.textContent = 'Uploading...';
+        messagesContainer.appendChild(loadingDiv);
+        scrollToBottom();
 
         fetch('/api/upload-chat-file/', {
             method: 'POST',
             headers: {
-                'X-CSRFToken': '{{ csrf_token }}'
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
             },
             body: formData
         })
         .then(response => response.json())
         .then(data => {
-            // Remove loading indicator
-            loadingMsg.remove();
-
+            loadingDiv.remove();
             if (data.success) {
-                // Send via WebSocket
-                chatSocket.send(JSON.stringify({
-                    'type': fileType,
-                    'message': {
-                        content: file.name,
-                        file_url: data.url,
-                        file_type: data.file_type,
-                        sender: currentUsername,
-                        created_at: new Date().toISOString()
-                    }
-                }));
+                const msgType = isImage ? 'image' : 'file';
 
-                // Optimistic UI update
-                addMessage({
-                    file_url: data.url,
-                    sender: currentUsername,
-                    created_at: new Date().toISOString()
-                }, true, fileType);
+                fetch(`/chat/send/${OTHER_USERNAME}/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        type: msgType,
+                        file_url: data.url,
+                        file_name: file.name
+                    })
+                })
+                .then(res => res.json())
+                .then(msgData => {
+                    if (msgData.success) {
+                        addFileMessageToUI(file.name, data.url, true, msgType, msgData.message_id, msgData.created_at);
+                        if (msgData.message_id > lastMessageId) lastMessageId = msgData.message_id;
+                    }
+                });
             } else {
                 alert('Upload failed: ' + data.error);
             }
         })
-        .catch(error => {
-            loadingMsg.remove();
-            console.error('Upload error:', error);
-            alert('Upload failed. Please try again.');
+        .catch(err => {
+            loadingDiv.remove();
+            console.error('Upload error:', err);
+            alert('Upload failed');
         });
     }
 
-    function sendMessage() {
-        if (!messageInput) return;
+    function pollMessages() {
+    fetch(`/chat/messages/${OTHER_USERNAME}/?since=${lastMessageId}`)
+        .then(res => res.json())
+        .then(data => {
+            if (data.messages && data.messages.length > 0) {
+                data.messages.forEach(msg => {
 
-        const message = messageInput.value.trim();
+                    if (msg.sender !== CURRENT_USERNAME) {
 
-        if (!message) return;
+                        if (msg.type === 'image') {
+                            addFileMessageToUI(
+                                msg.file_name,
+                                msg.file_url,
+                                false,
+                                'image',
+                                msg.id,
+                                msg.created_at
+                            );
 
-        if (!chatSocket || chatSocket.readyState !== WebSocket.OPEN) {
-            alert("Connection lost. Please wait...");
-            return;
-        }
+                        } else if (msg.type === 'file') {
+                            addFileMessageToUI(
+                                msg.file_name,
+                                msg.file_url,
+                                false,
+                                'file',
+                                msg.id,
+                                msg.created_at
+                            );
 
-        chatSocket.send(JSON.stringify({ message }));
+                        } else {
+                            addMessageToUI(
+                                msg.content,
+                                false,
+                                msg.id,
+                                msg.created_at
+                            );
+                        }
+                    }
 
-        // Optimistic UI update
-        addMessage({
-            content: message,
-            sender: currentUsername,
-            created_at: new Date().toISOString()
-        }, true, 'text');
-
-        messageInput.value = "";
-    }
-
-    if (messageForm) {
-        messageForm.addEventListener("submit", function (e) {
-            e.preventDefault();
-            sendMessage();
-        });
-    }
-
+                    if (msg.id > lastMessageId) {
+                        lastMessageId = msg.id;
+                    }
+                });
+            }
+        })
+        .catch(err => console.error('Poll error:', err));
+}
+    // Event listeners
     if (messageInput) {
-        messageInput.addEventListener("keypress", function (e) {
-            if (e.key === "Enter" && !e.shiftKey) {
+        messageInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
             }
-            handleTyping();
+        });
+
+        let timer;
+        messageInput.addEventListener('input', function() {
+            clearTimeout(timer);
+            sendTyping(true);
+            timer = setTimeout(() => sendTyping(false), 1000);
         });
     }
 
-    if (sendButton) {
-        sendButton.addEventListener("click", function (e) {
+    if (sendBtn) {
+        sendBtn.addEventListener('click', function(e) {
             e.preventDefault();
             sendMessage();
         });
     }
 
-    // Image upload
-    if (imageUploadBtn && fileInput) {
-        imageUploadBtn.addEventListener("click", function() {
-            fileInput.accept = "image/*";
-            fileInput.click();
-        });
-    }
-
-    // File upload
-    if (fileUploadBtn && fileInput) {
-        fileUploadBtn.addEventListener("click", function() {
-            fileInput.accept = ".pdf,.doc,.docx,.txt";
-            fileInput.click();
-        });
-    }
-
-    // File input change handler
-    if (fileInput) {
-        fileInput.addEventListener("change", function(e) {
+    if (attachBtn && fileInput) {
+        attachBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', function(e) {
             const file = e.target.files[0];
-            if (!file) return;
-
-            const fileType = file.type.startsWith('image/') ? 'image' : 'file';
-            uploadFile(file, fileType);
-
-            // Clear input so same file can be selected again
+            if (file) {
+                uploadFile(file);
+            }
             fileInput.value = '';
         });
     }
 
-    window.openImageModal = function(imageUrl) {
-        const modal = document.getElementById('image-modal');
-        const modalImg = document.getElementById('modal-image');
-        modalImg.src = imageUrl;
-        modal.classList.remove('hidden');
-        modal.classList.add('flex');
-    };
-
-    window.closeImageModal = function() {
-        const modal = document.getElementById('image-modal');
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-    };
-
-    // Close modal with Escape key
-    document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape') {
-            closeImageModal();
-        }
-    });
-    connectWebSocket();
+        // Start polling
+    pollingInterval = setInterval(pollMessages, 2000);
+    pollMessages();
     scrollToBottom();
 
-    console.log("🚀 Chat initialized with typing indicators and file sharing", {
-        currentUser: currentUsername,
-        otherUser: otherUsername
-    });
+    // Mobile: open chat area if a user is selected
+    if (window.innerWidth <= 768) {
+        const chatMain = document.querySelector('.chat-main');
+        const sidebar = document.getElementById('chat-sidebar');
 
-    {% endif %}
+        if (OTHER_USERNAME) {
+            if (chatMain) chatMain.classList.add('active');
+            if (sidebar) sidebar.style.display = 'none';
+        }
+    }
 
+    console.log('Chat initialized for:', OTHER_USERNAME);
 })();
+
+// Sidebar functions
+function openSidebar() {
+    const sidebar = document.getElementById('chat-sidebar');
+    const chatMain = document.querySelector('.chat-main');
+
+    if (window.innerWidth <= 768) {
+        if (sidebar) sidebar.style.display = 'flex';
+        if (chatMain) chatMain.classList.remove('active');
+    }
+}
+
+function closeSidebar() {
+    const sidebar = document.getElementById('chat-sidebar');
+    const chatMain = document.querySelector('.chat-main');
+
+    if (window.innerWidth <= 768) {
+        if (sidebar) sidebar.style.display = 'none';
+        if (chatMain) chatMain.classList.add('active');
+    }
+}
+
+// Image modal functions
+function openImageModal(imageUrl) {
+    const modal = document.getElementById('image-modal');
+    const modalImg = document.getElementById('modal-image');
+    if (modal && modalImg) {
+        modalImg.src = imageUrl;
+        modal.style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+}
+
+function closeImageModal() {
+    const modal = document.getElementById('image-modal');
+    if (modal) {
+        modal.style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+}
+
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeImageModal();
+});
 </script>
 {% endblock %}
+

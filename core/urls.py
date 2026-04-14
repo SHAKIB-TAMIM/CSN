@@ -19,11 +19,11 @@ urlpatterns = [
         template_name='core/password_change.html',
         success_url='/password-change/done/'
     ), name='password_change'),
-    
+
     path('password-change/done/', auth_views.PasswordChangeDoneView.as_view(
         template_name='core/password_change_done.html'
     ), name='password_change_done'),
-    path('password-reset/', 
+    path('password-reset/',
          auth_views.PasswordResetView.as_view(
              template_name='core/password_reset.html'
          ), name='password_reset'),
@@ -39,25 +39,26 @@ urlpatterns = [
          auth_views.PasswordResetCompleteView.as_view(
              template_name='core/password_reset_complete.html'
          ), name='password_reset_complete'),
-    
+
     # Main views
     path('feed/', views.FeedView.as_view(), name='feed'),
     path('explore/', views.ExploreView.as_view(), name='explore'),
     path('search/', views.SearchView.as_view(), name='search'),
-    
+    path('discover/', views.DiscoverUsersView.as_view(), name='discover-users'),
     # Profile
     path('profile/edit/', views.ProfileUpdateView.as_view(), name='profile-edit'),
     path('profile/<str:username>/', views.ProfileView.as_view(), name='profile'),
-    
-    
+
+
     # Posts
     path('post/new/', views.PostCreateView.as_view(), name='post-create'),
     path('post/<int:pk>/', views.PostDetailView.as_view(), name='post-detail'),
+    path('post/<int:pk>/save/', views.save_post, name='save-post'),
     path('post/<int:pk>/unsave/', views.unsave_post, name='unsave-post'),
     path('post/<int:pk>/delete/', views.PostDeleteView.as_view(), name='post-delete'),
     path('post/<int:pk>/edit/', views.PostUpdateView.as_view(), name='post-update'),
     path('post/<int:pk>/delete/', views.PostDeleteView.as_view(), name='post-delete'),
-    
+
     # Interactions
     path('post/<int:post_id>/like/', views.LikeToggleView.as_view(), name='post-like'),
     path('post/<int:post_id>/comment/', views.CommentCreateView.as_view(), name='post-comment'),
@@ -65,27 +66,31 @@ urlpatterns = [
     path('report/<str:username>/', views.ReportUserView.as_view(), name='report-user'),
 
     path('saved-posts/', views.SavedPostsView.as_view(), name='saved-posts'),
+    path('api/following-for-share/', views.get_following_for_share, name='following-for-share'),
     # Messaging
     path('chat/', views.ChatView.as_view(), name='chat'),
     path('chat/<str:username>/', views.ChatView.as_view(), name='chat-with'),
-    
+    path('chat/messages/<str:username>/', views.chat_messages, name='chat-messages'),
+    path('chat/send/<str:username>/', views.send_message, name='chat-send'),
+    path('chat/typing/<str:username>/', views.typing_indicator, name='chat-typing'),
+
     # Notifications
     path('notifications/', views.NotificationsView.as_view(), name='notifications'),
-    
+
     # Stories
     path('story/new/', views.StoryCreateView.as_view(), name='story-create'),
-    
+
     # Block/Unblock
     path('block/<str:username>/', views.BlockUserView.as_view(), name='block-user'),
     path('unblock/<str:username>/', views.UnblockUserView.as_view(), name='unblock-user'),
-    
+
 
     path('delete-account/confirm/', views.DeleteAccountConfirmView.as_view(), name='delete-account-confirm'),
-    path('delete-account/', views.DeleteAccountView.as_view(), name='delete-account'), 
-    
+    path('delete-account/', views.DeleteAccountView.as_view(), name='delete-account'),
+
     # Welcome redirect
     path('welcome/', views.welcome, name='welcome'),
-    
+
     # API endpoints
     path('api/', include('core.api.urls')),
 
@@ -107,5 +112,5 @@ urlpatterns = [
     path('contact/', views.ContactView.as_view(), name='contact'),
     path('privacy/', views.PrivacyView.as_view(), name='privacy'),
     path('terms/', views.TermsView.as_view(), name='terms'),
-    
+
 ]

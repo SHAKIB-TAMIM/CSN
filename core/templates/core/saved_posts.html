@@ -18,7 +18,7 @@
         <div class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition" data-saved-id="{{ saved.id }}">
             <div class="flex items-start space-x-3">
                 <a href="{% url 'profile' saved.post.user.username %}" class="flex-shrink-0">
-                    <img src="{{ saved.post.user.profile.profile_photo.url }}" 
+                    <img src="{{ saved.post.user.profile.profile_photo.url }}"
                          class="w-10 h-10 rounded-full object-cover border-2 border-indigo-600"
                          onerror="this.src='/static/default.jpg'">
                 </a>
@@ -32,17 +32,17 @@
                         </div>
                         <span class="text-xs text-gray-400">Saved {{ saved.created_at|naturaltime }}</span>
                     </div>
-                    
+
                     <p class="mt-2 text-gray-700">{{ saved.post.content|truncatechars:200 }}</p>
-                    
+
                     {% if saved.post.image %}
                     <div class="mt-3 rounded-lg overflow-hidden max-h-48">
                         <img src="{{ saved.post.image.url }}" class="w-full object-cover">
                     </div>
                     {% endif %}
-                    
+
                     <div class="mt-4 flex items-center space-x-4">
-                        <a href="{% url 'post-detail' saved.post.id %}" 
+                        <a href="{% url 'post-detail' saved.post.id %}"
                            class="text-sm text-indigo-600 hover:text-indigo-800 font-medium">
                             View Full Post
                         </a>
@@ -75,12 +75,12 @@
     {% if page_obj.has_other_pages %}
     <div class="mt-8 flex justify-center space-x-2">
         {% if page_obj.has_previous %}
-        <a href="?page={{ page_obj.previous_page_number }}" 
+        <a href="?page={{ page_obj.previous_page_number }}"
            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
             <i class="fas fa-chevron-left mr-1"></i> Previous
         </a>
         {% endif %}
-        
+
         {% for i in paginator.page_range %}
             {% if page_obj.number == i %}
             <span class="px-4 py-2 bg-indigo-600 text-white rounded-lg">{{ i }}</span>
@@ -88,9 +88,9 @@
             <a href="?page={{ i }}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">{{ i }}</a>
             {% endif %}
         {% endfor %}
-        
+
         {% if page_obj.has_next %}
-        <a href="?page={{ page_obj.next_page_number }}" 
+        <a href="?page={{ page_obj.next_page_number }}"
            class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
             Next <i class="fas fa-chevron-right ml-1"></i>
         </a>
@@ -105,7 +105,7 @@
         btn.addEventListener('click', function() {
             const savedId = this.dataset.savedId;
             const postId = this.dataset.postId;
-            
+
             if (confirm('Remove this post from your saved items?')) {
                 fetch(`/post/${postId}/unsave/`, {
                     method: 'POST',
@@ -122,11 +122,12 @@
                         if (card) {
                             card.remove();
                         }
-                        
-                        // Check if any posts left
+
+                        // Show success message
+                        const emptyState = document.querySelector('.empty-state-placeholder');
                         const remaining = document.querySelectorAll('[data-saved-id]').length;
-                        if (remaining === 0) {
-                            location.reload(); // Reload to show empty state
+                        if (remaining === 0 && emptyState) {
+                            emptyState.style.display = 'flex';
                         }
                     } else {
                         alert('Error removing saved post. Please try again.');

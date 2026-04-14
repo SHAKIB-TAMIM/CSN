@@ -2,7 +2,6 @@
 Django settings for campus_social_network project.
 Modern, production-ready configuration with environment variables.
 """
-
 import os
 from pathlib import Path
 from dotenv import load_dotenv
@@ -17,8 +16,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Security
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-development-key-change-in-production')
 # DEBUG = os.getenv('DEBUG', 'False') == 'True'
-DEBUG = True
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',')
+DEBUG = False
+ALLOWED_HOSTS=['localhost,127.0.0.1',' CSN.pythonanywhere.com', '127.0.0.1', 'csn.pythonanywhere.com']
 
 # Application definition
 INSTALLED_APPS = [
@@ -35,7 +34,7 @@ INSTALLED_APPS = [
     # Third-party apps
     'rest_framework',
     'rest_framework_simplejwt',
-    'channels',
+   # 'channels',
     'corsheaders',
     'crispy_forms',
     'crispy_bootstrap4',
@@ -46,21 +45,15 @@ INSTALLED_APPS = [
     'allauth.socialaccount.providers.google',
     'allauth.socialaccount.providers.github',
     'storages',
-    #'debug_toolbar',
     'django_extensions',
     'haystack',
     'sslserver',
-    'constance',
-    'constance.backends.database',
-    
-    
     # Local apps
     'core',
     'chat',
 ]
 
 MIDDLEWARE = [
-   # 'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
@@ -70,7 +63,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'allauth.account.middleware.AccountMiddleware',
     'core.middleware.OnlineStatusMiddleware',
     'core.middleware.NotificationMiddleware',
 ]
@@ -99,49 +91,29 @@ WSGI_APPLICATION = 'campus_social_network.wsgi.application'
 ASGI_APPLICATION = 'campus_social_network.asgi.application'
 
 # Channels
-CHANNEL_LAYERS = {
-    'default': {
-        'BACKEND': 'channels_redis.core.RedisChannelLayer',
-        'CONFIG': {
-            'hosts': [os.getenv('REDIS_URL', 'redis://localhost:6379')],
-        },
-    },
-}
+
+#CHANNEL_LAYERS = {
+ #   'default': {
+  #      'BACKEND': 'channels_redis.core.RedisChannelLayer',
+   #     'CONFIG': {
+    #        'hosts': [os.getenv('REDIS_URL', 'redis://localhost:6379')],
+     #   },
+   # },
+#}
 
 # Database
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv('DB_NAME', 'social_network'),
-        'USER': os.getenv('DB_USER', 'admins'),
-        'PASSWORD': os.getenv('DB_PASSWORD', 'YourStrongPassword123!'),
-        'HOST': os.getenv('DB_HOST', 'localhost'),
-        'PORT': os.getenv('DB_PORT', '3306'),
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
-        },
-        'CONN_MAX_AGE': 600,  # 10 minutes
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
 
 # Cache
 CACHES = {
     'default': {
-        'BACKEND': 'django_redis.cache.RedisCache',
-        'LOCATION': os.getenv('REDIS_URL', 'redis://localhost:6379/1'),
-        'OPTIONS': {
-            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
-           # 'PARSER_CLASS': 'redis._parsers.HiredisParser',
-            'CONNECTION_POOL_CLASS': 'redis.BlockingConnectionPool',
-            'CONNECTION_POOL_CLASS_KWARGS': {
-                'max_connections': 50,
-                'timeout': 20,
-            },
-            'MAX_CONNECTIONS': 1000,
-            'PICKLE_VERSION': -1,
-        },
-        'KEY_PREFIX': 'csn',
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
     }
 }
 
@@ -228,7 +200,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 LANGUAGE_CODE = 'en-us'
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Asia/Dhaka'
 USE_I18N = True
 USE_TZ = True
 USE_L10N = True

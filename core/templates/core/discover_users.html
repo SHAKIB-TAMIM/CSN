@@ -1,0 +1,171 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% load humanize %}
+
+{% block title %}Discover People - Campus Social Network{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-card {
+        background: white;
+        border-radius: 1rem;
+        padding: 1.5rem;
+        transition: all 0.3s ease;
+        border: 1px solid #e5e7eb;
+    }
+    
+    .user-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: #c7d2fe;
+    }
+    
+    .user-avatar-large {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #e0e7ff;
+        transition: all 0.3s ease;
+    }
+    
+    .user-card:hover .user-avatar-large {
+        border-color: #4f46e5;
+        transform: scale(1.02);
+    }
+    
+    .follow-stat {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.75rem;
+        color: #6b7280;
+    }
+    
+    .follow-stat i {
+        font-size: 0.7rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
+            Discover People
+        </h1>
+        <p class="text-gray-600 mt-2">Find and connect with new people in your campus community</p>
+    </div>
+    
+    <!-- Users Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for user in users %}
+        <div class="user-card">
+            <div class="flex flex-col items-center text-center">
+                <!-- Avatar - Clickable to visit profile -->
+                <a href="{% url 'profile' user.username %}" class="block">
+                    <img src="{{ user.profile.profile_photo.url }}" 
+                         class="user-avatar-large mx-auto"
+                         alt="{{ user.username }}"
+                         onerror="this.src='/static/default.jpg'">
+                </a>
+                
+                <!-- User Info - Clickable to visit profile -->
+                <div class="mt-4">
+                    <a href="{% url 'profile' user.username %}" class="block">
+                        <h3 class="font-bold text-lg text-gray-900 hover:text-indigo-600 transition">
+                            {{ user.get_full_name|default:user.username }}
+                        </h3>
+                        <p class="text-sm text-gray-500">@{{ user.username }}</p>
+                    </a>
+                    
+                    <!-- Bio -->
+                    {% if user.profile.bio %}
+                    <p class="text-sm text-gray-600 mt-2 line-clamp-2">{{ user.profile.bio|truncatechars:80 }}</p>
+                    {% endif %}
+                    
+                    <!-- Stats -->
+                    <div class="flex justify-center gap-4 mt-3">
+                        <div class="follow-stat">
+                            <i class="fas fa-user-friends"></i>
+                            <span>{{ user.profile.followers_count }}</span>
+                            <span>followers</span>
+                        </div>
+                        <div class="follow-stat">
+                            <i class="fas fa-newspaper"></i>
+                            <span>{{ user.profile.posts_count }}</span>
+                            <span>posts</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Follow Button -->
+                    <button class="follow-btn mt-4 w-full bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition font-medium"
+                            data-username="{{ user.username }}"
+                            data-action="follow">
+                        <i class="fas fa-user-plus mr-2"></i>Follow
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full">
+            <div class="bg-white rounded-lg shadow-md p-12 text-center">
+                <i class="fas fa-users text-5xl text-gray-300 mb-4"></i>
+                <h3 class="text-xl font-semibold text-gray-700 mb-2">No suggestions available</h3>
+                <p class="text-gray-500">You've already connected with everyone! Check back later for new users.</p>
+                <a href="{% url 'explore' %}" class="inline-block mt-4 text-indigo-600 hover:text-indigo-800">
+                    <i class="fas fa-compass mr-1"></i> Explore content instead
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if page_obj.has_next %}
+    <div class="text-center mt-8">
+        <button hx-get="?page={{ page_obj.next_page_number }}"
+                hx-target=".grid"
+                hx-swap="beforeend"
+                class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700 transition">
+            Load More
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+// Follow button functionality
+document.querySelectorAll('.follow-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const username = this.dataset.username;
+        const action = this.dataset.action;
+        
+        fetch(`/follow/${username}/`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value,
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'followed') {
+                this.innerHTML = '<i class="fas fa-user-check mr-2"></i>Following';
+                this.classList.remove('bg-indigo-600', 'hover:bg-indigo-700');
+                this.classList.add('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+                this.dataset.action = 'unfollow';
+            } else {
+                this.innerHTML = '<i class="fas fa-user-plus mr-2"></i>Follow';
+                this.classList.remove('bg-gray-200', 'text-gray-800', 'hover:bg-gray-300');
+                this.classList.add('bg-indigo-600', 'text-white', 'hover:bg-indigo-700');
+                this.dataset.action = 'follow';
+            }
+        })
+        .catch(error => console.error('Follow error:', error));
+    });
+});
+</script>
+{% endblock %}
+
